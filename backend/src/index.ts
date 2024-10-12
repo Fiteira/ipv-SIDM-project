@@ -19,6 +19,7 @@ app.use(cors());
 let date = new Date();
 console.log("Date: " + date)
 
+
 app.use((req : Request, res : Response, next) => {
   console.log(` ${req.method} ${req.url}`);
   next();
@@ -35,7 +36,7 @@ app.listen(PORT, () => {
 })
 
 app.get('/', (req  : Request , res : Response ) => {
-  res.send('The endpoints is /api/, for example /api/user')
+  res.json({ message: "Hello World!" });
 })
 
 
