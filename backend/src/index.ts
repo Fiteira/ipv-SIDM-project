@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-const passport = require('./config/passport.config');
+const passport = require('./config/passport');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -25,18 +25,17 @@ app.use((req : Request, res : Response, next) => {
   next();
 });
 
-/*
 // define the routes for the API
 require("./routes/auth.routes")(app)
 require("./routes/user.routes")(app)
-*/
+
 
 app.listen(PORT, () => {
   console.log(`API listening on port: ${PORT} `)
 })
 
 app.get('/', (req  : Request , res : Response ) => {
-  res.json({ message: "Hello World!" });
+  res.json({ message: "Hello Nigga!" });
 })
 
 
