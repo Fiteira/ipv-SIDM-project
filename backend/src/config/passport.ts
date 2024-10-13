@@ -1,33 +1,38 @@
-const passport = require("passport");
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-const UserModel = require("../models/user.model");
-const cache = require("./cache");
-require('dotenv').config();
+import passport from 'passport';
+import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
+import dotenv from 'dotenv';
+import UserModel from '../models/user.model';
+import cache from './cache';
 
-const jwtOptions  = {
+dotenv.config();
+
+const jwtOptions: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_SECRET_KEY || 'secret', 
 };
 
-passport.use(new JwtStrategy(jwtOptions ,async (jwtPayload: any, done: any) => {
-
+// Configure Passport JWT strategy
+passport.use(new JwtStrategy(jwtOptions, async (jwtPayload: any, done: (error: any, user?: any, info?: any) => void) => {
   try {
+    // Try to fetch the user from the cache
     let user = await cache.get(jwtPayload.id);
+
     if (!user) {
-      console.log("User não está em cache, obtendo do banco de dados...");
-      // Se o user não está em cache, obtém do banco de dados
+      console.log("User not found in cache, fetching from database...");
+      
+      // If user is not in cache, fetch from the database
       user = await UserModel.findByPk(jwtPayload.id, {
         attributes: ['userId', 'roleId', 'companyId', 'email', 'userName', 'status']
       });
-      // Armazena o user em cache por 4 minutos
+
+      // Store the user in cache for 4 minutes (240 seconds)
       cache.set(jwtPayload.id, user, 240);
     }
-    
+
     return done(null, user);
-    
   } catch (err) {
     return done(err, false);
   }
 }));
 
-module.exports = passport;
+export default passport;

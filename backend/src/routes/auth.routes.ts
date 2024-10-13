@@ -1,25 +1,32 @@
-import { Router } from 'express';
-import { login, register } from '../controllers/auth.controller';
-import { jwtAuthMiddleware } from '../config/middleware';
+import { Express, Router, Request, Response } from 'express';
 import passport from 'passport';
+import { login } from '../controllers/auth.controller';
+import * as middleware from '../config/middleware';
 
-const router = Router();
+const authRoutes = (app: Express) => {
+  const router: Router = Router();
 
-// Rota de login
-router.post("/login", login);
+  // Route for login
+  router.post("/login", middleware.limitAccess, login);
 
-// Rota de registo
-router.post("/register", register);
-
-
-// Exemplo de rota protegida com JWT
-router.get('/checktoken', passport.authenticate('jwt', { session: false }), (req, res) => {
+  // Route to check token
+  router.get('/checktoken', passport.authenticate('jwt', { session: false }), (req: Request, res: Response) => {
     if (req.user) {
-      const { userId, userName, password, status } = req.user as any; // Ajuste o tipo conforme necessário
-      res.status(200).json({ success: true, userId, userName, status });
+      const { userId, userName, roleId, companyId, email, status } = (req.user as any).dataValues;  // casting to `any` to access `dataValues`
+      res.status(200).json({
+        success: true,
+        message: { userId, userName, roleId, companyId, email, status }
+      });
     } else {
-      res.status(401).json({ success: false, message: 'Utilizador não autenticado' });
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
     }
   });
-  
-  export default router;
+
+  // Use the router under the /api route
+  app.use("/api", router);
+};
+
+export default authRoutes;

@@ -1,181 +1,107 @@
-import { Request, Response } from 'express';
-// Importar o modelo de usuário
-const User = require('../models/user.model');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken')
-const auth = require('../config/passport')
-const Joi = require('joi');
-const cache = require("../config/cache");
-import { ValidationErrorItem } from 'joi';
+import { Request, Response, NextFunction } from 'express';
+import { generateJwtToken, validateRequest, findUserByEmail, handleServerError } from '../utils/helpers';
+import bcrypt from 'bcryptjs';
+import Joi, { ObjectSchema } from 'joi';
+import { User } from '../interfaces/user.interface';
+import UserModel from '../models/user.model';
 
+// Login controller
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const { email, password } = req.body;
 
-const { func } = require('joi');
-
-
-
-exports.login = async (req: Request, res: Response) => {
-  if (!req.body.email) {
-    return res.status(400).send({
+  if (!email || !password) {
+    res.status(400).json({
       success: false,
-      message: "O email está vazio."
-    })
+      message: `${!email ? 'Email' : 'Password'} is empty.`,
+    });
+    return;
   }
 
-  if (!req.body.password) {
-    return res.status(400).send({
-      success: false,
-      message: "A password está vazia."
-    })
-  }
-
-  let user;
   try {
-    user = await User.findOne({ where: { email: req.body.email } });
+    const user: User | null = await findUserByEmail(email);
     if (!user) {
-      return res.status(401).send({
+      res.status(401).json({
         success: false,
-        message: "O email ou a password estão incorretos."
-
-      })
+        message: "Email or password is incorrect.",
+      });
+      return;
     }
+
+    if (user.status === 0) {
+      res.status(401).json({
+        success: false,
+        message: "The account is deactivated. Please check your email or contact administration.",
+      });
+      return;
+    }
+
+    if (bcrypt.compareSync(password, user.password)) {
+      const token = generateJwtToken(user.email, user.userId);
+      res.status(200).json({
+        success: true,
+        token: `Bearer ${token}`,
+      });
+      return;
+    }
+
+    res.status(401).json({
+      success: false,
+      message: "Email or password is incorrect.",
+    });
   } catch (error) {
-    res.status(500).send(
-      {
-        success: false,
-        message: "Erro ao verificar o email: " + error
-      }
-    )
+    handleServerError(res, "Authentication error", error);
   }
+};
 
-  // Verifica se o usuário está ativado.
-  if (user.estado === 0) {
-    console.log("Conta desativada")
-    return res.status(401).send(
-      {
-        success: false,
-        message: "A conta está desativada. Por favor, verifique o seu email ou contacte a adminstração."
-      }
-    )
-  }
-
-  // Verificiar password´
-
-  try {
-    if (bcrypt.compareSync(req.body.password, user.password)) {
-      const payload =
-      {
-        email: user.email,
-        id: user.utilizador_id
-      }
-      const token = jwt.sign(payload, "mudar", { expiresIn: "1d" })
-      // Check if it's the first login
-      if (!user.primeiroLogin) {
-        user.primeiroLogin = new Date();
-      }
-
-      // Update last login
-      user.ultimoLogin = new Date();
-
-      await user.save();
-      return res.status(200).send(
-        {
-          success: true,
-          message: "Bearer " + token
-        })
-    }
-    else {
-      return res.status(401).send(
-        {
-          message: "O email ou a password estão incorretos.",
-          success: false
-        })
-    }
-
-  } catch (error) {
-    res.status(500).send(
-      {
-        message: "Erro de autenticação: " + error,
-        success: false
-      }
-    );
-  }
-}
-exports.register = async (req: Request, res: Response) => {
-
-  const schema = Joi.object({
-    nome: Joi.string().min(3).required().messages({
-      'string.base': 'O nome deve ser uma string válida',
-      'string.empty': 'O nome não pode estar vazio',
-      'string.min': 'O nome deve ter no mínimo {#limit} caracteres'
+// Register controller
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const schema: ObjectSchema = Joi.object({
+    name: Joi.string().min(3).required().messages({
+      'string.base': 'Name must be a valid string',
+      'string.empty': 'Name cannot be empty',
+      'string.min': 'Name must have at least {#limit} characters',
     }),
     email: Joi.string().email().required().messages({
-      'string.base': 'O e-mail deve ser uma string válida',
-      'string.empty': 'O e-mail não pode estar vazio',
-      'string.email': 'O e-mail deve ser um endereço de e-mail válido'
+      'string.base': 'Email must be a valid string',
+      'string.empty': 'Email cannot be empty',
+      'string.email': 'Email must be a valid email address',
     }),
     password: Joi.string().min(6).regex(/^(?=.*[a-zA-Z])(?=.*[0-9])/).required().messages({
-      'string.base': 'A palavra-passe deve ser uma string válida',
-      'string.empty': 'A palavra-passe não pode estar vazia',
-      'string.min': 'A palavra-passe deve ter no mínimo {#limit} caracteres',
-      'string.pattern.base': 'A palavra-passe deve conter pelo menos uma letra e um número'
-    })
+      'string.base': 'Password must be a valid string',
+      'string.empty': 'Password cannot be empty',
+      'string.min': 'Password must have at least {#limit} characters',
+      'string.pattern.base': 'Password must contain at least one letter and one number',
+    }),
   });
-  
-  const { error } = schema.validate(req.body, { abortEarly: false });
-  
-  if (error) {
-    const errorMessages = error.details.map((detail: ValidationErrorItem) => detail.message);
-    return res.status(400).send({
-      message: errorMessages[0],
-      success: false
+
+  const validationErrors = validateRequest(schema, req.body);
+  if (validationErrors) {
+    res.status(400).json({
+      success: false,
+      message: validationErrors[0],
     });
+    return;
   }
-  
-  // Criar novo User
 
-
-
-  // Verificar se o email não está cadastrado
   try {
-    const user = await User.findOne({ where: { email: req.body.email } });
-    if (user) {
-      return res.status(500).send({
+    const userExists = await findUserByEmail(req.body.email);
+    if (userExists) {
+      res.status(409).json({
         success: false,
-        message: "O email já está registado."
-
-      })
+        message: "Email is already registered.",
+      });
+      return;
     }
-  } catch (error) {
-    res.status(500).send(
-      {
-        success: false,
-        message: "Erro ao verificar o email do utilizador: " + error
-      }
-    )
-  }
-  // Encriptar password
-  const salt = await bcrypt.genSalt();
-  req.body.password = await bcrypt.hash(req.body.password, salt);
 
-
-  // Define o cargo padrão como 1 "Admin" (Mudar depois para 2 "User normal")
-  req.body.cargo_id = 2;
-
-  try {
-    const data = await User.create(req.body);
-    res.send({
-      message: data,
-      success: true
-
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const newUser = { ...req.body, password: hashedPassword, role_id: 2 };
+    const createdUser = await UserModel.create(newUser);
+    res.status(201).json({
+      success: true,
+      message: createdUser,
     });
-
   } catch (error) {
-    res.status(500).send(
-      {
-        message: "Erro ao criar o utilizador: " + error,
-        success: false
-      })
+    handleServerError(res, "Error creating user", error);
   }
-}
-
-
+};
