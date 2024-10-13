@@ -1,28 +1,32 @@
-import { Application, Request, Response } from "express";
+import { Express, Router, Request, Response } from 'express';
+import passport from 'passport';
+import { login } from '../controllers/auth.controller';
+import * as middleware from '../config/middleware';
 
+const authRoutes = (app: Express) => {
+  const router: Router = Router();
 
-module.exports = (app: Application) => {
-    const router = require("express").Router();
+  // Route for login
+  router.post("/login", middleware.limitAccess, login);
 
-    const authController = require('../controllers/auth.controller');
-    const passport = require("passport");
+  // Route to check token
+  router.get('/checktoken', passport.authenticate('jwt', { session: false }), (req: Request, res: Response) => {
+    if (req.user) {
+      const { userId, userName, roleId, companyId, email, status } = (req.user as any).dataValues;  // casting to `any` to access `dataValues`
+      res.status(200).json({
+        success: true,
+        message: { userId, userName, roleId, companyId, email, status }
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
+    }
+  });
 
-    const middleware = require("../config/middleware.ts")
-
-    router.route("/login").post(middleware.limitAccess, authController.login);
-
-
-    router.get('/checktoken', passport.authenticate('jwt', { session: false }), (req: Request, res: Response) => {
-
-        //console.log(req.user.dataValues);
-
-        //const { userId, userName, roleId, companyId, email, status } = req.user.dataValues;
-        res.status(200).json({
-            success: true,
-            //message: { userId, userName, roleId, companyId, email, status }
-        });
-    });
-
-
-    app.use("/api", router);
+  // Use the router under the /api route
+  app.use("/api", router);
 };
+
+export default authRoutes;

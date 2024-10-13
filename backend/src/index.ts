@@ -1,43 +1,40 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-const passport = require('./config/passport.config');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const session = require('express-session');
+import passport from './config/passport'; 
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import authRoutes from './routes/auth.routes';  
+//import userRoutes from './routes/user.routes';  
+
 dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware setup
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(cors());
-//app.use(passport.initialize());
+app.use(passport.initialize());  
 
-
-let date = new Date();
-console.log("Date: " + date)
-
-
-app.use((req : Request, res : Response, next) => {
-  console.log(` ${req.method} ${req.url}`);
+// Logger middleware to print request info
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log(`${req.method} ${req.url}`);
   next();
 });
 
-/*
-// define the routes for the API
-require("./routes/auth.routes")(app)
-require("./routes/user.routes")(app)
-*/
+// Define the routes for the API
+app.use('/api/auth', authRoutes);  
+//app.use('/api/users', userRoutes); 
 
-app.listen(PORT, () => {
-  console.log(`API listening on port: ${PORT} `)
-})
-
-app.get('/', (req  : Request , res : Response ) => {
+// Example route
+app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Hello World!" });
-})
+});
 
+// Server start
+app.listen(PORT, () => {
+  console.log(`API listening on port: ${PORT}`);
+});
 
-module.exports = app
+export default app;

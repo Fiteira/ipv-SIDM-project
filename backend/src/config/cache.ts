@@ -1,5 +1,7 @@
-const NodeCache = require("node-cache");
+import NodeCache from 'node-cache';
 
+// Create a new cache instance
 const cacheNode = new NodeCache();
 
-module.exports = cacheNode;
+// Export the cache instance for use in other files
+export default cacheNode;
