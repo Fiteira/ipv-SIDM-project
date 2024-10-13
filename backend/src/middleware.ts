@@ -1,6 +1,9 @@
 import passport from "passport";
 import rateLimit from 'express-rate-limit';
+import { app } from './index'; // Importa o app de outro arquivo
 import { Request, Response, NextFunction } from 'express';
+
+
 
 // Middleware de autenticação JWT
 export const jwtAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {

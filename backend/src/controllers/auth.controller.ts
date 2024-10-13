@@ -3,40 +3,39 @@ import { generateJwtToken, validateRequest, findUserByEmail, handleServerError }
 import bcrypt from 'bcryptjs';
 import Joi, { ObjectSchema } from 'joi';
 import { User } from '../interfaces/user.interface';
-import UserModel from '../models/user.model';
+import { UserModel } from '../models/user.model';
+import { findUserByUserNumber } from '../utils/helpers';
 
 // Login controller
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const { email, password } = req.body;
+  const { userNumber, password } = req.body;
 
-  if (!email || !password) {
+  // Validação de campos
+  if (!userNumber || !password) {
     res.status(400).json({
       success: false,
-      message: `${!email ? 'Email' : 'Password'} is empty.`,
+      message: `${!userNumber ? 'User Number' : 'Password'} is empty.`,
     });
     return;
   }
 
   try {
-    const user: User | null = await findUserByEmail(email);
+    // Buscar usuário pelo userNumber
+    const user: User | null = await findUserByUserNumber(userNumber);
+    
+    // Verificar se o usuário existe
     if (!user) {
       res.status(401).json({
         success: false,
-        message: "Email or password is incorrect.",
+        message: "User number or password is incorrect.",
       });
       return;
     }
 
-    if (user.status === 0) {
-      res.status(401).json({
-        success: false,
-        message: "The account is deactivated. Please check your email or contact administration.",
-      });
-      return;
-    }
-
+    // Comparar a senha
     if (bcrypt.compareSync(password, user.password)) {
-      const token = generateJwtToken(user.email, user.userId);
+      // Gerar o token JWT
+      const token = generateJwtToken(user.userNumber, user.userId);
       res.status(200).json({
         success: true,
         token: `Bearer ${token}`,
@@ -44,9 +43,10 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
+    // Caso a senha esteja incorreta
     res.status(401).json({
       success: false,
-      message: "Email or password is incorrect.",
+      message: "User number or password is incorrect.",
     });
   } catch (error) {
     handleServerError(res, "Authentication error", error);

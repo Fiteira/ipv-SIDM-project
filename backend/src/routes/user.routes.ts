@@ -1,31 +1,27 @@
-import { Application } from "express";
+import { Router } from 'express';
+import {
+  getUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUserByFactoryId,
+} from '../controllers/user.controller';
 
-module.exports = (app: Application) => {
-    const user = require("../controllers/user.controller.ts");
-    const router = require("express").Router();
-    const middleware = require("../config/middleware.ts")
+const router: Router = Router();
 
+// Rota para obter um usuário pelo ID
+router.get('/:userId', getUser);
 
-    // get all users
-    router.route("/").get(user.getAll);
+// Rota para criar um novo usuário
+router.post('/', createUser);
 
-    // get the user by id
-    router.route("/:nUser").get(user.getById);
+// Rota para atualizar um usuário existente
+router.put('/:userId', updateUser);
 
-    // Update the user by id
-    router.route("/:nUser").put(user.updateById);
+// Rota para deletar um usuário
+router.delete('/:userId', deleteUser);
 
-    // Update password the user by token jwt that have the userId
-    router.route("/password").put(user.updatePassword);
+// Rota para obter todos os usuários de uma fábrica
+router.get('/factory/:factoryId', getUserByFactoryId);
 
-    // Update password the user by admin
-    router.route("/userpassword/:nUser").put(user.updateUserPassword);
-
-    // Create a new user
-    router.route("/").post(user.create);
-
-    // delete the user by id
-    router.route("/:nUser").delete(user.delete);
-
-    app.use("/api/user", middleware.jwtAuthMiddleware, router);
-};
+export default router;
