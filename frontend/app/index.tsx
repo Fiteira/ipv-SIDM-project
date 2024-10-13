@@ -1,47 +1,12 @@
-import { StyleSheet, Text, View } from "react-native";
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';  // Importando o container de navegação
+import TabNavigator from './tabs/tabNavigator';  // Importando o TabNavigator
 
-import api from '@/config/api';
-
-api.get('/')
-  .then((response) => {
-    console.log('API response: successfull', response.data);
-  })
-  .catch((error: any) => {
-    console.error('API error:', error);
-  })
-  .finally(() => {
-    console.log('API request complete.');
-  });
-
-export default function Page() {
+export default function App() {
   return (
-    <View style={styles.container}>
-      <View style={styles.main}>
-        <Text style={styles.title}>Hello World</Text>
-        <Text style={styles.subtitle}>This is the first page of your app.</Text>
-      </View>
-    </View>
+    <NavigationContainer independent={true}>
+      {/* O TabNavigator é exibido como navegação principal */}
+      <TabNavigator />
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    padding: 24,
-  },
-  main: {
-    flex: 1,
-    justifyContent: "center",
-    maxWidth: 960,
-    marginHorizontal: "auto",
-  },
-  title: {
-    fontSize: 64,
-    fontWeight: "bold",
-  },
-  subtitle: {
-    fontSize: 36,
-    color: "#38434D",
-  },
-});

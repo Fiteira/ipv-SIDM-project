@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-let api_url = 'http://localhost:3000';
+let api_url = 'http://192.168.1.144:3000/api';
 console.log('API_URL: ');
 
 const api = axios.create({
