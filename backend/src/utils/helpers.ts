@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { ObjectSchema, ValidationErrorItem } from 'joi';
-import UserModel from '../models/user.model';  // Import the User model
+import { UserModel } from '../models/user.model';  // Import the User model
 import { User } from '../interfaces/user.interface';  // Import the User interface
 
 /**
@@ -41,6 +41,21 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
     return user;  // Can return a User instance or null
   } catch (error) {
     throw new Error("Error verifying user email: " + error);
+  }
+};
+
+/**
+ * Finds a user by user number
+ * @param userNumber - The user's user number to search for
+ * @returns The user if found, or null if not found
+ * @throws An error if the database operation fails
+ */
+export const findUserByUserNumber = async (userNumber: string): Promise<User | null> => {
+  try {
+    const user = await UserModel.findOne({ where: { userNumber } });
+    return user;  // Can return a User instance or null
+  } catch (error) {
+    throw new Error("Error verifying user number: " + error);
   }
 };
 

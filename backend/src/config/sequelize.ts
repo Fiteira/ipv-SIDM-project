@@ -16,20 +16,20 @@ const sequelizeInstance = new Sequelize({
 // Authenticate the database connection
 sequelizeInstance.authenticate()
   .then(() => {
-    console.log('Connection has been established successfully.');
+    console.log('Connection to the database has been established successfully.');
   })
   .catch((error: unknown) => {
     console.error('Unable to connect to the database:', error);
   });
 
 // Uncomment this block if you want to synchronize the models with the database
-/*
+
 sequelizeInstance.sync()
   .then(() => {
     console.log('Database & tables created!');
   }).catch((error) => { 
     console.error('Error to create database & tables', error);
   });
-*/
+
 
 export default sequelizeInstance;

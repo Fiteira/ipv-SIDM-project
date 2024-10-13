@@ -1,41 +1,61 @@
-import { DataTypes, Model } from "sequelize";
-import bcrypt from "bcryptjs";
+import { DataTypes } from "sequelize";
 import sequelize from "../config/sequelize"; 
 import { User } from "../interfaces/user.interface";
+import { FactoryModel } from "./factory.model";  // Importar o modelo da fábrica para a associação
+import bcrypt from 'bcryptjs';  // Importar o módulo bcrypt para criptografar a senha
 
-// Define the User model
-const UserModel = sequelize.define<User>('User', {
+// Define o modelo User
+export const UserModel = sequelize.define<User>('User', {
   userId: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     allowNull: false,
     primaryKey: true
   },
-  userName: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  email: {
+  userNumber: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true  // Garantir que o userNumber seja único
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
   password: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  status: {
-    type: DataTypes.INTEGER,
+  role: {
+    type: DataTypes.STRING,
     allowNull: false
   },
-  roleId: {
+  factoryId: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {
+      model: FactoryModel,  // Referência ao modelo Factory
+      key: 'factoryId'
+    },
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
   }
 }, {
   timestamps: false,
-  freezeTableName: true, // Prevents table name pluralization
+  freezeTableName: true  // Evita a pluralização automática do nome da tabela
 });
+
+// Definir a associação entre User e Factory
+UserModel.belongsTo(FactoryModel, {
+  foreignKey: 'factoryId',
+  as: 'factory'  // Alias para o relacionamento inverso
+});
+
+FactoryModel.hasMany(UserModel, {
+  foreignKey: 'factoryId',
+  as: 'users'  // Alias para o relacionamento 1:N
+});
+
+
 
 // Function to create the default user
 const createDefaultUser = async () => {
@@ -67,4 +87,3 @@ UserModel.afterSync(() => {
   });
 });
 
-export default UserModel;
