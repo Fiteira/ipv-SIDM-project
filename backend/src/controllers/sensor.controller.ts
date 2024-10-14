@@ -36,11 +36,18 @@ export const getSensorsByMachineId = async (req: Request, res: Response): Promis
 
 // Criar um novo sensor
 export const createSensor = async (req: Request, res: Response): Promise<void> => {
-  const { sensorType, machineId } = req.body;
-
+  const { name, sensorType, machineId } = req.body;
+  if (!name || !sensorType || !machineId) {
+    res.status(400).json({ success: false, message: 'Missing required fields' });
+    return
+  }
+  let apiKey: string = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  console.log("APIKEY do sensor: ", apiKey);
   try {
-    const newSensor = await SensorModel.create({ sensorType, machineId });
-    res.status(201).json({ success: true, data: newSensor });
+    if (apiKey) {
+      const newSensor = await SensorModel.create({ name, sensorType, machineId, apiKey });
+      res.status(201).json({ success: true, data: newSensor });
+    }
   } catch (error) {
     handleServerError(res, 'Error creating sensor', error);
   }

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-let api_url = 'http://192.168.1.144:3000/api';
-console.log('API_URL: ');
+let api_url = 'http://192.168.241.127:3000/api';
+console.log('------------------------SE A API ESTIVER EM OUTRO IP, MUDE O IP NO ARQUIVO frontend/config/api.ts----------------------------');
 
 const api = axios.create({
   baseURL: api_url,

@@ -10,6 +10,10 @@ export const SensorModel = sequelize.define<Sensor>('Sensor', {
     allowNull: false,
     primaryKey: true
   },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
   sensorType: {
     type: DataTypes.STRING,
     allowNull: false
@@ -23,7 +27,11 @@ export const SensorModel = sequelize.define<Sensor>('Sensor', {
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
-  }
+  }, 
+  apiKey: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
 }, {
   timestamps: false,
   freezeTableName: true, // Prevents table name pluralization
