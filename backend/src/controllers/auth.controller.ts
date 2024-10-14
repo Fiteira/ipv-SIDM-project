@@ -4,7 +4,10 @@ import bcrypt from 'bcryptjs';
 import Joi, { ObjectSchema } from 'joi';
 import { User } from '../interfaces/user.interface';
 import { UserModel } from '../models/user.model';
+import { SensorModel } from '../models/sensor.model';
 import { findUserByUserNumber } from '../utils/helpers';
+import jwt from 'jsonwebtoken';
+import cacheNode from '../config/cache';
 
 // Login controller
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -105,3 +108,28 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     handleServerError(res, "Error creating user", error);
   }
 };
+
+// Sensor login
+
+// Rota para o sensor obter o token
+export const sensorlogin = async (req: Request, res: Response): Promise<any> => {
+  const { apiKey } = req.body;
+  const sensor = await SensorModel.findOne({ where: { apiKey: apiKey } }) || null;
+  if (!apiKey) {
+    return res.status(400).json({ message: 'apiKey is mandatory!' });
+  }
+  
+  // Verificar se o sensor está autorizado
+  if (apiKey === sensor?.apiKey) {
+    // Gerar o token JWT
+    const token = jwt.sign({ sensor }, "mudar" as string, { expiresIn: '1h' });
+    //Salvar o sensor no cache com o token gerado
+    cacheNode.set(token, sensor);
+    // Retorna o token gerado para o sensor
+    return res.status(200).json({ token });
+  } else {
+    // Se as credenciais forem inválidas, retorna Unauthorized
+    return res.status(401).json({ message: 'Invalid credentials!' });
+  }
+};
+
