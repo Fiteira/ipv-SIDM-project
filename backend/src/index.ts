@@ -11,10 +11,14 @@ import sensorRoutes from './routes/sensor.routes';
 import dataRoutes from './routes/data.routes';
 import maintenanceRoutes from './routes/maintenance.routes';
 import alertRoutes from './routes/alert.routes';
+import { createServer, Server as HTTPServer } from 'http'; // Para criar um servidor HTTP
+import { Server as SocketIOServer } from 'socket.io';
+import { configureSocketEvents } from './config/socket'; // Importando a configuração de eventos WebSocket
 
 dotenv.config();
 
-export const app: Express = express();
+// Crie o app Express
+const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware setup
@@ -36,7 +40,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Define the routes for the API
+// Define as rotas da API
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/factories', factoryRoutes);
@@ -51,8 +55,21 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Hello World!" });
 });
 
+// Criando o servidor HTTP
+const httpServer: HTTPServer = createServer(app);
+
+// Criando o servidor WebSocket
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: "*", // Permitir requisições de qualquer origem
+  },
+});
+
+// Configurando os eventos do WebSocket em um arquivo separado
+configureSocketEvents(io);
+
 // Iniciar o servidor
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`API ouvindo na porta: ${PORT}`);
 });
 
