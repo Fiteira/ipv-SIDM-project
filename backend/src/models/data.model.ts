@@ -26,7 +26,7 @@ export const DataModel = sequelize.define<Data>('Data', {
     allowNull: false
   },
   value: {
-    type: DataTypes.FLOAT,
+    type: DataTypes.JSONB,
     allowNull: false
   }
 }, {
