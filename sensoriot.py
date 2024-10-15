@@ -10,7 +10,7 @@ API_URL = "http://localhost:3000/api/auth/loginsensor"  # Ajuste a URL conforme 
 WS_URL = "http://localhost:3000"  # Ajuste a URL conforme necessário
 
 # API Key do sensor
-apiKey = "up9bixj5x1hz623w3gmaip"
+apiKey = "49jfcdsuxpa4egwloyb6eu"
 
 # Função para autenticar o sensor e obter o token JWT
 def authenticate_sensor(api_key):

@@ -50,11 +50,7 @@ UserModel.belongsTo(FactoryModel, {
   as: 'factory'  // Alias para o relacionamento inverso
 });
 
-FactoryModel.hasMany(UserModel, {
-  foreignKey: 'factoryId',
-  as: 'users'  // Alias para o relacionamento 1:N
-});
-
+FactoryModel.hasMany(UserModel, { foreignKey: 'userId', as: 'users' });
 
 
 // Function to create the default user
@@ -63,13 +59,17 @@ const createDefaultUser = async () => {
   const password: string = await bcrypt.hash("admin", salt);
 
   try {
+    await FactoryModel.bulkCreate([
+      { factoryName: "Admin Factory", 
+        location: "Admin Location" }
+    ]);
     await UserModel.bulkCreate([
       {  
-        userName: "Administrator", 
-        email: "admin@admin.com", 
-        password: password, 
-        status: 1, 
-        roleId: 1 
+        name: "Administrator", 
+        userNumber: 1, 
+        password: password,  
+        role: "admin",
+        factoryId: 1
       }
     ]);
     console.log('User created successfully.');

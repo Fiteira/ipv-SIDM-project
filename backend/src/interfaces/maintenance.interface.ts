@@ -8,4 +8,5 @@ export interface Maintenance extends Model {
   description: string;  // Descrição da manutenção
   performedBy: number;  // Chave estrangeira referenciando o usuário que realizou a manutenção (userId)
   performedUser?: User;  // Relacionamento opcional com o modelo de usuário
+  alertId: number;  // Chave estrangeira referenciando o alerta
 }

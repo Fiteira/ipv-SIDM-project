@@ -1,6 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/sequelize"; 
 import { Sensor } from "../interfaces/sensor.interface";
+import { MachineModel } from "./machine.model";
+import { DataModel } from "./data.model";
 
 // Define the Sensor model
 export const SensorModel = sequelize.define<Sensor>('Sensor', {
@@ -22,7 +24,7 @@ export const SensorModel = sequelize.define<Sensor>('Sensor', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Machine',  // Nome da tabela Machine
+      model: MachineModel,  // Nome da tabela Machine
       key: 'machineId'
     },
     onDelete: 'CASCADE',
@@ -36,3 +38,7 @@ export const SensorModel = sequelize.define<Sensor>('Sensor', {
   timestamps: false,
   freezeTableName: true, // Prevents table name pluralization
 });
+
+
+SensorModel.hasMany(DataModel, { foreignKey: 'sensorId', as: 'data' });
+DataModel.belongsTo(SensorModel, { foreignKey: 'sensorId', as: 'sensor' });

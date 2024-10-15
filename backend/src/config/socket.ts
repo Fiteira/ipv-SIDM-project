@@ -8,31 +8,27 @@ export const configureSocketEvents = (io: SocketIOServer) => {
   // Middleware para validar o token JWT e verificar o sensor na cache antes de permitir a conexão
   io.use((socket: Socket, next) => {
     const token = socket.handshake.auth.token;
-    console.log('Token recebido:', token);
 
     // Se o token não foi fornecido, rejeitar a conexão
     if (!token) {
-      return next(new Error('Autenticação requerida. Token não fornecido.'));
+      return next(new Error('Authentication error. Token required.'));
     }
 
     // Recuperar o sensor da cache com base no token
     const sensor = cacheNode.get(token);
-    console.log('Sensor encontrado na cache:', sensor);
     if (!sensor) {
-      return next(new Error('Token inválido ou expirado.'));
+      return next(new Error('Invalid or expired token. Connection rejected.'));
     }
-    console.log('Vai verificar o token JWT...');
     // Verificar o token JWT manualmente
     jwt.verify(token, "mudar" as string, (err: VerifyErrors | null) => { //////////////Corrigir a parte dos erros////////////////////////////
       if (err) {
-        return next(new Error('Token inválido. Conexão rejeitada.'));
+        return next(new Error('Invalid or expired token. Connection rejected.'));
       }
-      console.log('Token verificado com sucesso!');
       // Se o token for válido, associar o sensor ao socket
       socket.data.sensor = sensor;
       next(); // Continuar a conexão
     });
-    console.log('Middleware de autenticação concluído.');
+    console.log('Sensor connected');
   });
 
   // Gerenciar os eventos depois que a conexão foi autenticada
