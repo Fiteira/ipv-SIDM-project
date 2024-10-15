@@ -6,6 +6,8 @@ import { User } from '../interfaces/user.interface';
 import { UserModel } from '../models/user.model';
 import { SensorModel } from '../models/sensor.model';
 import { MachineModel } from '../models/machine.model';
+import { FactoryModel } from '../models/factory.model';
+import { nestRawResults } from '../utils/helpers';
 import { findUserByUserNumber } from '../utils/helpers';
 import jwt from 'jsonwebtoken';
 import cacheNode from '../config/cache';
@@ -39,10 +41,13 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     // Comparar a senha
     if (bcrypt.compareSync(password, user.password)) {
       // Gerar o token JWT
-      const token = generateJwtToken(user.userNumber, user.userId);
+      const token = jwt.sign({ user }, "mudar", { expiresIn: '1h' });
+      //Guardar o token no cache
+      cacheNode.set(token, user);
+      // Responder com o token
       res.status(200).json({
         success: true,
-        token: `Bearer ${token}`,
+        token: token,
       });
       return;
     }
@@ -114,26 +119,55 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 
 // Rota para o sensor obter o token
 export const sensorlogin = async (req: Request, res: Response): Promise<any> => {
-  const { apiKey } = req.body;
-  const sensor = await SensorModel.findOne({
-    where: { apiKey: apiKey }
-  }) || null;
-  console.log("Sensor: " , JSON.stringify(sensor));
-  if (!apiKey) {
-    return res.status(400).json({ message: 'apiKey is mandatory!' });
-  }
-  
-  // Verificar se o sensor está autorizado
-  if (apiKey === sensor?.apiKey) {
-    // Gerar o token JWT
-    const token = jwt.sign({ sensor }, "mudar" as string, { expiresIn: '1h' });
-    //Salvar o sensor no cache com o token gerado
-    cacheNode.set(token, sensor);
-    // Retorna o token gerado para o sensor
+  try {
+    const { apiKey } = req.body;
+
+    if (!apiKey) {
+      console.log("The sensor did not send the apiKey");
+      return res.status(400).json({ message: 'apiKey is mandatory!' });
+    }
+
+    const sensor = await SensorModel.findOne({
+      where: { apiKey: apiKey },
+      include: [
+        {
+          model: MachineModel,
+          as: 'machine',
+          attributes: ['machineId', 'machineName', 'factoryId'], // Selecionar apenas atributos relevantes
+          include: [
+            {
+              model: FactoryModel,
+              as: 'factory',
+              attributes: ['factoryId', 'factoryName', 'location'], // Selecionar apenas atributos relevantes
+            },
+          ],
+        },
+      ],
+      raw: true,
+    });
+
+    if (!sensor) {
+      console.log("Invalid credentials: Sensor not found!");
+      return res.status(401).json({ message: 'Invalid credentials!' });
+    }
+
+    console.log("Sensor found: ", JSON.stringify(sensor));
+
+    // Crie um objeto limpo apenas com os dados essenciais do sensor e da máquina
+    const sensorData = nestRawResults(sensor);
+    console.log("Sensor data: ", sensorData);
+
+    // Gerar o token JWT com os dados essenciais
+    const token = jwt.sign({ sensor: sensorData }, "mudar", { expiresIn: '1h' });
+
+    // Salvar o objeto simplificado no cache com o token gerado
+    cacheNode.set(token, sensorData);
     return res.status(200).json({ token });
-  } else {
-    // Se as credenciais forem inválidas, retorna Unauthorized
-    return res.status(401).json({ message: 'Invalid credentials!' });
+    
+  } catch (error) {
+    console.log("Error authenticating sensor: ", error);
+    handleServerError(res, "Error authenticating sensor", error);
   }
 };
 
+  

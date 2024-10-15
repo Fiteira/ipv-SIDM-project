@@ -72,3 +72,55 @@ export const handleServerError = (res: Response, message: string, error: any): R
     message: `${message}: ${error}`
   });
 };
+
+/**
+ * Nest raw results from a SQL query into a structured object
+ * @param data - The raw data from the SQL query
+ * @returns A structured object with nested fields
+ * @throws An error if the input data is not an object
+ */
+export function nestRawResults(data: any) {
+  if (typeof data !== 'object' || data === null) {
+    console.log('Data is not an object or is null and cannot be nested!');
+    return data;
+  }
+
+  const result: any = {};
+
+  for (const key in data) {
+    if (Object.hasOwnProperty.call(data, key)) {
+      // Split the key into parts (supporting array notation, e.g., "items[0].name")
+      const keys = key.split(/[\.\[\]]+/).filter(Boolean); // Divide a chave em partes e remove vazios
+
+      // Traverse the key parts and create nested objects/arrays
+      keys.reduce((accumulator, currentKey, index) => {
+        const isArrayIndex = !isNaN(Number(currentKey)); // Verifica se é um índice de array
+
+        // Se for o último item, atribua o valor
+        if (index === keys.length - 1) {
+          accumulator[currentKey] = data[key];
+        } else {
+          // Se for um índice de array, inicialize como array
+          if (isArrayIndex) {
+            if (!Array.isArray(accumulator)) {
+              accumulator = [];
+            }
+            if (!accumulator[currentKey]) {
+              accumulator[currentKey] = {};
+            }
+          } else {
+            // Se for um objeto, inicialize como objeto
+            if (!accumulator[currentKey]) {
+              accumulator[currentKey] = {};
+            }
+          }
+        }
+
+        return accumulator[currentKey];
+      }, result);
+    }
+  }
+
+  return result;
+}
+
