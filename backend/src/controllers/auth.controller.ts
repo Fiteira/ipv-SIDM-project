@@ -5,6 +5,7 @@ import Joi, { ObjectSchema } from 'joi';
 import { User } from '../interfaces/user.interface';
 import { UserModel } from '../models/user.model';
 import { SensorModel } from '../models/sensor.model';
+import { MachineModel } from '../models/machine.model';
 import { findUserByUserNumber } from '../utils/helpers';
 import jwt from 'jsonwebtoken';
 import cacheNode from '../config/cache';
@@ -114,7 +115,10 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 // Rota para o sensor obter o token
 export const sensorlogin = async (req: Request, res: Response): Promise<any> => {
   const { apiKey } = req.body;
-  const sensor = await SensorModel.findOne({ where: { apiKey: apiKey } }) || null;
+  const sensor = await SensorModel.findOne({
+    where: { apiKey: apiKey }
+  }) || null;
+  console.log("Sensor: " , JSON.stringify(sensor));
   if (!apiKey) {
     return res.status(400).json({ message: 'apiKey is mandatory!' });
   }

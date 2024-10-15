@@ -2,6 +2,8 @@ import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/sequelize'; 
 import { Maintenance } from '../interfaces/maintenance.interface';
 import { UserModel } from './user.model';  // Importando o modelo de usuário para criar a associação
+import { AlertModel } from './alert.model';
+import { MachineModel } from './machine.model';
 
 // Define o modelo Maintenance
 export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
@@ -15,7 +17,7 @@ export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Machine',  // Nome da tabela Machine
+      model: MachineModel,  // Nome da tabela Machine
       key: 'machineId'
     },
     onDelete: 'CASCADE',
@@ -28,6 +30,16 @@ export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
   description: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  alertId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: AlertModel,  // Relaciona com o modelo de alerta
+      key: 'alertId'
+    },
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
   },
   performedBy: {
     type: DataTypes.INTEGER,
@@ -48,4 +60,14 @@ export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
 MaintenanceModel.belongsTo(UserModel, {
   foreignKey: 'performedBy',
   as: 'performedUser'  // Alias para o relacionamento
+});
+
+MaintenanceModel.belongsTo(AlertModel, {
+  foreignKey: 'alertId',
+  as: 'alert'
+});
+
+MaintenanceModel.belongsTo(MachineModel, { 
+  foreignKey: 'machineId',
+   as: 'machine' 
 });
