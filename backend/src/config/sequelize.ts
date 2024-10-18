@@ -22,7 +22,7 @@ sequelizeInstance.authenticate()
     console.error('Unable to connect to the database:', error);
   });
 
-// Uncomment this block if you want to synchronize the models with the database
+// Uncomment this block if you want to synchronize the models with the database 
 
 sequelizeInstance.sync()
   .then(() => {
