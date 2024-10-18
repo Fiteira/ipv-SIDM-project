@@ -3,7 +3,7 @@ import sequelize from "../config/sequelize";
 import { Data } from "../interfaces/data.interface";
 import { SensorModel } from "./sensor.model";
 
-// Define the Data model
+
 export const DataModel = sequelize.define<Data>('Data', {
   dataId: {
     type: DataTypes.INTEGER,
@@ -15,7 +15,7 @@ export const DataModel = sequelize.define<Data>('Data', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: SensorModel,  // Nome da tabela Sensor
+      model: SensorModel, 
       key: 'sensorId'
     },
     onDelete: 'CASCADE',
@@ -31,6 +31,6 @@ export const DataModel = sequelize.define<Data>('Data', {
   }
 }, {
   timestamps: false,
-  freezeTableName: true, // Prevents table name pluralization
+  freezeTableName: true, 
 });
 

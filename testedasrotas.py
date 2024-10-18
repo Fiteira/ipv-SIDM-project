@@ -25,7 +25,7 @@ def create_user(factory_id):
     url = f'{BASE_URL}/users'
     user_data = {
         "userNumber": "U12345",
-        "nome": "John Doe",
+        "name": "John Doe",
         "password": "password123",  # Incluindo o campo password
         "role": "operator",
         "factoryId": factory_id

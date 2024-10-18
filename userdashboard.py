@@ -68,8 +68,13 @@ def simulate_dashboard(user_number, password):
 
 # Simular o usuário no dashboard
 if __name__ == "__main__":
-    user_number = "1"  # Número do usuário
-    password = "admin"  # Senha do usuário
+    user_number = ""  # Número do usuário
+    password = ""  # Senha do usuário
+
+    # Pedir ao usuário para inserir o número e a senha
+    user_number = input("Insira o número do usuário: ")
+    password = input("Insira a senha do usuário: ")
 
     # Simular o dashboard do usuário após login
     simulate_dashboard(user_number, password)
+    

@@ -9,8 +9,6 @@ API_URL = "http://localhost:3000/api/auth/loginsensor"  # Ajuste a URL conforme 
 # WebSocket URL
 WS_URL = "http://localhost:3000"  # Ajuste a URL conforme necessário
 
-# API Key do sensor
-apiKey = "9y8i3zwzbnje3xxcp720tg"
 
 # Função para autenticar o sensor e obter o token JWT
 def authenticate_sensor(api_key):
@@ -51,7 +49,7 @@ def connect_to_websocket(token):
             print(f"Mensagem recebida: {data}")
         
         # Loop para enviar dados do sensor a cada 10 segundos
-        while conta < 50:
+        while True:
             # Gerar valores aleatórios para temperatura e umidade
             temperature = round(random.uniform(20.0, 30.0), 2)
             humidity = round(random.uniform(40.0, 70.0), 2)
@@ -60,8 +58,8 @@ def connect_to_websocket(token):
             sio.emit('sensor_data', {"temperature": temperature, "humidity": humidity})
             print(f"Dados enviados: Temperatura={temperature}, Umidade={humidity}")
 
-            # Aguardar 10 segundos antes de enviar novos dados
-            #time.sleep(10)
+            # Aguardar 500 milisegundos antes de enviar novos dados
+            time.sleep(0.5)
             conta+=1
 
         # Manter a conexão aberta
@@ -73,6 +71,12 @@ def connect_to_websocket(token):
 
 # Fluxo principal
 if __name__ == "__main__":
+    # Definir a API Key do sensor
+    apiKey = ""
+
+    # Prompt para inserir a API Key do sensor
+    apiKey = input("Insira a API Key do sensor: ")
+
     # Autenticar o sensor e obter o token JWT
     token = authenticate_sensor(apiKey)
 

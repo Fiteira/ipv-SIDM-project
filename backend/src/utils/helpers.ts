@@ -52,7 +52,7 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
  */
 export const findUserByUserNumber = async (userNumber: string): Promise<User | null> => {
   try {
-    const user = await UserModel.findOne({ where: { userNumber } });
+    const user: User = nestRawResults(await UserModel.findOne({ where: { userNumber }, raw: true }));
     return user;  // Can return a User instance or null
   } catch (error) {
     throw new Error("Error verifying user number: " + error);

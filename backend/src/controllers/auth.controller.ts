@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { generateJwtToken, validateRequest, findUserByEmail, handleServerError } from '../utils/helpers';
 import bcrypt from 'bcryptjs';
 import Joi, { ObjectSchema } from 'joi';
-import { User } from '../interfaces/user.interface';
+import { User, UserDTO } from '../interfaces/user.interface';
 import { UserModel } from '../models/user.model';
 import { SensorModel } from '../models/sensor.model';
 import { MachineModel } from '../models/machine.model';
@@ -26,10 +26,8 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
   }
 
   try {
-    // Buscar usuário pelo userNumber
     const user: User | null = await findUserByUserNumber(userNumber);
     
-    // Verificar se o usuário existe
     if (!user) {
       res.status(401).json({
         success: false,
@@ -41,9 +39,11 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     // Comparar a senha
     if (bcrypt.compareSync(password, user.password)) {
       // Gerar o token JWT
-      const token = jwt.sign({ user }, "mudar", { expiresIn: '1h' });
+      const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
+      const token = jwt.sign( userDTO , "mudar", { expiresIn: '1h' });
+      console.log("Token gerado: ", token);
       //Guardar o token no cache
-      cacheNode.set(token, user);
+      cacheNode.set(`user_${token}`, userDTO);
       // Responder com o token
       res.status(200).json({
         success: true,
@@ -161,7 +161,7 @@ export const sensorlogin = async (req: Request, res: Response): Promise<any> => 
     const token = jwt.sign({ sensor: sensorData }, "mudar", { expiresIn: '1h' });
 
     // Salvar o objeto simplificado no cache com o token gerado
-    cacheNode.set(token, sensorData);
+    cacheNode.set(`sensor_${token}`, sensorData);
     return res.status(200).json({ token });
     
   } catch (error) {

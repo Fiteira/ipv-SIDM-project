@@ -50,7 +50,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 // Atualizar um usuário existente
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
-  const { userNumber, nome, role, factoryId } = req.body;
+  const { userNumber, name, role, factoryId } = req.body;
 
   try {
     const user = await UserModel.findByPk(userId);
@@ -60,7 +60,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     }
 
     user.userNumber = userNumber;
-    user.nome = nome;
+    user.name = name;
     user.role = role;
     user.factoryId = factoryId;
 
