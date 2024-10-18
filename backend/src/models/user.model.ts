@@ -3,6 +3,8 @@ import sequelize from "../config/sequelize";
 import { User } from "../interfaces/user.interface";
 import { FactoryModel } from "./factory.model";  // Importar o modelo da fábrica para a associação
 import bcrypt from 'bcryptjs';  // Importar o módulo bcrypt para criptografar a senha
+import { MachineModel } from "./machine.model";
+import { SensorModel } from "./sensor.model";
 
 // Define o modelo User
 export const UserModel = sequelize.define<User>('User', {
@@ -61,7 +63,9 @@ const createDefaultUser = async () => {
   try {
     await FactoryModel.bulkCreate([
       { factoryName: "Admin Factory", 
-        location: "Admin Location" }
+        location: "Admin Location" },
+      { factoryName: "User Factory",
+        location: "User Location" }
     ]);
     await UserModel.bulkCreate([
       {  
@@ -70,9 +74,24 @@ const createDefaultUser = async () => {
         password: password,  
         role: "admin",
         factoryId: 1
+      },
+      {  
+        name: "User", 
+        userNumber: 2, 
+        password: password,  
+        role: "user",
+        factoryId: 2
       }
     ]);
-    console.log('User created successfully.');
+    await MachineModel.bulkCreate([
+      { machineName: "Machine 1", factoryId: 1 },
+      { machineName: "Machine 2", factoryId: 2 }
+    ]);
+    const sensores = await SensorModel.bulkCreate([
+      { name: "Sensor 1", machineId: 1, apiKey: "123", sensorType: "temperature" },
+      { name: "Sensor 2", machineId: 2, apiKey: "456", sensorType: "humidity" }
+    ]);
+    console.log('Sensores criados: ', sensores);
   } catch (error) {
     console.error('Error to create User', error);
   }
