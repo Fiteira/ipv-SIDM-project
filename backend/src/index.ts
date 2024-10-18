@@ -14,6 +14,8 @@ import alertRoutes from './routes/alert.routes';
 import { createServer, Server as HTTPServer } from 'http'; // Para criar um servidor HTTP
 import { Server as SocketIOServer } from 'socket.io';
 import { configureSocketEvents } from './config/socket'; // Importando a configuração de eventos WebSocket
+import readAndPrintCSV from "./config/csv";
+import tensor from "./config/tensor";
 
 dotenv.config();
 
@@ -72,5 +74,24 @@ configureSocketEvents(io);
 httpServer.listen(PORT, () => {
   console.log(`API ouvindo na porta: ${PORT}`);
 });
+
+// Função assíncrona para ler o csv
+/*
+const readCSVData = async () => {
+  try {
+    const data: any = await readAndPrintCSV("./dataset.csv");
+    if (data) {
+      console.log(data);
+    } else {
+      console.log("No data found in CSV.");
+    }
+  } catch (error) {
+    console.error("Error reading CSV data:", error);
+  }
+};
+
+// Chamar a função assíncrona
+readCSVData();*/
+tensor().catch(console.error);
 
 export default app;

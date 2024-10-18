@@ -3,8 +3,6 @@ import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { DataModel } from '../models/data.model';
 import { Data } from '../interfaces/data.interface';
 import cacheNode from './cache';
-import { cache } from 'joi';
-import { json } from 'sequelize';
 var moment = require('moment');
 
 interface CachedSensorData {
@@ -86,6 +84,8 @@ export const configureSocketEvents = (io: SocketIOServer) => {
       } else {
         console.log('Tipo de socket não definido desconectado!');
       }
+      socket.leave(socket.data.room);
+      socket.disconnect();
     });
   });
 };
