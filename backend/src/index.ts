@@ -92,6 +92,6 @@ const readCSVData = async () => {
 
 // Chamar a função assíncrona
 readCSVData();*/
-tensor().catch(console.error);
-
+tensor([[298.3,308.5,1575,41.2,105]]).catch(console.error);
+//                 falha                   falha                    nao falha                 nao falha
 export default app;

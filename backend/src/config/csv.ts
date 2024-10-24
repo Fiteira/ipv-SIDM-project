@@ -13,7 +13,13 @@ async function readAndPrintCSV(csvFilePath: string): Promise<any[]> {
             })
             .on('end', () => {
                 console.log('Leitura do arquivo CSV completa.');
+
+                // Verificar se o UDI faz parte do CSV, normalizando os nomes das colunas
+                if (data.length > 0) {
+                    const firstRow = data[0];
+                    const normalizedKeys = Object.keys(firstRow).map(key => key.trim().toLowerCase());
                 resolve(data); // Resolve a promessa com os dados
+            }
             })
             .on('error', (error: any) => {
                 reject(error); // Rejeita a promessa caso ocorra um erro
