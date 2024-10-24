@@ -1,55 +1,57 @@
 const tf = require('@tensorflow/tfjs-node');
-import readAndPrintCSV from "./csv"; 
+const fs = require('fs');
+import path from "path";
+import readAndPrintCSV from "./csv";
 
 interface SensorData {
-    UDI: number;
-    airTemperature: number;
-    processTemperature: number;
-    rotationalSpeed: number;
-    torque: number;
-    toolWear: number;
-    target: number;
-    failureType: string;
+    [key: string]: number | string;
 }
 
-async function tensor() {
+// Função para garantir que o diretório exista
+function ensureDirectoryExistence(dirPath: string) {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true }); // Cria o diretório, incluindo subdiretórios
+    }
+}
+
+async function tensor(newInput: number[] | number[][]): Promise<void> {
     // Lê o CSV de forma assíncrona e aguarda os dados
     const rawData = await readAndPrintCSV("./dataset.csv");
 
-    // Processa os dados após a leitura, verificando se os valores são válidos
+    // Processar os dados do CSV para transformar em objetos utilizáveis
     const sensorData: SensorData[] = rawData.map((item: any) => {
-        const airTemperature = parseFloat(item['Air temperature [K]']);
-        const processTemperature = parseFloat(item['Process temperature [K]']);
-        const rotationalSpeed = parseFloat(item['Rotational speed [rpm]']);
-        const torque = parseFloat(item['Torque [Nm]']);
-        const toolWear = parseFloat(item['Tool wear [min]']);
-        const target = parseFloat(item['Target']);
-        
-        // Verificar se há valores inválidos
-        if (isNaN(airTemperature) || isNaN(processTemperature) || isNaN(rotationalSpeed) || isNaN(torque) || isNaN(toolWear) || isNaN(target)) {
-            console.log('Valores inválidos encontrados:', item);
+        const processedItem: SensorData = {};
+
+        // Certifica-se de que o 'UDI' ou 'id' seja processado como número
+        if (item['UDI']) {
+            processedItem['UDI'] = parseInt(item['UDI'], 10);
+        } else if (item['id']) {
+            processedItem['ID'] = parseInt(item['id'], 10);
         }
 
-        return {
-            UDI: parseFloat(item['UDI']),
-            airTemperature,
-            processTemperature,
-            rotationalSpeed,
-            torque,
-            toolWear,
-            target,
-            failureType: item['Failure Type']
-        };
+        // Para cada sensor, converte os valores para float (excluindo 'UDI' e 'Failure Type')
+        Object.keys(item).forEach((key) => {
+            if (key !== 'Failure Type' && key !== 'Target' && key !== 'UDI' && key !== 'id') {
+                processedItem[key] = parseFloat(item[key]);
+            }
+        });
+
+        // Certificar-se de que 'Failure Type' e 'Target' estão processados corretamente
+        processedItem['Failure Type'] = item['Failure Type'];
+        processedItem['Target'] = parseInt(item['Target'], 10); // Adiciona o Target como número
+
+        return processedItem;
     });
 
-    // Criar os tensores xs (entrada) e ys (saída), filtrando valores inválidos
+    // Identificar automaticamente as colunas numéricas para o treinamento
+    const allColumns = Object.keys(sensorData[0]);
+    const columnsToUse = allColumns.filter(key => key !== 'UDI' && key !== 'Failure Type' && key !== 'Target' && key !== 'id');
+
+    // Filtrar dados inválidos: verificando se todos os valores numéricos são válidos
     const validData = sensorData.filter(item => 
-        !isNaN(item.airTemperature) &&
-        !isNaN(item.processTemperature) &&
-        !isNaN(item.rotationalSpeed) &&
-        !isNaN(item.torque) &&
-        !isNaN(item.toolWear) &&
-        !isNaN(item.target)
+        Object.keys(item).every(key => 
+            key === 'Failure Type' || key === 'Target' || !isNaN(item[key] as number)
+        ) && !isNaN(item['Target'] as number)
     );
 
     if (validData.length === 0) {
@@ -57,33 +59,74 @@ async function tensor() {
         return;
     }
 
-    const xs = tf.tensor2d(validData.map(item => [
-        item.airTemperature,
-        item.processTemperature,
-        item.rotationalSpeed,
-        item.torque,
-        item.toolWear
-    ]), [validData.length, 5]);
+    // Verificar se já temos um modelo treinado
+    let model;
+    if (fs.existsSync('./meu_modelo/model.json')) {
+        // Carregar o modelo treinado se o arquivo já existir
+        console.log('Carregando modelo salvo...');
+        model = await tf.loadLayersModel('file://./meu_modelo/model.json');
+        console.log('Modelo carregado com sucesso.');
+    } else {
+        // Treinar o modelo se ele não existir
+        console.log('Modelo salvo não encontrado. Treinando novo modelo...');
 
-    const ys = tf.tensor2d(validData.map(item => item.target), [validData.length, 1]);
+        // Preparar os tensores xs (entrada) e ys (saída)
+        const xs = tf.tensor2d(
+            validData.map(item => columnsToUse.map(key => item[key] as number)),
+            [validData.length, columnsToUse.length]
+        );
 
-    // Definir o modelo
-    const model = tf.sequential();
-    model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: [5] }));
-    model.add(tf.layers.dense({ units: 1 }));
+        const ys = tf.tensor2d(
+            validData.map(item => item['Target'] as number), // Target deve ser binário
+            [validData.length, 1]
+        );
 
-    // Compilar o modelo
-    model.compile({ optimizer: 'sgd', loss: 'meanSquaredError' });
+        // Definir o modelo de rede neural para classificação binária
+        model = tf.sequential();
+        model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: [xs.shape[1]] }));
+        model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' })); // Sigmoid para saída binária
 
-    // Treinar o modelo
-    await model.fit(xs, ys, { epochs: 100 });
+        // Compilar o modelo usando binaryCrossentropy para classificação binária
+        model.compile({ optimizer: 'adam', loss: 'binaryCrossentropy', metrics: ['accuracy'] });
+
+        // Treinar o modelo
+        await model.fit(xs, ys, { epochs: 100 });
+        try {
+        // Diretório onde o modelo será salvo
+        const modelDir = './meu_modelo';
+
+        // Garantir que o diretório exista antes de salvar o modelo
+        ensureDirectoryExistence(modelDir);
+
+        // Salvar o modelo treinado
+        await model.save(`file://${path.resolve(modelDir)}`);
+        console.log('Modelo salvo com sucesso.');
+        } catch (error) {
+            console.error('Erro ao salvar o modelo:', error);
+        }
+    }
 
     // Fazer uma predição com novos dados
-    const prediction = model.predict(tf.tensor2d([[298.8, 308.8, 1551, 44.4, 55]], [1, 5]));
-    prediction.print(); // Exibir o resultado da predição
-}
+    console.log('Fazendo predição com novos dados:', newInput);
 
-// Chama a função principal para executar o códig
-//tensor().catch(console.error);
+    // Verificar se newInput é um array de números ou um array de arrays
+    let inputData: number[][];
+    if (Array.isArray(newInput[0])) {
+        // newInput é um array de arrays (múltiplas linhas)
+        inputData = newInput as number[][];
+    } else {
+        // newInput é um array de números (uma única linha)
+        inputData = [newInput as number[]];
+    }
+
+    // Criar o tensor dinamicamente com base no número de linhas e colunas de inputData
+    const prediction = model.predict(tf.tensor2d(inputData, [inputData.length, inputData[0].length])); // Flexível para múltiplas linhas ou uma única linha
+    const predictedValues = await prediction.array();  // Obtenha as predições como array
+
+    predictedValues.forEach((predictedValue: number[], index: number) => {
+        const resultadoFinal = predictedValue[0] >= 0.5 ? 'Falha detectada' : 'Nenhuma falha';
+        console.log(`Resultado final da predição para a linha ${index + 1}:`, resultadoFinal);
+    });
+}
 
 export default tensor;
