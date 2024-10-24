@@ -2,6 +2,9 @@ const tf = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 import path from "path";
 import readAndPrintCSV from "./csv";
+import { log } from "console";
+import { raw } from "express";
+import { cos } from "@tensorflow/tfjs";
 
 interface SensorData {
     [key: string]: number | string;
@@ -17,21 +20,14 @@ function ensureDirectoryExistence(dirPath: string) {
 async function tensor(newInput: number[] | number[][]): Promise<void> {
     // Lê o CSV de forma assíncrona e aguarda os dados
     const rawData = await readAndPrintCSV("./dataset.csv");
-
     // Processar os dados do CSV para transformar em objetos utilizáveis
     const sensorData: SensorData[] = rawData.map((item: any) => {
-        const processedItem: SensorData = {};
 
-        // Certifica-se de que o 'UDI' ou 'id' seja processado como número
-        if (item['UDI']) {
-            processedItem['UDI'] = parseInt(item['UDI'], 10);
-        } else if (item['id']) {
-            processedItem['ID'] = parseInt(item['id'], 10);
-        }
+        const processedItem: SensorData = {};
 
         // Para cada sensor, converte os valores para float (excluindo 'UDI' e 'Failure Type')
         Object.keys(item).forEach((key) => {
-            if (key !== 'Failure Type' && key !== 'Target' && key !== 'UDI' && key !== 'id') {
+            if (key !== 'Failure Type') {
                 processedItem[key] = parseFloat(item[key]);
             }
         });
@@ -42,7 +38,7 @@ async function tensor(newInput: number[] | number[][]): Promise<void> {
 
         return processedItem;
     });
-
+    
     // Identificar automaticamente as colunas numéricas para o treinamento
     const allColumns = Object.keys(sensorData[0]);
     const columnsToUse = allColumns.filter(key => key !== 'UDI' && key !== 'Failure Type' && key !== 'Target' && key !== 'id');
@@ -83,7 +79,7 @@ async function tensor(newInput: number[] | number[][]): Promise<void> {
 
         // Definir o modelo de rede neural para classificação binária
         model = tf.sequential();
-        model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: [xs.shape[1]] }));
+        model.add(tf.layers.dense({ units: 1000, activation: 'relu', inputShape: [xs.shape[1]] }));
         model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' })); // Sigmoid para saída binária
 
         // Compilar o modelo usando binaryCrossentropy para classificação binária
@@ -128,5 +124,7 @@ async function tensor(newInput: number[] | number[][]): Promise<void> {
         console.log(`Resultado final da predição para a linha ${index + 1}:`, resultadoFinal);
     });
 }
+
+
 
 export default tensor;
