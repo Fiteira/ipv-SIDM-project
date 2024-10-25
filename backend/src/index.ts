@@ -11,17 +11,16 @@ import sensorRoutes from './routes/sensor.routes';
 import dataRoutes from './routes/data.routes';
 import maintenanceRoutes from './routes/maintenance.routes';
 import alertRoutes from './routes/alert.routes';
-import { createServer, Server as HTTPServer } from 'http'; // Para criar um servidor HTTP
+import { createServer, Server as HTTPServer } from 'http'; 
 import { Server as SocketIOServer } from 'socket.io';
-import { configureSocketEvents } from './config/socket'; // Importando a configuração de eventos WebSocket
-import readAndPrintCSV from "./config/csv";
+import { configureSocketEvents } from './config/socket'; 
 import tensor from "./config/tensor";
 
 dotenv.config();
 
 // Crie o app Express
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ?? 3000;
 
 // Middleware setup
 app.use(bodyParser.json());
@@ -75,23 +74,12 @@ httpServer.listen(PORT, () => {
   console.log(`API ouvindo na porta: ${PORT}`);
 });
 
-// Função assíncrona para ler o csv
-/*
-const readCSVData = async () => {
-  try {
-    const data: any = await readAndPrintCSV("./dataset.csv");
-    if (data) {
-      console.log(data);
-    } else {
-      console.log("No data found in CSV.");
-    }
-  } catch (error) {
-    console.error("Error reading CSV data:", error);
-  }
-};
-
-// Chamar a função assíncrona
-readCSVData();*/
-tensor([[298.4,308.2,1282,60.7,216]]).catch(console.error);
-//                 falha                   falha                    nao falha                 nao falha
+tensor([
+  [298.4,308.2,1282,60.7,216], //falha
+  [298.4,308.3,1433,62.3,20], //falha
+  [298.4,308.3,1433,62.3,20], // falha
+  [298.4,308.3,1422,42.7,186], //nao falha
+  [298.6,308.4,1407,50.5,164] //nao falha
+]).catch(console.error);
+  //falha, falha,falha, nao falha,nao falha
 export default app;
