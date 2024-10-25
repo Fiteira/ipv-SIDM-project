@@ -22,9 +22,9 @@ async function tensor(newInput: number[] | number[][]) {
 
     let model;
     if (fs.existsSync(modelPath)) {
-        console.log('Carregando modelo salvo...');
+        console.log('Loading saved model...');
         model = await tf.loadLayersModel(`file://${modelPath}`);
-        console.log('Modelo carregado com sucesso.');
+        console.log('Model loaded successfully.');
     } else {
         model = createModel(columnsToUse.length);
         await trainAndSaveModel(model, xs, ys, modelDir);
@@ -33,7 +33,7 @@ async function tensor(newInput: number[] | number[][]) {
     if (isSequentialModel(model)) {
         await predictFailure(model, newInput);
     } else {
-        console.error('O modelo carregado não é do tipo Sequential.');
+        console.error('The loaded model is not of the Sequential type.');
     }
 }
 
@@ -86,7 +86,7 @@ function createModel(inputShape: number): tf.Sequential {
 }
 
 async function trainAndSaveModel(model: tf.Sequential, xs: tf.Tensor, ys: tf.Tensor, modelDir: string) {
-    console.log('Treinando o modelo...');
+    console.log('Training the model...');
 
     const weightForNoFailure = 1;
     const weightForFailure = 9661 / 339;
@@ -103,7 +103,7 @@ async function trainAndSaveModel(model: tf.Sequential, xs: tf.Tensor, ys: tf.Ten
     
     ensureDirectoryExists(modelDir);
     await model.save(`file://${path.resolve(modelDir)}`);
-    console.log('Modelo salvo com sucesso.');
+    console.log('Model saved successfully.');
 }
 
 function ensureDirectoryExists(dirPath: string) {
@@ -117,7 +117,7 @@ function isSequentialModel(model: tf.LayersModel): model is tf.Sequential {
 }
 
 async function predictFailure(model: tf.LayersModel | tf.Sequential, newInput: number[] | number[][]) {
-    console.log('Fazendo predição com novos dados:', newInput);
+    console.log('Making prediction with new data:', newInput);
 
     const inputData = Array.isArray(newInput[0]) ? newInput as number[][] : [newInput as number[]];
     const predictionsTensor = model.predict(tf.tensor2d(inputData)) as tf.Tensor;
@@ -127,11 +127,11 @@ async function predictFailure(model: tf.LayersModel | tf.Sequential, newInput: n
     if (Array.isArray(predictions) && Array.isArray(predictions[0])) {
         predictions.forEach((predictedValue: number[], index: number) => {
             console.log(predictedValue)
-            const result = predictedValue[0] >= 0.6 ? 'Falha detectada' : 'Nenhuma falha';
-            console.log(`Resultado da predição para a linha ${index + 1}: ${result}`);
+            const result = predictedValue[0] >= 0.50 ? 'Failure detected' : 'No failure';
+            console.log(`Prediction result for line ${index + 1}: ${result}`);
         });
     } else {
-        console.error('Formato de predição inesperado:', predictions);
+        console.error('Unexpected prediction format:', predictions);
     }
 }
 export default tensor;

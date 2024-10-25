@@ -18,7 +18,7 @@ import tensor from "./config/tensor";
 
 dotenv.config();
 
-// Crie o app Express
+// Create the Express app
 const app: Express = express();
 const PORT = process.env.PORT ?? 3000;
 
@@ -28,20 +28,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use(passport.initialize());
 
-// Middleware de log de solicitações
+// Request Logging Middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`[${new Date().toLocaleString()}] ${req.method} ${req.url}`);
 
   if (req.body && Object.keys(req.body).length > 0) {
     console.log('Body:', req.body);
   } else {
-    console.log('Body: Nenhum corpo de requisição.');
+    console.log('Body: No data');
   }
 
   next();
 });
 
-// Define as rotas da API
+// Defines API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/factories', factoryRoutes);
@@ -51,35 +51,33 @@ app.use('/api/data', dataRoutes);
 app.use('/api/maintenances', maintenanceRoutes);
 app.use('/api/alerts', alertRoutes);
 
-// Rota de exemplo
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Hello World!" });
 });
 
-// Criando o servidor HTTP
+
 const httpServer: HTTPServer = createServer(app);
 
-// Criando o servidor WebSocket
+// Creating the WebSocket Server
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: "*", // Permitir requisições de qualquer origem
+    origin: "*", 
   },
 });
 
-// Configurando os eventos do WebSocket em um arquivo separado
+
 configureSocketEvents(io);
 
-// Iniciar o servidor
+// Start the server
 httpServer.listen(PORT, () => {
-  console.log(`API ouvindo na porta: ${PORT}`);
+  console.log(`API listing on PORT: ${PORT}`);
 });
 
 tensor([
-  [298.4,308.2,1282,60.7,216], //falha
-  [298.4,308.3,1433,62.3,20], //falha
-  [298.4,308.3,1433,62.3,20], // falha
-  [298.4,308.3,1422,42.7,186], //nao falha
-  [298.6,308.4,1407,50.5,164] //nao falha
+  [298,308,1455,41,202], //Failure 
+  [298,308,1379,46,204], //No Failure
+  [298,308,1727,27,37], //No Failure
+  [298,308,1412,52,218]
 ]).catch(console.error);
-  //falha, falha,falha, nao falha,nao falha
+  
 export default app;
