@@ -95,7 +95,7 @@ async function trainAndSaveModel(model: tf.Sequential, xs: tf.Tensor, ys: tf.Ten
     await model.fit(xs, ys, 
         { 
          // Sets the number of complete passes over the entire dataset; more epochs allow for better learning but can lead to overfitting if too high
-        epochs: 200,
+        epochs: 40,
         batchSize: 32,
         classWeight: { 0: weightForNoFailure, 1: weightForFailure }
         }

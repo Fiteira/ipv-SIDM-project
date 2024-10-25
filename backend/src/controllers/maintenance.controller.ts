@@ -5,7 +5,10 @@ import { handleServerError } from '../utils/helpers';
 // Obter manutenção pelo ID
 export const getMaintenance = async (req: Request, res: Response): Promise<void> => {
   const { maintenanceId } = req.params;
-
+  if (!maintenanceId) {
+    res.status(400).json({ success: false, message: 'MaintenanceId is required' });
+    return;
+  }
   try {
     const maintenance = await MaintenanceModel.findByPk(maintenanceId);
     if (!maintenance) {
@@ -21,7 +24,10 @@ export const getMaintenance = async (req: Request, res: Response): Promise<void>
 // Obter todas as manutenções por machineId
 export const getMaintenanceByMachineId = async (req: Request, res: Response): Promise<void> => {
     const { machineId } = req.params;
-  
+    if (!machineId) {
+      res.status(400).json({ success: false, message: 'MachineId is required' });
+      return;
+    }
     try {
       const maintenances = await MaintenanceModel.findAll({ where: { machineId } });
       if (!maintenances.length) {
@@ -37,7 +43,10 @@ export const getMaintenanceByMachineId = async (req: Request, res: Response): Pr
 // Criar nova manutenção
 export const createMaintenance = async (req: Request, res: Response): Promise<void> => {
     const { machineId, maintenanceDate, description, performedBy } = req.body;
-  
+    if (!machineId || !maintenanceDate || !description || !performedBy) {
+      res.status(400).json({ success: false, message: 'MachineId, maintenanceDate, description, and performedBy are required' });
+      return;
+    }
     try {
       const newMaintenance = await MaintenanceModel.create({ machineId, maintenanceDate, description, performedBy });
       res.status(201).json({ success: true, data: newMaintenance });
@@ -73,7 +82,10 @@ export const updateMaintenance = async (req: Request, res: Response): Promise<vo
 // Deletar uma manutenção
 export const deleteMaintenance = async (req: Request, res: Response): Promise<void> => {
   const { maintenanceId } = req.params;
-
+  if (!maintenanceId) {
+    res.status(400).json({ success: false, message: 'MaintenanceId is required' });
+    return;
+  }
   try {
     const maintenance = await MaintenanceModel.findByPk(maintenanceId);
     if (!maintenance) {

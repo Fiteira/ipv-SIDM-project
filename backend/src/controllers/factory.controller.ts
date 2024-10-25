@@ -5,7 +5,10 @@ import { handleServerError } from '../utils/helpers';
 // Obter uma fábrica pelo ID
 export const getFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
-
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'FactoryId is required' });
+    return;
+  }
   try {
     const factory = await FactoryModel.findByPk(factoryId);
     if (!factory) {
@@ -18,10 +21,23 @@ export const getFactory = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// Obter todas as fábricas
+export const getAllFactories = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const factories = await FactoryModel.findAll();
+    res.status(200).json({ success: true, data: factories });
+  } catch (error) {
+    handleServerError(res, 'Error fetching factories', error);
+  }
+};
+
 // Criar uma nova fábrica
 export const createFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryName, location } = req.body;
-
+  if (!factoryName || !location) {
+    res.status(400).json({ success: false, message: 'FactoryName and location are required' });
+    return;
+  }
   try {
     const newFactory = await FactoryModel.create({ factoryName, location });
     res.status(201).json({ success: true, data: newFactory });
@@ -55,6 +71,10 @@ export const updateFactory = async (req: Request, res: Response): Promise<void> 
 // Deletar uma fábrica
 export const deleteFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'FactoryId is required' });
+    return;
+  }
 
   try {
     const factory = await FactoryModel.findByPk(factoryId);

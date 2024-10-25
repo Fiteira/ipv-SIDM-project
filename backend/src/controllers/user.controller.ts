@@ -5,7 +5,10 @@ import { handleServerError } from '../utils/helpers';
 // Obter um usuário pelo ID
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
-
+  if (!userId) {
+    res.status(400).json({ success: false, message: 'UserId is required' });
+    return
+  }
   try {
     const user = await UserModel.findByPk(userId);
     if (!user) {
@@ -21,6 +24,10 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 // Obter todos os usuários por factoryId
 export const getUserByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'FactoryId is required' });
+    return;
+  }
 
   try {
     const users = await UserModel.findAll({ where: { factoryId } });
@@ -38,7 +45,10 @@ export const getUserByFactoryId = async (req: Request, res: Response): Promise<v
 // Criar um novo usuário
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   const { userNumber, name, role, factoryId, password } = req.body;
-
+  if (!userNumber || !name || !role || !factoryId || !password) {
+    res.status(400).json({ success: false, message: 'UserNumber, name, role, factoryId, and password are required' });
+    return;
+  }
   try {
     const newUser = await UserModel.create({ userNumber, name, password, role, factoryId });
     res.status(201).json({ success: true, data: newUser });
@@ -74,7 +84,10 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 // Deletar um usuário
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
-
+  if (!userId) {
+    res.status(400).json({ success: false, message: 'UserId is required' });
+    return;
+  }
   try {
     const user = await UserModel.findByPk(userId);
     if (!user) {
