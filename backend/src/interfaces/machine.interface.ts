@@ -10,4 +10,5 @@ export interface Machine extends Model {
     sensors?: Sensor[];  // Sensores associados à máquina
     factory?: Factory;  // Relacionamento inverso (1:N) para acessar a fábrica da máquina
     maintenanceRecords?: Maintenance[];  // Registros de manutenção associados à máquina
+    state: string;  // Estado da máquina
   }

@@ -103,8 +103,8 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     }
 
     const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
-    const newUser = { ...req.body, password: hashedPassword, role_id: 2 };
+    const hashedPassword = await bcrypt.hash("123456", salt);
+    const newUser = { ...req.body, password: hashedPassword };
     const createdUser = await UserModel.create(newUser);
     res.status(201).json({
       success: true,

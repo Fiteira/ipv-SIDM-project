@@ -33,7 +33,7 @@ export const SensorModel = sequelize.define<Sensor>('Sensor', {
   apiKey: {
     type: DataTypes.STRING,
     allowNull: false
-  },
+  }
 }, {
   timestamps: false,
   freezeTableName: true, // Prevents table name pluralization

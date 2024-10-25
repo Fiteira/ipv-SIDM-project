@@ -5,7 +5,10 @@ import { handleServerError } from '../utils/helpers';
 // Obter uma máquina pelo ID
 export const getMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineId } = req.params;
-
+  if (!machineId) {
+    res.status(400).json({ success: false, message: 'MachineId is required' });
+    return;
+  }
   try {
     const machine = await MachineModel.findByPk(machineId);
     if (!machine) {
@@ -21,7 +24,10 @@ export const getMachine = async (req: Request, res: Response): Promise<void> => 
 // Obter todas as máquinas por factoryId
 export const getMachinesByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
-
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'FactoryId is required' });
+    return;
+  }
   try {
     const machines = await MachineModel.findAll({ where: { factoryId } });
     if (!machines.length) {
@@ -38,6 +44,10 @@ export const getMachinesByFactoryId = async (req: Request, res: Response): Promi
 // Criar uma nova máquina
 export const createMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineName, factoryId } = req.body;
+  if (!machineName || !factoryId) {
+    res.status(400).json({ success: false, message: 'MachineName and factoryId are required' });
+    return;
+  }
 
   try {
     const newMachine = await MachineModel.create({ machineName, factoryId });
@@ -72,7 +82,10 @@ export const updateMachine = async (req: Request, res: Response): Promise<void> 
 // Deletar uma máquina
 export const deleteMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineId } = req.params;
-
+  if (!machineId) {
+    res.status(400).json({ success: false, message: 'MachineId is required' });
+    return;
+  }
   try {
     const machine = await MachineModel.findByPk(machineId);
     if (!machine) {

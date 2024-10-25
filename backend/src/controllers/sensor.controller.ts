@@ -5,7 +5,10 @@ import { handleServerError } from '../utils/helpers';
 // Obter um sensor pelo ID
 export const getSensor = async (req: Request, res: Response): Promise<void> => {
   const { sensorId } = req.params;
-
+  if (!sensorId) {
+    res.status(400).json({ success: false, message: 'SensorId is required' });
+    return;
+  }
   try {
     const sensor = await SensorModel.findByPk(sensorId);
     if (!sensor) {
@@ -21,7 +24,10 @@ export const getSensor = async (req: Request, res: Response): Promise<void> => {
 // Obter todos os sensores por machineId
 export const getSensorsByMachineId = async (req: Request, res: Response): Promise<void> => {
     const { machineId } = req.params;
-  
+    if (!machineId) {
+      res.status(400).json({ success: false, message: 'MachineId is required' });
+      return;
+    }
     try {
       const sensors = await SensorModel.findAll({ where: { machineId } });
       if (!sensors.length) {
@@ -78,7 +84,10 @@ export const updateSensor = async (req: Request, res: Response): Promise<void> =
 // Deletar um sensor
 export const deleteSensor = async (req: Request, res: Response): Promise<void> => {
   const { sensorId } = req.params;
-
+  if (!sensorId) {
+    res.status(400).json({ success: false, message: 'SensorId is required' });
+    return;
+  }
   try {
     const sensor = await SensorModel.findByPk(sensorId);
     if (!sensor) {

@@ -33,6 +33,11 @@ export const AlertModel = sequelize.define<Alert>('Alert', {
   message: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'active'
   }
 }, {
   timestamps: false,

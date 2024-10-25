@@ -25,6 +25,11 @@ export const MachineModel = sequelize.define<Machine>('Machine', {
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
+  },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'active'
   }
 }, {
   timestamps: false,

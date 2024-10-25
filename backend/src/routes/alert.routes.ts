@@ -4,7 +4,7 @@ import {
   createAlert,
   updateAlert,
   deleteAlert,
-  getAlertByUserId,
+  getAlertByMachineId,
 } from '../controllers/alert.controller';
 
 const router: Router = Router();
@@ -22,6 +22,6 @@ router.put('/:alertId', updateAlert);
 router.delete('/:alertId', deleteAlert);
 
 // Rota para obter todos os alertas por userId
-router.get('/user/:userId', getAlertByUserId);
+router.get('/user/:userId', getAlertByMachineId);
 
 export default router;

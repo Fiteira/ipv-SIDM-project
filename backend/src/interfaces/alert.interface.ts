@@ -8,4 +8,5 @@ export interface Alert extends Model {
     severity: string;  // Nível de severidade do alerta (baixa, média, alta)
     message: string;  // Mensagem do alerta
     machine: Machine;  // Relacionamento inverso para acessar a máquina
+    state: string;  // Estado do alerta
   }
