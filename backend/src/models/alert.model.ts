@@ -16,7 +16,7 @@ export const AlertModel = sequelize.define<Alert>('Alert', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: MachineModel,  // Nome da tabela Machine
+      model: MachineModel, 
       key: 'machineId'
     },
     onDelete: 'CASCADE',

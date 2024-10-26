@@ -1,4 +1,4 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes } from "sequelize";
 import sequelize from "../config/sequelize"; 
 import { Machine } from "../interfaces/machine.interface";
 import { SensorModel } from "./sensor.model";
@@ -18,9 +18,9 @@ export const MachineModel = sequelize.define<Machine>('Machine', {
   },
   factoryId: {
     type: DataTypes.INTEGER,
-    allowNull: false,  // Relaciona com a fábrica
+    allowNull: false,  
     references: {
-      model: FactoryModel,  // Nome da tabela Factory
+      model: FactoryModel,  
       key: 'factoryId'
     },
     onDelete: 'CASCADE',

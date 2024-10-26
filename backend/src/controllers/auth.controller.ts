@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { generateJwtToken, validateRequest, findUserByEmail, handleServerError } from '../utils/helpers';
+import { validateRequest, findUserByEmail, handleServerError , nestRawResults , findUserByUserNumber } from '../utils/helpers';
 import bcrypt from 'bcryptjs';
 import Joi, { ObjectSchema } from 'joi';
 import { User, UserDTO } from '../interfaces/user.interface';
@@ -7,16 +7,15 @@ import { UserModel } from '../models/user.model';
 import { SensorModel } from '../models/sensor.model';
 import { MachineModel } from '../models/machine.model';
 import { FactoryModel } from '../models/factory.model';
-import { nestRawResults } from '../utils/helpers';
-import { findUserByUserNumber } from '../utils/helpers';
 import jwt from 'jsonwebtoken';
 import cacheNode from '../config/cache';
+import dotenv from "dotenv";
 
-// Login controller
+dotenv.config();
+
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { userNumber, password } = req.body;
 
-  // Validação de campos
   if (!userNumber || !password) {
     res.status(400).json({
       success: false,
@@ -36,15 +35,14 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
-    // Comparar a senha
+
     if (bcrypt.compareSync(password, user.password)) {
-      // Gerar o token JWT
+
       const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
-      const token = jwt.sign( userDTO , "mudar", { expiresIn: '1h' });
-      console.log("Token gerado: ", token);
-      //Guardar o token no cache
+      const token = jwt.sign( userDTO , process.env.JWT_SECRET_KEY as string, { expiresIn: '30d' });
+      console.log("Token generate: ", token);
       cacheNode.set(`user_${token}`, userDTO);
-      // Responder com o token
+
       res.status(200).json({
         success: true,
         token: token,
@@ -52,17 +50,17 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
-    // Caso a senha esteja incorreta
     res.status(401).json({
       success: false,
       message: "User number or password is incorrect.",
     });
+
   } catch (error) {
     handleServerError(res, "Authentication error", error);
   }
 };
 
-// Register controller
+
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const schema: ObjectSchema = Joi.object({
     name: Joi.string().min(3).required().messages({
@@ -75,7 +73,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
       'string.empty': 'Email cannot be empty',
       'string.email': 'Email must be a valid email address',
     }),
-    password: Joi.string().min(6).regex(/^(?=.*[a-zA-Z])(?=.*[0-9])/).required().messages({
+    password: Joi.string().min(6).regex(/^(?=.*[a-zA-Z])(?=.*\d)/).required().messages({
       'string.base': 'Password must be a valid string',
       'string.empty': 'Password cannot be empty',
       'string.min': 'Password must have at least {#limit} characters',
@@ -115,10 +113,8 @@ export const register = async (req: Request, res: Response, next: NextFunction):
   }
 };
 
-// Sensor login
 
-// Rota para o sensor obter o token
-export const sensorlogin = async (req: Request, res: Response): Promise<any> => {
+export const sensorLogin = async (req: Request, res: Response): Promise<any> => {
   try {
     const { apiKey } = req.body;
 
@@ -133,12 +129,12 @@ export const sensorlogin = async (req: Request, res: Response): Promise<any> => 
         {
           model: MachineModel,
           as: 'machine',
-          attributes: ['machineId', 'machineName', 'factoryId'], // Selecionar apenas atributos relevantes
+          attributes: ['machineId', 'machineName', 'factoryId'], 
           include: [
             {
               model: FactoryModel,
               as: 'factory',
-              attributes: ['factoryId', 'factoryName', 'location'], // Selecionar apenas atributos relevantes
+              attributes: ['factoryId', 'factoryName', 'location'], 
             },
           ],
         },
@@ -153,14 +149,11 @@ export const sensorlogin = async (req: Request, res: Response): Promise<any> => 
 
     console.log("Sensor found: ", JSON.stringify(sensor));
 
-    // Crie um objeto limpo apenas com os dados essenciais do sensor e da máquina
     const sensorData = nestRawResults(sensor);
     console.log("Sensor data: ", sensorData);
 
-    // Gerar o token JWT com os dados essenciais
-    const token = jwt.sign({ sensor: sensorData }, "mudar", { expiresIn: '1h' });
+    const token = jwt.sign({ sensor: sensorData }, process.env.JWT_SECRET_KEY as string, { expiresIn: '1h' });
 
-    // Salvar o objeto simplificado no cache com o token gerado
     cacheNode.set(`sensor_${token}`, sensorData);
     return res.status(200).json({ token });
     

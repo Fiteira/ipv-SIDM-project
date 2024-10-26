@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { DataModel } from '../models/data.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter dados pelo ID
 export const getData = async (req: Request, res: Response): Promise<void> => {
   const { dataId } = req.params;
   if (!dataId) {
@@ -22,7 +21,6 @@ export const getData = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Obter todos os dados por sensorId
 export const getDataBySensorId = async (req: Request, res: Response): Promise<void> => {
     const { sensorId } = req.params;
     if (!sensorId) {
@@ -42,7 +40,6 @@ export const getDataBySensorId = async (req: Request, res: Response): Promise<vo
     }
   };
 
-// Criar novo dado
 export const createData = async (req: Request, res: Response): Promise<void> => {
   const { sensorId, value } = req.body;
   if (!sensorId || !value) {
@@ -57,7 +54,6 @@ export const createData = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Atualizar dado existente
 export const updateData = async (req: Request, res: Response): Promise<void> => {
   const { dataId } = req.params;
   const { sensorId, value } = req.body;
@@ -82,7 +78,6 @@ export const updateData = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Deletar um dado
 export const deleteData = async (req: Request, res: Response): Promise<void> => {
   const { dataId } = req.params;
   if (!dataId) {

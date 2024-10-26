@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { UserModel } from '../models/user.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter um usuário pelo ID
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
   if (!userId) {
@@ -21,7 +20,6 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Obter todos os usuários por factoryId
 export const getUserByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
@@ -42,7 +40,6 @@ export const getUserByFactoryId = async (req: Request, res: Response): Promise<v
 };
 
 
-// Criar um novo usuário
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   const { userNumber, name, role, factoryId, password } = req.body;
   if (!userNumber || !name || !role || !factoryId || !password) {
@@ -57,7 +54,6 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   }
 }; 
 
-// Atualizar um usuário existente
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
   const { userNumber, name, role, factoryId } = req.body;
@@ -81,7 +77,6 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Deletar um usuário
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
   if (!userId) {

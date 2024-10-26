@@ -1,11 +1,11 @@
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize'; 
 import { Maintenance } from '../interfaces/maintenance.interface';
-import { UserModel } from './user.model';  // Importando o modelo de usuário para criar a associação
+import { UserModel } from './user.model'; 
 import { AlertModel } from './alert.model';
 import { MachineModel } from './machine.model';
 
-// Define o modelo Maintenance
+// Define o model Maintenance
 export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
   maintenanceId: {
     type: DataTypes.INTEGER,
@@ -17,7 +17,7 @@ export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: MachineModel,  // Nome da tabela Machine
+      model: MachineModel,  
       key: 'machineId'
     },
     onDelete: 'CASCADE',
@@ -35,7 +35,7 @@ export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: AlertModel,  // Relaciona com o modelo de alerta
+      model: AlertModel, 
       key: 'alertId'
     },
     onDelete: 'CASCADE',
@@ -45,21 +45,21 @@ export const MaintenanceModel = sequelize.define<Maintenance>('Maintenance', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: UserModel,  // Relaciona com o modelo de usuário
+      model: UserModel, 
       key: 'userId'
     },
-    onDelete: 'SET NULL',  // Se o usuário for deletado, mantém o registro de manutenção, mas sem um usuário
+    onDelete: 'SET NULL', 
     onUpdate: 'CASCADE'
   }
 }, {
   timestamps: false,
-  freezeTableName: true  // Evita a pluralização automática do nome da tabela
+  freezeTableName: true  
 });
 
-// Definir a associação entre Maintenance e User
+
 MaintenanceModel.belongsTo(UserModel, {
   foreignKey: 'performedBy',
-  as: 'performedUser'  // Alias para o relacionamento
+  as: 'performedUser'  
 });
 
 MaintenanceModel.belongsTo(AlertModel, {

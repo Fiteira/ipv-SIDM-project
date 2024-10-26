@@ -14,7 +14,7 @@ import alertRoutes from './routes/alert.routes';
 import { createServer, Server as HTTPServer } from 'http'; 
 import { Server as SocketIOServer } from 'socket.io';
 import { configureSocketEvents } from './config/socket'; 
-import tensor from "./config/tensor";
+//import tensor from "./config/tensor";
 
 dotenv.config();
 
@@ -73,6 +73,7 @@ httpServer.listen(PORT, () => {
   console.log(`API listing on PORT: ${PORT}`);
 });
 
+/*
 tensor([
   [298,308,1455,41,202], //Failure 
   [298,308,1379,46,204], //No Failure
@@ -80,5 +81,5 @@ tensor([
   [298,308,1412,52,218], //Failure
   [298,308,1924,20,29] //No Failure
 ]).catch(console.error);
-  
+ */
 export default app;

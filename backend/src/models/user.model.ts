@@ -1,12 +1,14 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/sequelize"; 
 import { User } from "../interfaces/user.interface";
-import { FactoryModel } from "./factory.model";  // Importar o modelo da fábrica para a associação
-import bcrypt from 'bcryptjs';  // Importar o módulo bcrypt para criptografar a senha
+import { FactoryModel } from "./factory.model"; 
+import bcrypt from 'bcryptjs';  
 import { MachineModel } from "./machine.model";
 import { SensorModel } from "./sensor.model";
+import dotenv from "dotenv";
 
-// Define o modelo User
+dotenv.config();
+
 export const UserModel = sequelize.define<User>('User', {
   userId: {
     type: DataTypes.INTEGER,
@@ -17,7 +19,7 @@ export const UserModel = sequelize.define<User>('User', {
   userNumber: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true  // Garantir que o userNumber seja único
+    unique: true  
   },
   name: {
     type: DataTypes.STRING,
@@ -35,7 +37,7 @@ export const UserModel = sequelize.define<User>('User', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: FactoryModel,  // Referência ao modelo Factory
+      model: FactoryModel,  
       key: 'factoryId'
     },
     onDelete: 'CASCADE',
@@ -43,22 +45,21 @@ export const UserModel = sequelize.define<User>('User', {
   }
 }, {
   timestamps: false,
-  freezeTableName: true  // Evita a pluralização automática do nome da tabela
+  freezeTableName: true  
 });
 
-// Definir a associação entre User e Factory
+
 UserModel.belongsTo(FactoryModel, {
   foreignKey: 'factoryId',
-  as: 'factory'  // Alias para o relacionamento inverso
+  as: 'factory'  
 });
 
 FactoryModel.hasMany(UserModel, { foreignKey: 'userId', as: 'users' });
 
 
-// Function to create the default user
 const createDefaultUser = async () => {
   const salt = await bcrypt.genSalt();
-  const password: string = await bcrypt.hash("admin", salt);
+  const password: string = await bcrypt.hash(process.env.PASSWORD_USER as string, salt);
 
   try {
     await FactoryModel.bulkCreate([
@@ -87,11 +88,11 @@ const createDefaultUser = async () => {
       { machineName: "Machine 1", factoryId: 1 },
       { machineName: "Machine 2", factoryId: 2 }
     ]);
-    const sensores = await SensorModel.bulkCreate([
-      { name: "Sensor 1", machineId: 1, apiKey: "123", sensorType: "temperature" },
-      { name: "Sensor 2", machineId: 2, apiKey: "456", sensorType: "humidity" }
+    const sensor = await SensorModel.bulkCreate([
+      { name: "Sensor 1", machineId: 1, apiKey: "123", sensorType: "xpto_32" },
+      { name: "Sensor 2", machineId: 2, apiKey: "456", sensorType: "xpto_43" }
     ]);
-    console.log('Sensores criados: ', sensores);
+    console.log('Sensor created: ', sensor);
   } catch (error) {
     console.error('Error to create User', error);
   }
