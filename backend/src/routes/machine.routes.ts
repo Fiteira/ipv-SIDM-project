@@ -9,19 +9,14 @@ import {
 
 const router: Router = Router();
 
-// Rota para obter uma máquina pelo ID
 router.get('/:machineId', getMachine);
 
-// Rota para criar uma nova máquina
 router.post('/', createMachine);
 
-// Rota para atualizar uma máquina existente
 router.put('/:machineId', updateMachine);
 
-// Rota para deletar uma máquina
 router.delete('/:machineId', deleteMachine);
 
-// Rota para obter todas as máquinas de uma fábrica
 router.get('/factory/:factoryId', getMachinesByFactoryId);
 
 export default router;

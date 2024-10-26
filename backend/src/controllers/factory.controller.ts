@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { FactoryModel } from '../models/factory.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter uma fábrica pelo ID
 export const getFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
@@ -21,7 +20,7 @@ export const getFactory = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Obter todas as fábricas
+
 export const getAllFactories = async (req: Request, res: Response): Promise<void> => {
   try {
     const factories = await FactoryModel.findAll();
@@ -31,7 +30,7 @@ export const getAllFactories = async (req: Request, res: Response): Promise<void
   }
 };
 
-// Criar uma nova fábrica
+
 export const createFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryName, location } = req.body;
   if (!factoryName || !location) {
@@ -46,7 +45,6 @@ export const createFactory = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Atualizar uma fábrica existente
 export const updateFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   const { factoryName, location } = req.body;
@@ -68,7 +66,6 @@ export const updateFactory = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Deletar uma fábrica
 export const deleteFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {

@@ -1,9 +1,12 @@
 {
     "cSpell.words": [
+        "checktoken",
         "Crossentropy",
+        "loginsensor",
         "overfitting",
         "regularizers",
         "relu",
-        "tfjs"
+        "tfjs",
+        "xpto"
     ]
 }

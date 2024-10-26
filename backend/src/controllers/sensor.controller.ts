@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { SensorModel } from '../models/sensor.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter um sensor pelo ID
 export const getSensor = async (req: Request, res: Response): Promise<void> => {
   const { sensorId } = req.params;
   if (!sensorId) {
@@ -21,7 +20,6 @@ export const getSensor = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Obter todos os sensores por machineId
 export const getSensorsByMachineId = async (req: Request, res: Response): Promise<void> => {
     const { machineId } = req.params;
     if (!machineId) {
@@ -40,7 +38,6 @@ export const getSensorsByMachineId = async (req: Request, res: Response): Promis
     }
   };
 
-// Criar um novo sensor
 export const createSensor = async (req: Request, res: Response): Promise<void> => {
   const { name, sensorType, machineId } = req.body;
   if (!name || !sensorType || !machineId) {
@@ -48,7 +45,7 @@ export const createSensor = async (req: Request, res: Response): Promise<void> =
     return
   }
   let apiKey: string = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  console.log("APIKEY do sensor: ", apiKey);
+  console.log("API_KEY do sensor: ", apiKey);
   try {
     if (apiKey) {
       const newSensor = await SensorModel.create({ name, sensorType, machineId, apiKey });
@@ -59,7 +56,6 @@ export const createSensor = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// Atualizar um sensor existente
 export const updateSensor = async (req: Request, res: Response): Promise<void> => {
   const { sensorId } = req.params;
   const { sensorType, machineId } = req.body;
@@ -81,7 +77,6 @@ export const updateSensor = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// Deletar um sensor
 export const deleteSensor = async (req: Request, res: Response): Promise<void> => {
   const { sensorId } = req.params;
   if (!sensorId) {

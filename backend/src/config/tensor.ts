@@ -14,31 +14,34 @@ async function tensor(newInput: number[] | number[][]) {
     const modelDir = './tensor_model';
     const modelPath = `${modelDir}/model.json`;
 
-    
-
     let model;
+
     if (fs.existsSync(modelPath)) {
         console.log('Loading saved model...');
         model = await tf.loadLayersModel(`file://${modelPath}`);
         console.log('Model loaded successfully.');
     } else {
-        console.log('Model not found. Training a new model...');
+
+        console.log('Saved model not found. Training a new model...');
+
         const sensorData = await loadAndProcessData(dataPath);
-        const columnsToUse = Object.keys(sensorData[0]).filter(key =>
-            key !== 'UDI' && key !== 'Failure Type' && key !== 'Target' && key !== 'id'
+        const columnsToUse = Object.keys(sensorData[0]).filter(
+            key => key !== 'UDI' && key !== 'Failure Type' && key !== 'Target' && key !== 'id'
+
         );
 
         const xs = tf.tensor2d(sensorData.map(item => columnsToUse.map(key => item[key] as number)));
         const ys = tf.tensor2d(sensorData.map(item => item['Target'] as number), [sensorData.length, 1]);
+
         model = createModel(columnsToUse.length);
         await trainAndSaveModel(model, xs, ys, modelDir);
     }
     const detectedAnomaly = {
-        prediction: 0.75, // Exemplo de probabilidade de falha
-        data: [298.8, 308.9, 1455, 41.3, 208], // Dados que causaram a detecção
+        prediction: 0.75, 
+        data: [298.8, 308.9, 1455, 41.3, 208], 
     }
     if (isSequentialModel(model)) {
-        return detectedAnomaly //await predictFailure(model, newInput);
+        return detectedAnomaly
     } else {
         console.error('The loaded model is not of the Sequential type.');
     }
@@ -126,7 +129,7 @@ function isSequentialModel(model: tf.LayersModel): model is tf.Sequential {
 async function predictFailure(model: tf.LayersModel | tf.Sequential, newInput: number[] | number[][]) {
     console.log('Making prediction with new data:', newInput);
 
-    // Garantir que newInput esteja no formato certo (array de arrays)
+    
     const inputData = Array.isArray(newInput[0]) ? newInput as number[][] : [newInput as number[]];
     const predictionsTensor = model.predict(tf.tensor2d(inputData)) as tf.Tensor;
 
@@ -138,7 +141,7 @@ async function predictFailure(model: tf.LayersModel | tf.Sequential, newInput: n
                 const result = predictedValue[0] >= 0.50 ? 'Failure detected' : 'No failure';
                 
                 if (predictedValue[0] >= 0.50) {
-                    // Adiciona a anomalia detectada ao array de anomalias
+                    
                     anomalyDetection.push({ 
                         prediction: predictedValue[0], 
                         data: inputData[index] 
@@ -154,7 +157,6 @@ async function predictFailure(model: tf.LayersModel | tf.Sequential, newInput: n
     } catch (error) {
         console.error('Error during prediction processing:', error);
     } finally {
-        // Libera o tensor de previsões para evitar vazamentos de memória
         predictionsTensor.dispose();
     }
     return anomalyDetection;

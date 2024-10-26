@@ -3,7 +3,6 @@ import { AlertModel } from '../models/alert.model';
 import { MachineModel } from '../models/machine.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter um alerta pelo ID
 export const getAlert = async (req: Request, res: Response): Promise<void> => {
   const { alertId } = req.params;
 
@@ -19,7 +18,7 @@ export const getAlert = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-//Obter todos os alertas
+
 export const getAllAlerts = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
@@ -34,7 +33,7 @@ export const getAllAlerts = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// Obter todos os alertas por MachineId
+
 export const getAlertByMachineId = async (req: Request, res: Response): Promise<void> => {
     const { machineId } = req.params;
     if (!machineId) {
@@ -43,15 +42,39 @@ export const getAlertByMachineId = async (req: Request, res: Response): Promise<
     }
   
     try {
-      // Buscar os alertas associados à máquina
       const machines = await AlertModel.findAll({ where: { machineId } });
+
+      if (!machines.length) {
+        res.status(404).json({ success: false, message: 'No machines found for this user' });
+        return;
+      }
+
+      const machineIds = machines.map(machine => machine.machineId);
+      const alerts = await AlertModel.findAll({ where: { machineId: machineIds } });
+
+      if (!alerts.length) {
+        res.status(404).json({ success: false, message: 'No alerts found for this machine' });
+        return;
+      }
+
+      res.status(200).json({ success: true, data: alerts });
+
+    } catch (error) {
+      handleServerError(res, 'Error fetching alerts by MachineId', error);
+    }
+}
+
+export const getAlertByUserId = async (req: Request, res: Response): Promise<void> => {
+    const { userId } = req.params;
+  
+    try {
+      const machines = await MachineModel.findAll({ where: { userId } });
   
       if (!machines.length) {
         res.status(404).json({ success: false, message: 'No machines found for this user' });
         return;
       }
   
-      // Buscar alertas associados às máquinas encontradas
       const machineIds = machines.map(machine => machine.machineId);
       const alerts = await AlertModel.findAll({ where: { machineId: machineIds } });
   
@@ -66,7 +89,6 @@ export const getAlertByMachineId = async (req: Request, res: Response): Promise<
     }
   };
 
-// Criar um novo alerta
 export const createAlert = async (req: Request, res: Response): Promise<void> => {
   const { machineId, alertDate, severity, message } = req.body;
   if (!machineId || !alertDate || !severity || !message) {
@@ -81,7 +103,6 @@ export const createAlert = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// Atualizar um alerta existente
 export const updateAlert = async (req: Request, res: Response): Promise<void> => {
   const { alertId } = req.params;
   const { machineId, alertDate, severity, message } = req.body;
@@ -112,7 +133,6 @@ export const updateAlert = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// Deletar um alerta
 export const deleteAlert = async (req: Request, res: Response): Promise<void> => {
   const { alertId } = req.params;
   if (!alertId) {

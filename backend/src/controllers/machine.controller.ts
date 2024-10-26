@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { MachineModel } from '../models/machine.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter uma máquina pelo ID
 export const getMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineId } = req.params;
   if (!machineId) {
@@ -21,7 +20,6 @@ export const getMachine = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Obter todas as máquinas por factoryId
 export const getMachinesByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
@@ -40,8 +38,6 @@ export const getMachinesByFactoryId = async (req: Request, res: Response): Promi
   }
 };
 
-
-// Criar uma nova máquina
 export const createMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineName, factoryId } = req.body;
   if (!machineName || !factoryId) {
@@ -57,7 +53,6 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Atualizar uma máquina existente
 export const updateMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineId } = req.params;
   const { machineName, factoryId } = req.body;
@@ -79,7 +74,6 @@ export const updateMachine = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Deletar uma máquina
 export const deleteMachine = async (req: Request, res: Response): Promise<void> => {
   const { machineId } = req.params;
   if (!machineId) {

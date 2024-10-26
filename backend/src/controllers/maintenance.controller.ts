@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { MaintenanceModel } from '../models/maintenance.model';
 import { handleServerError } from '../utils/helpers';
 
-// Obter manutenção pelo ID
 export const getMaintenance = async (req: Request, res: Response): Promise<void> => {
   const { maintenanceId } = req.params;
   if (!maintenanceId) {
@@ -21,7 +20,6 @@ export const getMaintenance = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Obter todas as manutenções por machineId
 export const getMaintenanceByMachineId = async (req: Request, res: Response): Promise<void> => {
     const { machineId } = req.params;
     if (!machineId) {
@@ -40,7 +38,6 @@ export const getMaintenanceByMachineId = async (req: Request, res: Response): Pr
     }
   };
 
-// Criar nova manutenção
 export const createMaintenance = async (req: Request, res: Response): Promise<void> => {
     const { machineId, maintenanceDate, description, performedBy } = req.body;
     if (!machineId || !maintenanceDate || !description || !performedBy) {
@@ -55,7 +52,6 @@ export const createMaintenance = async (req: Request, res: Response): Promise<vo
     }
   };
 
-// Atualizar manutenção existente
 export const updateMaintenance = async (req: Request, res: Response): Promise<void> => {
     const { maintenanceId } = req.params;
     const { machineId, maintenanceDate, description, performedBy } = req.body;
@@ -79,7 +75,6 @@ export const updateMaintenance = async (req: Request, res: Response): Promise<vo
     }
   };
 
-// Deletar uma manutenção
 export const deleteMaintenance = async (req: Request, res: Response): Promise<void> => {
   const { maintenanceId } = req.params;
   if (!maintenanceId) {

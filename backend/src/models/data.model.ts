@@ -1,4 +1,4 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes } from "sequelize";
 import sequelize from "../config/sequelize"; 
 import { Data } from "../interfaces/data.interface";
 import { SensorModel } from "./sensor.model";
