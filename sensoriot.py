@@ -59,7 +59,7 @@ def connect_to_websocket(token):
             print(f"Dados enviados: Temperatura={temperature}, Umidade={humidity}")
 
             # Aguardar 500 milisegundos antes de enviar novos dados
-            time.sleep(0.5)
+            time.sleep(2)
             conta+=1
 
         # Manter a conexão aberta

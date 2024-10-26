@@ -4,6 +4,7 @@ import { DataModel } from '../models/data.model';
 import { Data } from '../interfaces/data.interface';
 import cacheNode from './cache';
 var moment = require('moment');
+import tensor from "./tensor";
 
 interface CachedSensorData {
   sensorId: number;
@@ -71,6 +72,8 @@ export const configureSocketEvents = (io: SocketIOServer) => {
         cacheNode.set(sensorId, cachedData);
 
         console.log(`Dados temporariamente armazenados na cache para o sensor ${sensorId}`);
+
+        
       } catch (error) {
         console.error(`Erro ao armazenar os dados na cache para o sensor ${socket.data.sensor.sensorId}:`, error);
       }
@@ -92,13 +95,19 @@ export const configureSocketEvents = (io: SocketIOServer) => {
 
 // Função para persistir os dados do cache no banco de dados periodicamente
 const persistSensorDataFromCache = async () => {
-  const allKeys = cacheNode.keys();
+  // Obter todos os objetos do cache em vez de apenas as keys
+  const allCachedData = cacheNode.keys().map(sensorId => ({
+    sensorId,
+    data: cacheNode.get(sensorId) as CachedSensorData[] || [],
+  }));
 
-  for (const sensorId of allKeys) {
-    const cachedData: CachedSensorData[] = cacheNode.get(sensorId) || [];
+  for (const sensor of allCachedData) {
+    const { sensorId, data: cachedData } = sensor;
 
     if (cachedData.length > 0) {
       try {
+        console.log(`Persistindo dados para o sensor ${sensorId} com ${cachedData.length} entradas.`);
+
         // Salvar os dados no banco de dados em lotes
         await DataModel.bulkCreate(
           cachedData.map((entry) => ({
@@ -108,14 +117,49 @@ const persistSensorDataFromCache = async () => {
           }))
         );
 
+        // Normalizar os dados do sensor para o formato esperado pelo modelo de aprendizado de máquina
+        const normalizedData = normalizeSensorDataList(
+          cachedData.map((entry) => Object.values(entry.value))
+        );
+
+        // Detectar anomalias com o modelo de aprendizado de máquina
+        console.log("Por favor, aguarde enquanto o modelo de aprendizado de máquina detecta anomalias...");
+        const anomalies = await tensor(normalizedData).catch((error) => {
+          console.error('Erro ao processar com o modelo de aprendizado de máquina:', error);
+          return [];
+        });
+
+        if (Array.isArray(anomalies) && anomalies.length > 0) {
+          console.log("Anomalias detectadas:", anomalies);
+
+          // Identificar quais sensores enviaram os dados anômalos utilizando a correspondência dos índices
+          anomalies.forEach((anomalyData, index) => {
+            const correspondingData = cachedData[index];
+            if (correspondingData) {
+              console.log(`Alerta: Dados anômalos detectados para o sensor ${correspondingData.sensorId}`);
+              // Lógica adicional para enviar alertas ou salvar logs
+            }
+          });
+        } else {
+          console.log(`Nenhuma anomalia detectada para o sensor ${sensorId}.`);
+        }
+
         console.log(`Dados do sensor ${sensorId} persistidos no banco de dados com sucesso.`);
         cacheNode.del(sensorId);  // Limpa o cache após persistir os dados
       } catch (error) {
         console.error(`Erro ao salvar os dados do sensor ${sensorId}:`, error);
       }
+    } else {
+      console.log(`Nenhum dado na cache para o sensor ${sensorId}.`);
     }
   }
 };
+
+// Normalizar os dados do sensor para o formato esperado pelo modelo de aprendizado de máquina
+function normalizeSensorDataList(sensorDataList: any[]): number[][] {
+  return sensorDataList.map(sensorData => Object.values(sensorData));
+}
+
 
 // Intervalo para persistir os dados da cache no banco de dados a cada 10 segundos
 setInterval(persistSensorDataFromCache, 10000);  // 10 segundos
