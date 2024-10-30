@@ -48,19 +48,30 @@ class SensorSimulator:
             self.toolWear = random.uniform(100, 253)
     
     def generateReading(self):
-        
+        # Ajusta os valores dos atributos da classe
         self.airTemp = self.adjustValue(self.airTemp, 295.3, 304.5, 0.1)
         self.processTemp = self.adjustValue(self.processTemp, 305.7, 313.7, 0.1)
         self.rotationSpeed = self.adjustValue(self.rotationSpeed, 1168, 2886, 5)
         self.torque = self.adjustValue(self.torque, 3.8, 76.6, 1)
         self.toolWear = self.adjustValue(self.toolWear, 0, 253, 2)
         
+        # Mapeamento entre os nomes das colunas e os atributos da classe
+        column_to_attribute = {
+            'Air temperature [K]': self.airTemp,
+            'Process temperature [K]': self.processTemp,
+            'Rotational speed [rpm]': self.rotationSpeed,
+            'Torque [Nm]': self.torque,
+            'Tool wear [min]': self.toolWear
+        }
+        
+        # Extrair colunas e valores separados
+        columns = list(column_to_attribute.keys())
+        values = [round(value, 2) for value in column_to_attribute.values()]
+
+        # Retornar no formato JSON especificado
         return {
-            "airTemp": round(self.airTemp, 2),
-            "processTemp": round(self.processTemp, 2),
-            "rotationSpeed": round(self.rotationSpeed, 2),
-            "torque": round(self.torque, 2),
-            "toolWear": round(self.toolWear, 2)
+            "columns": columns,
+            "values": values
         }
 
     def adjustValue(self, value, min_val, max_val, step):

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:latest
@@ -9,27 +7,3 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - '9090:5432'
-    networks:
-      - backend-network
-
-  backend:
-    build:
-      context: ./backend  
-      dockerfile: Dockerfile  
-    environment:
-      URL_DB: postgres
-      PORT_DB: 5432
-      USER_DB: postgres
-      PASSWORD_DB: password
-      DATABASE_NAME: postgres
-      JWT_SECRET_KEY: 4ff24aaacd71765ea3a08733691594f3d51f94c315439906aa149a5a0f90598e
-    depends_on:
-      - postgres
-    ports:
-      - '3000:3000'  
-    networks:
-      - backend-network
-
-networks:
-  backend-network:
-    driver: bridge

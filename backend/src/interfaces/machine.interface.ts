@@ -12,5 +12,4 @@ export interface Machine extends Model {
     factory?: Factory;
     maintenanceRecords?: Maintenance[]; 
     state: string; 
-
   }
