@@ -3,14 +3,20 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Initialize Sequelize with environment variables or default values
 const sequelizeInstance = new Sequelize({
   dialect: 'postgres',
-  host: process.env.URL_DB, 
-  port: process.env.PORT_DB ? parseInt(process.env.PORT_DB, 10) : undefined,
-  username: process.env.USER_DB,
-  password: process.env.PASSWORD_DB,
-  database: process.env.DATABASE_NAME || 'postgres',
-  dialectOptions: process.env.NODE_ENV === 'production' ? { ssl: { require: true, rejectUnauthorized: false } } : {}
+  host: String(process.env.URL_DB),
+  port: Number(process.env.PORT_DB),
+  username: String(process.env.USER_DB),
+  password: String(process.env.PASSWORD_DB),
+  database: 'bd_sidm',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
 });
 
 // Authenticate the database connection
