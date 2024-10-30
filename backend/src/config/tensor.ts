@@ -4,161 +4,101 @@ import path from 'path';
 import readAndPrintCSV from './csv';
 
 interface SensorData {
-    [key: string]: number | string;
+    columns: string[];
+    values: number[][];
 }
 
 const anomalyDetection: { prediction: number; data: number[]; }[] = [];
+export const COLUMNS_TO_USE = ['Air temperature [K]', 'Process temperature [K]', 'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]'];
+let trainingModel = false;
+let loadedModel: tf.Sequential | null = null;
 
-async function tensor(newInput: number[] | number[][]) {
-    const dataPath = './dataset.csv';
-    const modelDir = './tensor_model';
-    const modelPath = `${modelDir}/model.json`;
+async function tensor(newInput: SensorData) {
+    const modelPath = './tensor_model/model.json';
 
-    let model;
+    if (loadedModel) return detectAnomalies(loadedModel, newInput);
 
-    if (fs.existsSync(modelPath)) {
-        console.log('Loading saved model...');
-        model = await tf.loadLayersModel(`file://${modelPath}`);
-        console.log('Model loaded successfully.');
-    } else {
-
-        console.log('Saved model not found. Training a new model...');
-
-        const sensorData = await loadAndProcessData(dataPath);
-        const columnsToUse = Object.keys(sensorData[0]).filter(
-            key => key !== 'UDI' && key !== 'Failure Type' && key !== 'Target' && key !== 'id'
-
-        );
-
-        const xs = tf.tensor2d(sensorData.map(item => columnsToUse.map(key => item[key] as number)));
-        const ys = tf.tensor2d(sensorData.map(item => item['Target'] as number), [sensorData.length, 1]);
-
-        model = createModel(columnsToUse.length);
-        await trainAndSaveModel(model, xs, ys, modelDir);
+    if (trainingModel) {
+        while (trainingModel) await new Promise(resolve => setTimeout(resolve, 100));
+        return loadedModel ? detectAnomalies(loadedModel, newInput) : [];
     }
-    const detectedAnomaly = {
-        prediction: 0.75, 
-        data: [298.8, 308.9, 1455, 41.3, 208], 
-    }
-    if (isSequentialModel(model)) {
-        return detectedAnomaly
-    } else {
-        console.error('The loaded model is not of the Sequential type.');
-    }
+
+    loadedModel = await loadOrTrainModel(modelPath);
+    return detectAnomalies(loadedModel, newInput);
 }
 
-async function loadAndProcessData(filePath: string): Promise<SensorData[]> {
+async function loadOrTrainModel(modelPath: string): Promise<tf.Sequential> {
+    if (fs.existsSync(modelPath)) return await tf.loadLayersModel(`file://${modelPath}`) as tf.Sequential;
+
+    trainingModel = true;
+    const [sensorData, testData] = await Promise.all([loadAndProcessData('./dataset.csv'), loadAndProcessData('./test_dataset.csv')]);
+    const { xs, ys } = prepareTensors(sensorData);
+    const { xs: xTest, ys: yTest } = prepareTensors(testData);
+
+    const model = createModel(COLUMNS_TO_USE.length);
+    await trainAndSaveModel(model, xs, ys, xTest, yTest, path.dirname(modelPath));
+    trainingModel = false;
+    return model;
+}
+
+async function loadAndProcessData(filePath: string): Promise<SensorData> {
     const rawData = await readAndPrintCSV(filePath);
+    return {
+        columns: COLUMNS_TO_USE,
+        values: rawData.map((item: any) => COLUMNS_TO_USE.map(column => parseFloat(item[column]) || 0))
+    };
+}
 
-    return rawData.map((item: any) => {
-        const processedItem: SensorData = {};
-
-        Object.keys(item).forEach((key) => {
-            if (key !== 'Failure Type') {
-                processedItem[key] = parseFloat(item[key]);
-            }
-        });
-
-        processedItem['Failure Type'] = item['Failure Type'];
-        processedItem['Target'] = parseInt(item['Target'], 10);
-
-        return processedItem;
-    }).filter(item => 
-        Object.keys(item).every(key => 
-            key === 'Failure Type' || key === 'Target' || !isNaN(item[key] as number)
-        ) && !isNaN(item['Target'] as number)
-    );
+function prepareTensors(data: SensorData) {
+    const xs = tf.tensor2d(data.values);
+    const ys = tf.tensor2d(data.values.map(row => row[COLUMNS_TO_USE.indexOf('Target')]));
+    return { xs, ys };
 }
 
 function createModel(inputShape: number): tf.Sequential {
     const model = tf.sequential();
-    model.add(tf.layers.dense(
-        { 
-        units: 300,         // Defines the number of neurons (units) in this layer, allowing it to learn complex patterns
-        activation: 'relu',         // Sets the activation function to ReLU, which helps the model handle non-linear relationships
-        inputShape: [inputShape],          // Specifies the shape of the input data; inputShape expects an array with one item for each feature
-        kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })  // Adds L2 regularization to the layer, penalizing large weights to reduce over fitting
-        }));
-
-    model.add(tf.layers.dropout({ rate: 0.3 }));     // Dropout layer with a 30% dropout rate to prevent overfitting
-
-    model.add(tf.layers.dense({
-        units: 128,
-        activation: 'relu',
-        kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
-    }));
+    model.add(tf.layers.dense({ units: 300, activation: 'relu', inputShape: [inputShape], kernelRegularizer: tf.regularizers.l2({ l2: 0.01 }) }));
     model.add(tf.layers.dropout({ rate: 0.3 }));
-
-    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));     // dense output layer with 1 unit and sigmoid activation for binary classification
-    model.compile({ optimizer: 'adam', loss: 'binaryCrossentropy', metrics: ['accuracy'] });     // model using the Adam optimizer and binary cross-entropy loss for binary classification
- 
+    model.add(tf.layers.dense({ units: 128, activation: 'relu', kernelRegularizer: tf.regularizers.l2({ l2: 0.01 }) }));
+    model.add(tf.layers.dropout({ rate: 0.3 }));
+    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+    model.compile({ optimizer: tf.train.adam(1e-5), loss: 'binaryCrossentropy', metrics: ['accuracy'] });
     return model;
 }
 
-async function trainAndSaveModel(model: tf.Sequential, xs: tf.Tensor, ys: tf.Tensor, modelDir: string) {
-    console.log('Training the model...');
-
-    const weightForNoFailure = 1;
-    const weightForFailure = 9661 / 339;
-
-    // Trains the model using the provided input (xs) and output (ys) data
-    await model.fit(xs, ys, 
-        { 
-         // Sets the number of complete passes over the entire dataset; more epochs allow for better learning but can lead to overfitting if too high
+async function trainAndSaveModel(model: tf.Sequential, xs: tf.Tensor, ys: tf.Tensor, xTest: tf.Tensor, yTest: tf.Tensor, modelDir: string) {
+    await model.fit(xs, ys, {
         epochs: 40,
         batchSize: 32,
-        classWeight: { 0: weightForNoFailure, 1: weightForFailure }
-        }
-    );
-    
-    ensureDirectoryExists(modelDir);
-    await model.save(`file://${path.resolve(modelDir)}`);
-    console.log('Model saved successfully.');
+        classWeight: { 0: 1, 1: 9661 / 339 },
+        validationData: [xTest, yTest]
+    });
+    await model.save(`file://${modelDir}`);
 }
 
-function ensureDirectoryExists(dirPath: string) {
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
+function normalizeColumnName(name: string): string {
+    return name.trim().toLowerCase().replace(/[\s\[\]]+/g, '');
+}
+
+async function detectAnomalies(model: tf.Sequential, sensorData: SensorData) {
+    const normalizedColumns = sensorData.columns.map(normalizeColumnName);
+    const expectedColumns = COLUMNS_TO_USE.map(normalizeColumnName);
+
+    if (!expectedColumns.every(col => normalizedColumns.includes(col))) {
+        console.error('Error: Sensor data columns do not match COLUMNS_TO_USE.');
+        return [];
     }
-}
 
-function isSequentialModel(model: tf.LayersModel): model is tf.Sequential {
-    return (model as tf.Sequential).add !== undefined;
-}
+    const data = sensorData.values.map(row => expectedColumns.map((_, index) => row[index] ?? 0));
+    const predictionsTensor = model.predict(tf.tensor2d(data)) as tf.Tensor;
+    const predictions = await predictionsTensor.array() as number[][];
 
-async function predictFailure(model: tf.LayersModel | tf.Sequential, newInput: number[] | number[][]) {
-    console.log('Making prediction with new data:', newInput);
+    predictions.forEach((predictedValue, index) => {
+        if (predictedValue[0] >= 0.50) anomalyDetection.push({ prediction: predictedValue[0], data: data[index] });
+    });
 
-    
-    const inputData = Array.isArray(newInput[0]) ? newInput as number[][] : [newInput as number[]];
-    const predictionsTensor = model.predict(tf.tensor2d(inputData)) as tf.Tensor;
-
-    try {
-        const predictions = await predictionsTensor.array() as number[][];
-
-        if (Array.isArray(predictions) && Array.isArray(predictions[0])) {
-            predictions.forEach((predictedValue: number[], index: number) => {
-                const result = predictedValue[0] >= 0.50 ? 'Failure detected' : 'No failure';
-                
-                if (predictedValue[0] >= 0.50) {
-                    
-                    anomalyDetection.push({ 
-                        prediction: predictedValue[0], 
-                        data: inputData[index] 
-                    });
-                    console.log('Anomaly detected:', inputData[index]);
-                }
-                
-                console.log(`Prediction result for line ${index + 1}: ${result}`);
-            });
-        } else {
-            console.error('Unexpected prediction format:', predictions);
-        }
-    } catch (error) {
-        console.error('Error during prediction processing:', error);
-    } finally {
-        predictionsTensor.dispose();
-    }
+    predictionsTensor.dispose();
     return anomalyDetection;
 }
+
 export default tensor;
