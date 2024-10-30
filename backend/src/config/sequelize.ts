@@ -4,13 +4,20 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Initialize Sequelize with environment variables or default values
+const isProduction = process.env.NODE_ENV === 'production';
+
 const sequelizeInstance = new Sequelize({
   dialect: 'postgres',
   host: String(process.env.URL_DB), 
   port: Number(process.env.PORT_DB),
-  username: String(process.env.USER_DB) , 
+  username: String(process.env.USER_DB), 
   password: String(process.env.PASSWORD_DB), 
   database: 'postgres', 
+  dialectOptions: {
+    ssl: isProduction
+      ? { require: true, rejectUnauthorized: false } // SSL ativado para produção
+      : false, // SSL desativado para desenvolvimento/local
+  },
 });
 
 // Authenticate the database connection
