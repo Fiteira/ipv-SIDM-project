@@ -30,13 +30,13 @@ sequelizeInstance.authenticate()
   });
 
 // Uncomment this block if you want to synchronize the models with the database 
-
+/*
 sequelizeInstance.sync()
   .then(() => {
     console.log('Database & tables created!');
   }).catch((error) => { 
     console.error('Error to create database & tables', error);
   });
-
+*/
 
 export default sequelizeInstance;

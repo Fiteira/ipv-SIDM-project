@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { validateRequest, findUserByEmail, handleServerError , nestRawResults , findUserByUserNumber } from '../utils/helpers';
+import { handleServerError , nestRawResults } from '../utils/helpers';
+import { findUserByUserNumber } from '../services/user.service';
 import bcrypt from 'bcryptjs';
-import Joi, { ObjectSchema } from 'joi';
 import { User, UserDTO } from '../interfaces/user.interface';
-import { UserModel } from '../models/user.model';
 import { SensorModel } from '../models/sensor.model';
 import { MachineModel } from '../models/machine.model';
 import { FactoryModel } from '../models/factory.model';
@@ -27,16 +26,13 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
   try {
     const user: User | null = await findUserByUserNumber(userNumber);
     
-    if (!user) {
+    if (!user || !bcrypt.compareSync(password, user.password)) {
       res.status(401).json({
         success: false,
         message: "User number or password is incorrect.",
       });
       return;
     }
-
-
-    if (bcrypt.compareSync(password, user.password)) {
 
       const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
       const token = jwt.sign( userDTO , process.env.JWT_SECRET_KEY as string, { expiresIn: '30d' });
@@ -47,72 +43,11 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
         success: true,
         token: token,
       });
-      return;
-    }
-
-    res.status(401).json({
-      success: false,
-      message: "User number or password is incorrect.",
-    });
 
   } catch (error) {
     handleServerError(res, "Authentication error", error);
   }
 };
-
-
-export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const schema: ObjectSchema = Joi.object({
-    name: Joi.string().min(3).required().messages({
-      'string.base': 'Name must be a valid string',
-      'string.empty': 'Name cannot be empty',
-      'string.min': 'Name must have at least {#limit} characters',
-    }),
-    email: Joi.string().email().required().messages({
-      'string.base': 'Email must be a valid string',
-      'string.empty': 'Email cannot be empty',
-      'string.email': 'Email must be a valid email address',
-    }),
-    password: Joi.string().min(6).regex(/^(?=.*[a-zA-Z])(?=.*\d)/).required().messages({
-      'string.base': 'Password must be a valid string',
-      'string.empty': 'Password cannot be empty',
-      'string.min': 'Password must have at least {#limit} characters',
-      'string.pattern.base': 'Password must contain at least one letter and one number',
-    }),
-  });
-
-  const validationErrors = validateRequest(schema, req.body);
-  if (validationErrors) {
-    res.status(400).json({
-      success: false,
-      message: validationErrors[0],
-    });
-    return;
-  }
-
-  try {
-    const userExists = await findUserByEmail(req.body.email);
-    if (userExists) {
-      res.status(409).json({
-        success: false,
-        message: "Email is already registered.",
-      });
-      return;
-    }
-
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash("123456", salt);
-    const newUser = { ...req.body, password: hashedPassword };
-    const createdUser = await UserModel.create(newUser);
-    res.status(201).json({
-      success: true,
-      message: createdUser,
-    });
-  } catch (error) {
-    handleServerError(res, "Error creating user", error);
-  }
-};
-
 
 export const sensorLogin = async (req: Request, res: Response): Promise<any> => {
   try {
