@@ -11,7 +11,11 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
     return
   }
   try {
+
     const user = findUserByUserNumber(userId);
+
+    //const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
+
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
@@ -22,7 +26,17 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getAllUser = async (req: Request, res: Response): Promise<void> => {
+
+export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const users = await UserModel.findAll();
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    handleServerError(res, 'Error fetching users', error);
+  }
+};
+
+export const getUserByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
     res.status(400).json({ success: false, message: 'FactoryId is required' });
@@ -30,7 +44,7 @@ export const getAllUser = async (req: Request, res: Response): Promise<void> => 
   }
 
   try {
-    const users = await UserModel.findAll({ where: { factoryId } });
+    const users = await UserModel.findAll({ where: { factoryId }, attributes: { exclude: ['password'] } });
     if (!users.length) {
       res.status(404).json({ success: false, message: 'No users found for this factory' });
       return;

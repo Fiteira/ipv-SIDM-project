@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getMaintenance,
+  getMaintenanceByFactoryId,
   createMaintenance,
   updateMaintenance,
   deleteMaintenance,
@@ -10,6 +11,8 @@ import {
 const router: Router = Router();
 
 router.get('/:maintenanceId', getMaintenance);
+
+router.get('/factory/:factoryId', getMaintenanceByFactoryId);
 
 router.post('/', createMaintenance);
 

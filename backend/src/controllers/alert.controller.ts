@@ -19,7 +19,7 @@ export const getAlert = async (req: Request, res: Response): Promise<void> => {
 };
 
 
-export const getAllAlerts = async (req: Request, res: Response): Promise<void> => {
+export const getAllAlertsByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
     res.status(400).json({ success: false, message: 'FactoryId is required' });
@@ -42,15 +42,7 @@ export const getAlertByMachineId = async (req: Request, res: Response): Promise<
     }
   
     try {
-      const machines = await AlertModel.findAll({ where: { machineId } });
-
-      if (!machines.length) {
-        res.status(404).json({ success: false, message: 'No machines found for this user' });
-        return;
-      }
-
-      const machineIds = machines.map(machine => machine.machineId);
-      const alerts = await AlertModel.findAll({ where: { machineId: machineIds } });
+      const alerts = await AlertModel.findAll({ where: { machineId: machineId } });
 
       if (!alerts.length) {
         res.status(404).json({ success: false, message: 'No alerts found for this machine' });
@@ -63,31 +55,6 @@ export const getAlertByMachineId = async (req: Request, res: Response): Promise<
       handleServerError(res, 'Error fetching alerts by MachineId', error);
     }
 }
-
-export const getAlertByUserId = async (req: Request, res: Response): Promise<void> => {
-    const { userId } = req.params;
-  
-    try {
-      const machines = await MachineModel.findAll({ where: { userId } });
-  
-      if (!machines.length) {
-        res.status(404).json({ success: false, message: 'No machines found for this user' });
-        return;
-      }
-  
-      const machineIds = machines.map(machine => machine.machineId);
-      const alerts = await AlertModel.findAll({ where: { machineId: machineIds } });
-  
-      if (!alerts.length) {
-        res.status(404).json({ success: false, message: 'No alerts found for this machine' });
-        return;
-      }
-  
-      res.status(200).json({ success: true, data: alerts });
-    } catch (error) {
-      handleServerError(res, 'Error fetching alerts by MachineId', error);
-    }
-  };
 
 export const createAlert = async (req: Request, res: Response): Promise<void> => {
   const { machineId, alertDate, severity, message } = req.body;
