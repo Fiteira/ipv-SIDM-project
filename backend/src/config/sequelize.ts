@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // Initialize Sequelize with environment variables or default values
 const sequelizeInstance = new Sequelize({
   dialect: 'postgres',
@@ -10,12 +12,11 @@ const sequelizeInstance = new Sequelize({
   port: Number(process.env.PORT_DB),
   username: String(process.env.USER_DB),
   password: String(process.env.PASSWORD_DB),
-  database: 'bd_sidm',
+  database:  isProduction ? 'bd_sidm' : '',
   dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
+    ssl:  isProduction
+    ? { require: true, rejectUnauthorized: false }
+    : false,
   },
 });
 
@@ -29,7 +30,6 @@ sequelizeInstance.authenticate()
   });
 
 // Uncomment this block if you want to synchronize the models with the database 
-
 async function initializeSequence() {
   try {
 

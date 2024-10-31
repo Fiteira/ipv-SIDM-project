@@ -24,6 +24,6 @@ export const FactoryModel = sequelize.define<Factory>('Factory', {
   freezeTableName: true, // Prevents table name pluralization
 });
 
-FactoryModel.hasMany(MachineModel, { foreignKey: 'machineId', as: 'machines' });
+FactoryModel.hasMany(MachineModel, { foreignKey: 'factoryId', as: 'machines' });
 
 MachineModel.belongsTo(FactoryModel, { foreignKey: 'factoryId', as: 'factory' });

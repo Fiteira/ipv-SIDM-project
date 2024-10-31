@@ -8,7 +8,7 @@ export default function ProfileScreen() {
 
   const procurarPerfilAPI = () => {
     // Função para procurar perfil na API
-    api.get('/users/3')
+    api.get('/users/1')
       .then((response) => {
         console.log(response.data);
         setPerfil(response.data.data); // Usando setPerfil para atualizar o estado

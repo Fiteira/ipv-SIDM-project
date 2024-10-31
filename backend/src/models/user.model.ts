@@ -38,7 +38,7 @@ export const UserModel = sequelize.define<User>('User', {
   },
   factoryId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: FactoryModel,  
       key: 'factoryId'
@@ -52,12 +52,18 @@ export const UserModel = sequelize.define<User>('User', {
 });
 
 
+UserModel.beforeCreate((user) => {
+  if (user.role !== "adminSystem" && user.factoryId === null) {
+    throw new Error("User must have a factoryId");
+  }
+});
+
 UserModel.belongsTo(FactoryModel, {
   foreignKey: 'factoryId',
   as: 'factory'  
 });
 
-FactoryModel.hasMany(UserModel, { foreignKey: 'userId', as: 'users' });
+FactoryModel.hasMany(UserModel, { foreignKey: 'factoryId', as: 'users' });
 
 
 const createDefaultUser = async () => {
@@ -66,30 +72,35 @@ const createDefaultUser = async () => {
 
   try {
     await FactoryModel.bulkCreate([
-      { factoryName: "Admin Factory", 
-        location: "Admin Location" },
-      { factoryName: "User Factory",
-        location: "User Location" }
+      { factoryName: "Factory XPTO",
+        location: "Location Viseu" }
     ]);
     await UserModel.bulkCreate([
       {  
-        name: "Administrator", 
+        name: "System Administrator", 
         userNumber: 1, 
+        password: password,  
+        role: "adminSystem",
+        factoryId: null
+      },
+      {  
+        name: "Admin Factory XPTO", 
+        userNumber: 2, 
         password: password,  
         role: "admin",
         factoryId: 1
       },
       {  
         name: "User", 
-        userNumber: 2, 
+        userNumber: 3, 
         password: password,  
         role: "user",
-        factoryId: 2
+        factoryId: 1
       }
     ]);
     await MachineModel.bulkCreate([
       { machineName: "Machine 1", factoryId: 1 },
-      { machineName: "Machine 2", factoryId: 2 }
+      { machineName: "Machine 2", factoryId: 1 }
     ]);
     const sensor = await SensorModel.bulkCreate([
       { name: "Sensor 1", machineId: 1, apiKey: "123", sensorType: "xpto_32" },
