@@ -4,13 +4,11 @@ import {
   getAllUsers,
   createUser,
   updateUser,
-  deleteUser,
-  getAllUser
+  deleteUser
 } from '../controllers/user.controller';
 
 const router: Router = Router();
 
-router.get('/:userId', getAllUser);
 
 router.get('/:userId', getUser);
 

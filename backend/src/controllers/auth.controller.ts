@@ -6,6 +6,7 @@ import { User, UserDTO } from '../interfaces/user.interface';
 import { SensorModel } from '../models/sensor.model';
 import { MachineModel } from '../models/machine.model';
 import { FactoryModel } from '../models/factory.model';
+import { UserModel } from '../models/user.model';
 import jwt from 'jsonwebtoken';
 import cacheNode from '../config/cache';
 import dotenv from "dotenv";
