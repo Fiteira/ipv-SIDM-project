@@ -10,9 +10,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const findUserByUserNumber = async (userNumber: string): Promise<User | null> => {
-
-
-  return UserModel.findOne({ where: { userNumber } });
+  return UserModel.findOne({ where: { userNumber }, attributes: { exclude: ['password'] } });
 };
 
 export const createUserService = async (userData: any): Promise<User> => {
