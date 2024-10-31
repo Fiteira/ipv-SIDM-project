@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { MaintenanceModel } from '../models/maintenance.model';
 import { handleServerError } from '../utils/helpers';
+import { MachineModel } from '../models/machine.model';
 
 export const getMaintenance = async (req: Request, res: Response): Promise<void> => {
   const { maintenanceId } = req.params;
@@ -17,6 +18,30 @@ export const getMaintenance = async (req: Request, res: Response): Promise<void>
     res.status(200).json({ success: true, data: maintenance });
   } catch (error) {
     handleServerError(res, 'Error fetching maintenance', error);
+  }
+};
+
+export const getMaintenanceByFactoryId = async (req: Request, res: Response): Promise<void> => {
+  const { factoryId } = req.params;
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'factoryId is required' });
+    return;
+  }
+  try {
+    const maintenances =  await MaintenanceModel.findAll({
+      where: { factoryId },
+      include: [{
+        model: MachineModel,
+        as: 'machines' 
+      }]
+    });
+    if (!maintenances.length) {
+      res.status(404).json({ success: false, message: 'No maintenance records found for this machine' });
+      return;
+    }
+    res.status(200).json({ success: true, data: maintenances });
+  } catch (error) {
+    handleServerError(res, 'Error fetching maintenances by factoryId', error);
   }
 };
 

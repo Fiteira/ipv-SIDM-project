@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getSensor,
+  getAllSensorsByFactoryId,
   createSensor,
   updateSensor,
   deleteSensor,
@@ -10,6 +11,8 @@ import {
 const router: Router = Router();
 
 router.get('/:sensorId', getSensor);
+
+router.get('/factory/:factoryId', getAllSensorsByFactoryId);
 
 router.post('/', createSensor);
 
