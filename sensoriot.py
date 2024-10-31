@@ -4,10 +4,10 @@ import random
 import time
 
 
-API_URL = "http://localhost:3000/api/auth/loginsensor"  
+API_URL = "https://ipv-sidm-project.onrender.com/api/auth/loginsensor"  
 
 
-WS_URL = "http://localhost:3000"  
+WS_URL = "https://ipv-sidm-project.onrender.com"  
 
 
 def authenticate_sensor(api_key):
@@ -35,17 +35,17 @@ class SensorSimulator:
     def __init__(self, target):
         
         if target == 0:  
-            self.airTemp = random.uniform(295.3, 299.0)
-            self.processTemp = random.uniform(305.7, 310.0)
-            self.rotationSpeed = random.uniform(1200, 1600)
-            self.torque = random.uniform(15.0, 40.0)
-            self.toolWear = random.uniform(0, 100)
+            self.airTemp = random.uniform(280.0, 310.0)
+            self.processTemp = random.uniform(290.0, 320.0)
+            self.rotationSpeed = random.uniform(800, 3200)
+            self.torque = random.uniform(5.0, 90.0)
+            self.toolWear = random.uniform(0, 300)
         else:  
-            self.airTemp = random.uniform(299.1, 304.0)
-            self.processTemp = random.uniform(310.1, 313.0)
-            self.rotationSpeed = random.uniform(1400, 2886)
-            self.torque = random.uniform(45.0, 76.0)
-            self.toolWear = random.uniform(100, 253)
+            self.airTemp = random.uniform(310.1, 330.0)
+            self.processTemp = random.uniform(320.1, 340.0)
+            self.rotationSpeed = random.uniform(1600, 3600)
+            self.torque = random.uniform(50.0, 100.0)
+            self.toolWear = random.uniform(200, 400)
     
     def generateReading(self):
         # Ajusta os valores dos atributos da classe
@@ -110,7 +110,7 @@ def connect_to_websocket(token):
             print(f"Dados enviados: {sensor_data}")
 
             
-            time.sleep(2)
+            #time.sleep(0.05)
 
     except Exception as e:
         print(f"Erro ao conectar ao WebSocket: {e}")
