@@ -30,13 +30,36 @@ sequelizeInstance.authenticate()
   });
 
 // Uncomment this block if you want to synchronize the models with the database 
-/*
-sequelizeInstance.sync()
-  .then(() => {
+async function initializeSequence() {
+  try {
+
+    const [results] = await sequelizeInstance.query(`
+      SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'user_number_seq';
+    `);
+
+    if (results.length === 0) {
+      await sequelizeInstance.query(`CREATE SEQUENCE user_number_seq START 10000;`);
+      console.log("Sequência 'user_number_seq' criada com sucesso.");
+    } else {
+      console.log("A sequência 'user_number_seq' já existe.");
+    }
+  } catch (error) {
+    console.error("Erro ao verificar/criar a sequência:", error);
+  }
+}
+
+async function initializeDatabase() {
+  try {
+
+    await initializeSequence();
+
+    await sequelizeInstance.sync();
     console.log('Database & tables created!');
-  }).catch((error) => { 
+  } catch (error) {
     console.error('Error to create database & tables', error);
-  });
-*/
+  }
+}
+
+initializeDatabase();
 
 export default sequelizeInstance;

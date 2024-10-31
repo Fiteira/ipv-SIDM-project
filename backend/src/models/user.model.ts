@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { MachineModel } from "./machine.model";
 import { SensorModel } from "./sensor.model";
 import dotenv from "dotenv";
+import sequelizeInstance from "../config/sequelize";
 
 dotenv.config();
 
@@ -17,10 +18,12 @@ export const UserModel = sequelize.define<User>('User', {
     primaryKey: true
   },
   userNumber: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
+    defaultValue: sequelizeInstance.literal("nextval('user_number_seq')"),
+    unique: true,
     allowNull: false,
-    unique: true  
   },
+
   name: {
     type: DataTypes.STRING,
     allowNull: false
