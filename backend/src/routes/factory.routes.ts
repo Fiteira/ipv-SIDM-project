@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getFactory,
+  getAllFactories,
   createFactory,
   updateFactory,
   deleteFactory,
@@ -9,6 +10,8 @@ import {
 const router: Router = Router();
 
 router.get('/:factoryId', getFactory);
+
+router.get('/', getAllFactories);
 
 router.post('/', createFactory);
 

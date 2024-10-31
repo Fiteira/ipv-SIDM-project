@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { SensorModel } from '../models/sensor.model';
 import { handleServerError } from '../utils/helpers';
+import { MachineModel } from '../models/machine.model';
 
 export const getSensor = async (req: Request, res: Response): Promise<void> => {
   const { sensorId } = req.params;
@@ -19,6 +20,26 @@ export const getSensor = async (req: Request, res: Response): Promise<void> => {
     handleServerError(res, 'Error fetching sensor', error);
   }
 };
+
+export const getAllSensorsByFactoryId = async (req: Request, res: Response): Promise<void> => {
+  const { factoryId } = req.params;
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'FactoryId is required' });
+    return;
+  }
+  try {
+    const sensors = await SensorModel.findAll({ where: { factoryId },
+      include: [{ model: MachineModel, as: 'machines' }]});
+    if (!sensors.length) {
+      res.status(404).json({ success: false, message: 'No sensors found for this factory' });
+      return;
+    }
+    res.status(200).json({ success: true, data: sensors });
+  } catch (error) {
+    handleServerError(res, 'Error fetching sensors by factoryId', error);
+  }
+}
+
 
 export const getSensorsByMachineId = async (req: Request, res: Response): Promise<void> => {
     const { machineId } = req.params;
