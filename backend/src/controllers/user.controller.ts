@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/user.model';
 import { handleServerError } from '../utils/helpers';
+import { createUserService, findUserByUserNumber } from '../services/user.service';
+import bcrypt from 'bcryptjs';
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
@@ -9,7 +11,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
     return
   }
   try {
-    const user = await UserModel.findByPk(userId);
+    const user = findUserByUserNumber(userId);
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
@@ -20,7 +22,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getUserByFactoryId = async (req: Request, res: Response): Promise<void> => {
+export const getAllUser = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
     res.status(400).json({ success: false, message: 'FactoryId is required' });
@@ -41,16 +43,22 @@ export const getUserByFactoryId = async (req: Request, res: Response): Promise<v
 
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
-  const { userNumber, name, role, factoryId, password } = req.body;
-  if (!userNumber || !name || !role || !factoryId || !password) {
+
+
+
+  const { userNumber, name, role, factoryId } = req.body;
+  if (!userNumber || !name || !role || !factoryId) {
     res.status(400).json({ success: false, message: 'UserNumber, name, role, factoryId, and password are required' });
     return;
   }
   try {
-    const newUser = await UserModel.create({ userNumber, name, password, role, factoryId });
-    res.status(201).json({ success: true, data: newUser });
+
+    const newUser = await createUserService(req.body);
+    console.log(newUser);
+    
+    res.status(201).json({ success: true,  message: "User create successfully" });
   } catch (error) {
-    handleServerError(res, 'Error creating user', error);
+    handleServerError(res, 'Error creating user, user already exists', error);
   }
 }; 
 
@@ -74,6 +82,34 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     res.status(200).json({ success: true, data: user });
   } catch (error) {
     handleServerError(res, 'Error updating user', error);
+  }
+};
+
+export const updatePassword = async (req: Request, res: Response): Promise<void> => {
+
+  const { userId } = req.params;
+  const { password } = req.body;
+  if (!userId) {
+    res.status(400).json({ success: false, message: 'UserId is required' });
+    return;
+  }
+
+  try {
+    const user = await UserModel.findByPk(userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+
+    await user.save();
+    res.status(200).json({ success: true, message: "Password update successfully" });
+  } catch (error) {
+    handleServerError(res, 'Error updating user password', error);
   }
 };
 

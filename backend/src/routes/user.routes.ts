@@ -4,10 +4,12 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  getUserByFactoryId,
+  getAllUser
 } from '../controllers/user.controller';
 
 const router: Router = Router();
+
+router.get('/:userId', getAllUser);
 
 router.get('/:userId', getUser);
 
@@ -17,6 +19,5 @@ router.put('/:userId', updateUser);
 
 router.delete('/:userId', deleteUser);
 
-router.get('/factory/:factoryId', getUserByFactoryId);
 
 export default router;

@@ -1,8 +1,6 @@
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { ObjectSchema, ValidationErrorItem } from 'joi';
-import { UserModel } from '../models/user.model';  
-import { User } from '../interfaces/user.interface';  
+import Joi,{ ObjectSchema, ValidationErrorItem } from 'joi';
 
 
 export const generateJwtToken = (email: string, id: number): string => {
@@ -18,22 +16,20 @@ export const validateRequest = (schema: ObjectSchema, body: any): string[] | nul
   return null;
 };
 
-export const findUserByEmail = async (email: string): Promise<User | null> => {
-  try {
-    const user = await UserModel.findOne({ where: { email } });
-    return user; 
-  } catch (error) {
-    throw new Error("Error verifying user email: " + error);
-  }
-};
-
-export const findUserByUserNumber = async (userNumber: string): Promise<User | null> => {
-  try {
-    const user: User = nestRawResults(await UserModel.findOne({ where: { userNumber }, raw: true }));
-    return user; 
-  } catch (error) {
-    throw new Error("Error verifying user number: " + error);
-  }
+export const userRegistrationSchema = (): ObjectSchema => {
+  return Joi.object({
+    name: Joi.string().min(3).required().messages({
+      'string.base': 'Name must be a valid string',
+      'string.empty': 'Name cannot be empty',
+      'string.min': 'Name must have at least {#limit} characters',
+    }),
+    password: Joi.string().min(6).regex(/^(?=.*[a-zA-Z])(?=.*\d)/).required().messages({
+      'string.base': 'Password must be a valid string',
+      'string.empty': 'Password cannot be empty',
+      'string.min': 'Password must have at least {#limit} characters',
+      'string.pattern.base': 'Password must contain at least one letter and one number',
+    })
+  });
 };
 
 export const handleServerError = (res: Response, message: string, error: any): Response => {
@@ -81,4 +77,5 @@ export function nestRawResults(data: any) {
 
   return result;
 }
+
 
