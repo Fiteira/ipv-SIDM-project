@@ -27,18 +27,18 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
   try {
     const user: User | null = await findUserByUserNumber(userNumber);
     
-    if (!user || !bcrypt.compareSync(password, user.password)) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       res.status(401).json({
         success: false,
         message: "User number or password is incorrect.",
       });
       return;
     }
-
-      const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
-      const token = jwt.sign( userDTO , process.env.JWT_SECRET_KEY as string, { expiresIn: '30d' });
-      console.log("Token generate: ", token);
-      cacheNode.set(`user_${token}`, userDTO);
+    
+    const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
+    const token = jwt.sign(userDTO, process.env.JWT_SECRET_KEY as string, { expiresIn: '30d' });
+    console.log("Token generate: ", token);
+    cacheNode.set(`user_${token}`, userDTO);
 
       res.status(200).json({
         success: true,
@@ -46,6 +46,8 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       });
 
   } catch (error) {
+    console.log(error);
+    
     handleServerError(res, "Authentication error", error);
   }
 };

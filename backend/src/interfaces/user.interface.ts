@@ -3,7 +3,7 @@ import { Factory } from "./factory.interface";
 
 export interface User extends Model {
   userId: number;  
-  userNumber: string;  
+  userNumber: number;  
   name: string; 
   password: string;
   role: string; 
@@ -13,7 +13,7 @@ export interface User extends Model {
 
 export interface UserDTO {
   userId: number;
-  userNumber: string;
+  userNumber: number;
   name: string;
   role: string;
   factoryId: number;
