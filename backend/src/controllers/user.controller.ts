@@ -12,7 +12,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
   try {
 
-    const user = await findUserByUserNumber(userId);
+    const user = await findUserByUserNumber(Number(userId));
     //const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
 
     if (!user) {

@@ -40,7 +40,7 @@ async function initializeSequence() {
     if (results.length === 0) {
       await sequelizeInstance.query(`CREATE SEQUENCE user_number_seq START 10000;`);
       console.log("Sequência 'user_number_seq' criada com sucesso.");
-    } else {
+    } else { 
       console.log("A sequência 'user_number_seq' já existe.");
     }
   } catch (error) {
@@ -60,6 +60,6 @@ async function initializeDatabase() {
   }
 }
 
-initializeDatabase();
+//initializeDatabase();
 
 export default sequelizeInstance;
