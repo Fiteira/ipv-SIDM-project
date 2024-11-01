@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, DrawerContentComponentProps } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, StackScreenProps  } from '@react-navigation/stack';
 import { NativeBaseProvider, Avatar, HStack, VStack, Text } from 'native-base';
 import { TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,7 +16,7 @@ const Stack = createStackNavigator();
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   return (
     <DrawerContentScrollView {...props}>
-     {/* Avatar e Nome do Usuário na parte superior */}
+     {/* Avatar e Nome do User na parte superior */}
      <TouchableOpacity onPress={() => props.navigation.navigate('Profile Screen')}>
         <HStack alignItems="center" space={3} padding={4}>
           <Avatar size="md" source={avatar} />
@@ -62,9 +62,11 @@ export default function App() {
     <NativeBaseProvider>
       <Stack.Navigator>
         {!isAuthenticated ? (
-          <Stack.Screen 
+          <Stack.Screen
             name="Login" 
-            component={LoginScreen} 
+            component={(props: StackScreenProps<any>) => ( // Define o tipo de props
+              <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} />
+            )} 
             options={{ headerShown: false }} 
           />
         ) : (

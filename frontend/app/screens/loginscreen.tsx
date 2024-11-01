@@ -1,21 +1,15 @@
-
-// Em ./screens/loginscreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // Aqui você pode adicionar a lógica para autenticação,
-    // como chamar uma API com os dados de `userNumber` e `password`.
-    // Exemplo de validação simples:
+    const handleLogin = () => {
     if (userNumber === '123' && password === 'senha') {
-      // Se a autenticação for bem-sucedida, navegue para a tela principal
       Alert.alert('Sucesso', 'Login realizado com sucesso!');
-      // Aqui poderia mudar o estado global `isAuthenticated` para `true`
-      navigation.replace('Main'); // Redireciona para o DrawerNavigator
+      setIsAuthenticated(true); // Define como autenticado
+      navigation.navigate('Home'); // Navega para HomeScreen
     } else {
       Alert.alert('Erro', 'Número de usuário ou senha incorretos');
     }
@@ -26,14 +20,14 @@ export default function LoginScreen({ navigation }: any) {
       <Text style={styles.title}>Login Page</Text>
       <TextInput
         style={styles.input}
-        placeholder="Número de Usuário"
+        placeholder="Número de Utilizador"
         keyboardType="numeric"
         value={userNumber}
         onChangeText={setUserNumber}
       />
       <TextInput
         style={styles.input}
-        placeholder="Senha"
+        placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
