@@ -122,10 +122,13 @@ const handleSensorDisconnect = (socket: Socket) => {
 };
 
 const persistSensorDataFromCache = async () => {
-  const allCachedData = cacheNode.keys().map(sensorToken => ({
-    sensorToken,
-    data: cacheNode.get(sensorToken) as CachedSensorData[] || [],
-  }));
+
+  const allCachedData = cacheNode.keys()
+    .filter(key => key.startsWith('sensor_'))
+    .map(sensorToken => ({
+      sensorToken,
+      data: cacheNode.get(sensorToken) as CachedSensorData[] || [],
+    }));
 
   for (const sensor of allCachedData) {
     const { sensorToken, data: cachedData } = sensor;

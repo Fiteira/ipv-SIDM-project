@@ -60,6 +60,6 @@ async function initializeDatabase() {
   }
 }
 
-//initializeDatabase();
+initializeDatabase();
 
 export default sequelizeInstance;
