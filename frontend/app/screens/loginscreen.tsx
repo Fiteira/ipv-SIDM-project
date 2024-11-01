@@ -1,17 +1,32 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Para armazenar o token
 
 export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
 
-    const handleLogin = () => {
-    if (userNumber === '123' && password === 'senha') {
-      Alert.alert('Sucesso', 'Login realizado com sucesso!');
-      setIsAuthenticated(true); // Define como autenticado
-      navigation.navigate('Home'); // Navega para HomeScreen
-    } else {
-      Alert.alert('Erro', 'Número de usuário ou senha incorretos');
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/login', {
+        userNumber,
+        password,
+      });
+
+      if (response.data.success) {
+        // Armazena o token no armazenamento seguro
+        await AsyncStorage.setItem('token', response.data.token);
+
+        Alert.alert('Sucesso', 'Login realizado com sucesso!');
+        setIsAuthenticated(true);
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Erro', 'Número de usuário ou senha incorretos');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erro', 'Ocorreu um erro ao tentar fazer login.');
     }
   };
 
