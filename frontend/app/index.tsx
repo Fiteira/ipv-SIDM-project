@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, DrawerContentComponentProps } from '@react-navigation/drawer';
 import { createStackNavigator, StackScreenProps  } from '@react-navigation/stack';
 import { NativeBaseProvider, Avatar, HStack, VStack, Text } from 'native-base';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, ActivityIndicator, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import AdminAppHomeScreen from './screens/homescreen'; // Importando a HomeScreen
 import ProfileScreen from './screens/profilescreen'; // Importando a HomeScreen
 import LoginScreen from './screens/loginscreen'; // Importando o LoginScreen
@@ -56,7 +58,26 @@ function DrawerNavigator() {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // Verifica a existência do token no AsyncStorage ao inicializar o app
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem('token');
+      setIsAuthenticated(!!token);
+    };
+
+    checkToken();
+  }, []);
+
+  // Para mostrar spinner
+  if (isAuthenticated === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <NativeBaseProvider>

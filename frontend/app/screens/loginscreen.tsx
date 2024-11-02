@@ -25,7 +25,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
         Alert.alert('Erro', 'Número de usuário ou senha incorretos');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Erro na autenticação:', error);
       Alert.alert('Erro', 'Ocorreu um erro ao tentar fazer login.');
     }
   };
