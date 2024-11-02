@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import axios from 'axios';
+import api from '@/config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Para armazenar o token
 
 export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
@@ -9,7 +9,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await api.post('/auth/login', {
         userNumber,
         password,
       });
