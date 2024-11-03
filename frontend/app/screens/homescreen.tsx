@@ -34,8 +34,7 @@ export default function HomeScreen() {
 
   const renderFactoryCard = ({ item }: { item: Factory }) => (
     <Box
-      borderWidth="1"
-      borderColor="coolGray.300"
+      shadow={2}
       borderRadius="md"
       padding="4"
       marginBottom="4"
@@ -74,7 +73,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
   },
   listContainer: {
     paddingBottom: 16,

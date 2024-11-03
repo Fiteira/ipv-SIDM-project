@@ -1,37 +1,78 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
-import api from '../../config/api';
+import { View, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeBaseProvider, VStack, HStack, Avatar, Text, Box, Spinner, Button  } from 'native-base';
+import avatarImage from '@/assets/avatar.png';
 
 export default function ProfileScreen() {
-  // Definindo o estado do perfil com useState
-  const [perfil, setPerfil] = useState<any>({});
+  const [perfil, setPerfil] = useState<{ name: string; userNumber: string; role: string } | null>(null);
 
-  const procurarPerfilAPI = () => {
-    // Função para procurar perfil na API
-    api.get('/users/1')
-      .then((response) => {
-        console.log(response.data);
-        setPerfil(response.data.data); // Usando setPerfil para atualizar o estado
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const user = await AsyncStorage.getItem('user');
+        if (user) {
+          const parsedUser = JSON.parse(user);
+          setPerfil(parsedUser);
+        }
+      } catch (error) {
+        console.error("Failed to load user profile:", error);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  const handleEditProfile = () => {
+    // Lógica para abrir uma tela de edição ou habilitar a edição dos campos
+    console.log("Edit Profile button clicked");
   };
 
   return (
-    <View style={styles.container}>
-      <Text>Profile Screen</Text>
-      <Button title='Ver perfil' onPress={procurarPerfilAPI} />
+    <NativeBaseProvider>
+      <Box style={styles.container}>
+        <VStack space={4} alignItems="center">
+          <Avatar size="2xl" source={avatarImage} />
+          <Text fontSize="2xl" fontWeight="bold">
+            Profile
+          </Text>
 
-      {/* Verificando se o perfil existe e renderizando os dados */}
-      {perfil && perfil.name && (
-        <>
-          <Text>Perfil:</Text>
-          <Text>{perfil.name}</Text>
-          <Text>{perfil.userNumber}</Text>
-        </>
-      )}
-    </View>
+          {perfil ? (
+            <VStack space={2} alignItems="left" bg="light.50" p={4} borderRadius="lg" shadow={2} width="80%">
+              <HStack space={2} alignItems="left">
+                <Text fontSize="md" fontWeight="semibold" color="coolGray.800">
+                  Name:
+                </Text>
+                <Text fontSize="md" color="coolGray.600">
+                  {perfil.name}
+                </Text>
+              </HStack>
+              <HStack space={2} alignItems="left">
+                <Text fontSize="md" fontWeight="semibold" color="coolGray.800">
+                  Number:
+                </Text>
+                <Text fontSize="md" color="coolGray.600">
+                  {perfil.userNumber}
+                </Text>
+              </HStack>
+              <HStack space={2} alignItems="left">
+                <Text fontSize="md" fontWeight="semibold" color="coolGray.800">
+                  Role:
+                </Text>
+                <Text fontSize="md" color="coolGray.600">
+                  {perfil.role}
+                </Text>
+              </HStack>
+              <Button mt={4} colorScheme="darkBlue" alignSelf="center" onPress={handleEditProfile}>
+                Editar Perfil
+              </Button>
+            </VStack>
+          ) : (
+            <Spinner size="lg" color="primary.500" />
+          )}
+        </VStack>
+      </Box>
+    </NativeBaseProvider>
   );
 }
 
@@ -40,5 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    padding: 16,
   },
 });
