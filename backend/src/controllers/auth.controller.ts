@@ -100,7 +100,7 @@ export const sensorLogin = async (req: Request, res: Response): Promise<any> => 
     console.log("Sensor found: ", JSON.stringify(sensor));
 
     const sensorData = nestRawResults(sensor);
-    console.log("Sensor data: ", sensorData);
+    //console.log("Sensor data: ", sensorData);
 
     const token = jwt.sign({ sensor: sensorData }, process.env.JWT_SECRET_KEY as string, { expiresIn: '1h' });
 

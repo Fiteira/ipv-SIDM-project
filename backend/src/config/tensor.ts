@@ -89,11 +89,23 @@ async function detectAnomalies(model: tf.Sequential, sensorData: SensorData) {
         return [];
     }
 
-    const data = sensorData.values.map(row => expectedColumns.map((_, index) => row[index] ?? 0));
+    console.log("SENSOR DATA" + JSON.stringify(sensorData));
+
+    const data = sensorData.values.map((row) => {
+        return expectedColumns.map((col) => {
+            const index = normalizedColumns.indexOf(col);
+            return index !== -1 && row[index] !== undefined ? row[index] : 0;
+        });
+    });
+    
+    
     const predictionsTensor = model.predict(tf.tensor2d(data)) as tf.Tensor;
     const predictions = await predictionsTensor.array() as number[][];
 
     predictions.forEach((predictedValue, index) => {
+
+        console.log("PREDICTED VALUE: " + predictedValue[0] + "  INDEX:" + data[index] + "\n"); 
+        
         if (predictedValue[0] >= 0.50) anomalyDetection.push({ prediction: predictedValue[0], data: data[index] });
     });
 
