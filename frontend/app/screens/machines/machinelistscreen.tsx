@@ -21,9 +21,11 @@ export default function MachineListScreen() {
   const route = useRoute<MachineListRouteProp>();
   const { factoryId } = route.params;
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchMachines = () => {
+    setRefreshing(true);
     api.get(`/machines/factory/${factoryId}`)
       .then((response) => {
         setMachines(response.data.data);
@@ -32,12 +34,15 @@ export default function MachineListScreen() {
         console.error('Erro ao carregar as máquinas:', error);
         Alert.alert('Erro', 'Não foi possível carregar as máquinas.');
       })
-      .finally(() => setLoading(false));
-  }, [factoryId]);
+      .finally(() => {
+        setRefreshing(false);
+        setLoading(false);
+      });
+  };
 
-  if (loading) {
-    return <Spinner color="blue.500" />;
-  }
+  useEffect(() => {
+    fetchMachines();
+  }, [factoryId]);
 
   const renderMachineCard = ({ item }: { item: Machine }) => (
     <Box
@@ -61,6 +66,10 @@ export default function MachineListScreen() {
     </Box>
   );
 
+  if (loading) {
+    return <Spinner color="blue.500" />;
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -68,6 +77,8 @@ export default function MachineListScreen() {
         renderItem={renderMachineCard}
         keyExtractor={(item) => item.machineId}
         contentContainerStyle={styles.listContainer}
+        refreshing={refreshing}
+        onRefresh={fetchMachines}
       />
     </View>
   );
