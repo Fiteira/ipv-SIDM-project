@@ -149,10 +149,10 @@ const persistSensorDataFromCache = async () => {
 
         const structuredData: SensorData = {
           columns: COLUMNS_TO_USE,
-          values: cachedData.map(entry => COLUMNS_TO_USE.map(column => entry.value[column] ?? 0))
+          values: cachedData.map(entry => entry.value)
         };
 
-        const anomalies = await detectAnomalies(structuredData, sensorId, machineId, cachedData);
+        const anomalies = await anomalyDetectionHandler(structuredData, sensorId, machineId, cachedData);
         if (!anomalies) console.log(`No anomalies detected for sensor ${sensorId}.`);
         cacheNode.del(sensorToken);
       } catch (error) {
@@ -164,11 +164,23 @@ const persistSensorDataFromCache = async () => {
   }
 };
 
-const detectAnomalies = async (data: SensorData, sensorId: number, machineId: number, cachedData: CachedSensorData[]) => {
-  const anomalies = await tensor(data).catch((error) => {
+const anomalyState = new Map<number, boolean>();
+
+const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machineId: number, cachedData: CachedSensorData[]) => {
+  
+  const formattedData = {
+    columns: data.columns,
+    values: Array.isArray(data.values) && Array.isArray(data.values[0]?.values)
+      ? (data.values as unknown as Array<{ values: number[] }>).map((sensorData: { values: number[] }) => sensorData.values)
+      : data.values as number[][]
+  };
+
+  const anomalies = await tensor(formattedData).catch((error) => {
     console.error('Error processing with machine learning model:', error);
     return [];
   });
+
+  let inAnomaly = anomalyState.get(sensorId) || false;
 
   if (Array.isArray(anomalies) && anomalies.length > 0) {
     anomalies.forEach(async (anomalyData, index) => {
@@ -176,8 +188,8 @@ const detectAnomalies = async (data: SensorData, sensorId: number, machineId: nu
       if (correspondingData) {
         const severity = determineSeverity(anomalyData.prediction);
         const alertMessage = `Anomaly detected: value ${JSON.stringify(correspondingData.value)}`;
-        if (machineId && sensorId) {
-          await AlertModel.create({
+        if (anomalyData.prediction > 0.5 && !inAnomaly) {
+          const alert =  await AlertModel.create({
             machineId,
             sensorId,
             alertDate: correspondingData.timestamp,
@@ -185,9 +197,11 @@ const detectAnomalies = async (data: SensorData, sensorId: number, machineId: nu
             message: alertMessage,
             state: 'new',
           });
-          console.log(`Alert created for sensor ${sensorId} with severity ${severity}`);
+          console.log(`Alert created with ID ${alert.alertId} for sensor ${sensorId} with severity ${severity}`);
+          inAnomaly = true;
         } else {
           console.warn("Insufficient data to create alert: machineId or sensorId is missing.");
+          inAnomaly = false;
         }
       }
     });
