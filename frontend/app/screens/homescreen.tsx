@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Box, FlatList, Text, Icon, VStack, HStack } from 'native-base';
+import { View, StyleSheet, Alert } from 'react-native';
+import { Box, FlatList, Text, Icon, VStack, HStack, Spinner } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import api from '../../config/api';
 
@@ -9,31 +9,29 @@ interface Factory {
     factoryName: string;
     location: string;
 }
-
+//Teste
 export default function HomeScreen() {
   const [factories, setFactories] = useState<Factory[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-    // Função para buscar as fábricas da API
-    const fetchFactories = () => {
-        setRefreshing(true);
-        api.get('/factories')
-        .then((response) => {
-            console.log(response.data);
-            setFactories(response.data.data); // Atualiza o estado com os dados recebidos
-        })
-        .catch((error) => {
-            console.log('Erro ao buscar as fábricas:', error);
-        })
-        .finally(() => setRefreshing(false));
-    };
+  const fetchFactories = () => {
+    setRefreshing(true);
+    api.get('/factories')
+      .then((response) => {
+        console.log(response.data);
+        setFactories(response.data.data);
+      })
+      .catch((error) => {
+        console.log('Erro ao buscar as fábricas:', error);
+        Alert.alert('Erro', 'Não foi possível carregar as fábricas. Tente novamente mais tarde.');
+      })
+      .finally(() => setRefreshing(false));
+  };
 
-    // Chamada da função ao montar o componente
-    useEffect(() => {
-        fetchFactories();
-    }, []);
+  useEffect(() => {
+    fetchFactories();
+  }, []);
 
-  // Renderizar cada card de fábrica
   const renderFactoryCard = ({ item }: { item: Factory }) => (
     <Box
       borderWidth="1"
@@ -59,13 +57,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {refreshing && <Spinner color="blue.500" />}
       <FlatList
         data={factories}
         renderItem={renderFactoryCard}
         keyExtractor={(item) => item.factoryId}
         contentContainerStyle={styles.listContainer}
-
-        // Configurações para "Pull-to-Refresh"
         refreshing={refreshing}
         onRefresh={fetchFactories}
       />
@@ -78,12 +75,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
   },
   listContainer: {
     paddingBottom: 16,

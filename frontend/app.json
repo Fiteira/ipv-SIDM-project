@@ -1,12 +1,13 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Sensor Monitor",
+    "slug": "sensor-monitor",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/dreamy.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
+    "projectId": "02322587-e706-4724-abac-66b4ea98a0c8",
     "splash": {
       "image": "./assets/images/dreamy.png",
       "resizeMode": "contain",
@@ -18,7 +19,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "package": "com.sidm.sensormonitor",
+        "googleServicesFile": "./google-services.json",
+        "useNextNotificationsApi": true
       }
     },
     "web": {

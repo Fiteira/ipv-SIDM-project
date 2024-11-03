@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "579517300495",
+    "project_id": "sidm-ca6cc",
+    "storage_bucket": "sidm-ca6cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579517300495:android:31149568e4eee3f794c87a",
+        "android_client_info": {
+          "package_name": "com.sidm.sensormonitor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnrN9udvdaLjGA5EVS0vpuZRQH7cun2NA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
