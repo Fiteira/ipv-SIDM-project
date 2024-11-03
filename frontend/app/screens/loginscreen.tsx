@@ -1,32 +1,46 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import axios from 'axios';
+import Constants from 'expo-constants'; // Importe o Constants
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Para armazenar o token
+import api from '@/config/api';
+import * as Notifications from 'expo-notifications'; // Importe o expo-notifications
+import { Axios, AxiosError } from 'axios';
 
-export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
+export default function LoginScreen({ navigation, setIsAuthenticated, deviceToken }: any) {
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+
+  async function handleLogin() {
+    try {/*
+      // Obtém o token do dispositivo
+      const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? process.env.EXPO_PUBLIC_PROJECT_ID;
+      if (!projectId) {
+        return;
+      }
+  
+      const token = await Notifications.getExpoPushTokenAsync({ projectId });
+      setExpoPushToken(token.data); // Armazena o token correto
+      console.log("Token criado")*/
+
+      const response = await api.post('/auth/login', {
         userNumber,
         password,
+        deviceToken: deviceToken, // Envia o token do dispositivo no corpo da requisição
       });
-
-      if (response.data.success) {
+      
+  
+      if (response.data && response.data.success) {
         // Armazena o token no armazenamento seguro
         await AsyncStorage.setItem('token', response.data.token);
-
-        Alert.alert('Sucesso', 'Login realizado com sucesso!');
         setIsAuthenticated(true);
-        navigation.navigate('Home');
+        navigation.navigate('Homepage');
       } else {
-        Alert.alert('Erro', 'Número de usuário ou senha incorretos');
+        Alert.alert('Error', 'User number or password is incorrect.');
       }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Erro', 'Ocorreu um erro ao tentar fazer login.');
+    } catch (error: AxiosError | any) {
+      Alert.alert('Error', error.response?.data?.message || "There was an error trying to login.");
+      console.log(error)
     }
   };
 

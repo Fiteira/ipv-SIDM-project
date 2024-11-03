@@ -18,4 +18,5 @@ export interface UserDTO {
   role: string;
   factoryId: number;
   factory?: Factory;
+  deviceToken?: string;
 }
