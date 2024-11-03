@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Alert } from 'react-native';
 import { Box, Spinner, Button, VStack } from 'native-base';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 import api from '../../../config/api';
 
 type RootStackParamList = {
   FactoryDetail: { factoryId: string };
+  MachineList: { factoryId: string };
 };
 
 type FactoryDetailRouteProp = RouteProp<RootStackParamList, 'FactoryDetail'>;
@@ -21,6 +23,7 @@ export default function FactoryDetailScreen() {
   const { factoryId } = route.params;
   const [factory, setFactory] = useState<Factory | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     api.get(`/factories/${factoryId}`)
@@ -52,7 +55,10 @@ export default function FactoryDetailScreen() {
       <Text style={styles.location}>Location: {factory.location}</Text>
 
       <VStack space={4} marginTop={6}>
-        <Button colorScheme="darkBlue">
+        <Button
+          colorScheme="darkBlue"
+          onPress={() => navigation.navigate('MachineList', { factoryId })}
+        >
           Machines
         </Button>
         <Button colorScheme="darkBlue">

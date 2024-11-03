@@ -12,6 +12,8 @@ import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
 import LoginScreen from './screens/loginscreen';
 import FactoryDetailScreen from './screens/factories/factorydetailscreen';
+import MachineListScreen from './screens/machines/machinelistscreen';
+
 
 import avatar from '../assets/avatar.png';
 
@@ -212,7 +214,12 @@ export default function App() {
               name="FactoryDetail"
               component={FactoryDetailScreen}
               options={{ title: 'Factory Details' }}
-          />
+            />
+            <Stack.Screen
+              name="MachineList"
+              component={MachineListScreen}
+              options={{ title: 'Machines' }}
+            />
         </>
         )}
       </Stack.Navigator>

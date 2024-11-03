@@ -33,9 +33,6 @@ export default function ProfileScreen() {
       <Box style={styles.container}>
         <VStack space={4} alignItems="center">
           <Avatar size="2xl" source={avatarImage} />
-          <Text fontSize="2xl" fontWeight="bold">
-            Profile
-          </Text>
 
           {perfil ? (
             <VStack space={2} alignItems="left" bg="light.50" p={4} borderRadius="lg" shadow={2} width="80%">
