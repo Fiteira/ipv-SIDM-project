@@ -6,6 +6,8 @@ import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
 import LoginScreen from './screens/loginscreen';
@@ -21,13 +23,31 @@ interface CustomDrawerContentProps extends DrawerContentComponentProps {
 }
 
 function CustomDrawerContent(props: CustomDrawerContentProps) {
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const user = await AsyncStorage.getItem('user');
+        if (user) {
+          const parsedUser = JSON.parse(user);
+          setUserName(parsedUser.name);
+        }
+      } catch (error) {
+        console.error("Failed to load user name:", error);
+      }
+    };
+
+    loadUserName();
+  }, []);
+
   return (
     <DrawerContentScrollView {...props}>
       <TouchableOpacity onPress={() => props.navigation.navigate('Profile Screen')}>
         <HStack alignItems="center" space={3} padding={4}>
           <Avatar size="md" source={avatar} />
           <VStack>
-            <Text fontSize="md" bold>Nome do User</Text>
+            <Text fontSize="md" bold>{userName || 'Nome do User'}</Text>
           </VStack>
         </HStack>
       </TouchableOpacity>
@@ -177,11 +197,10 @@ export default function App() {
         {!isAuthenticated ? (
           <Stack.Screen
             name="Login"
-            component={(props: any) => (
-              <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} deviceToken={expoPushToken} />
-            )}
             options={{ headerShown: false }}
-          />
+          >
+            {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} deviceToken={expoPushToken} />}
+          </Stack.Screen>
         ) : (
           <Stack.Screen
             name="Main"

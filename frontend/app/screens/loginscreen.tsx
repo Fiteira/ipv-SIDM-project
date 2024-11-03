@@ -27,10 +27,10 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
         deviceToken: deviceToken, // Envia o token do dispositivo no corpo da requisição
       });
       
-  
       if (response.data && response.data.success) {
-        // Armazena o token no armazenamento seguro
+        // Armazena o token e user no armazenamento seguro
         await AsyncStorage.setItem('token', response.data.token);
+        await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
         setIsAuthenticated(true);
         navigation.navigate('Homepage');
       } else {
