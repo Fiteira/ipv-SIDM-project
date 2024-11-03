@@ -10,7 +10,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
 
-
   async function handleLogin() {
     try {/*
       // Obtém o token do dispositivo
@@ -22,7 +21,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
       const token = await Notifications.getExpoPushTokenAsync({ projectId });
       setExpoPushToken(token.data); // Armazena o token correto
       console.log("Token criado")*/
-
       const response = await api.post('/auth/login', {
         userNumber,
         password,
