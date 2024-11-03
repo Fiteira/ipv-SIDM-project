@@ -3,38 +3,38 @@ import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Icon, HStack, VStack, Spinner, Text } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
-import api from '../../../config/api';
+import api from '../../../../config/api';
 
 type RootStackParamList = {
-  MachineList: { factoryId: string };
-  MachineDetail: { machineId: string };
+  SensorList: { machineId: string };
+  SensorDetail: { sensorId: string };
 };
 
-type MachineListRouteProp = RouteProp<RootStackParamList, 'MachineList'>;
+type SensorListRouteProp = RouteProp<RootStackParamList, 'SensorList'>;
 
-interface Machine {
-  machineId: string;
-  machineName: string;
-  state: string;
+interface Sensor {
+  sensorId: string;
+  name: string;
+  sensorType: string;
 }
 
-export default function MachineListScreen() {
-  const route = useRoute<MachineListRouteProp>();
-  const { factoryId } = route.params;
-  const [machines, setMachines] = useState<Machine[]>([]);
+export default function SensorListScreen() {
+  const route = useRoute<SensorListRouteProp>();
+  const { machineId } = route.params;
+  const [sensors, setSensors] = useState<Sensor[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  const fetchMachines = () => {
+  const fetchSensors = () => {
     setRefreshing(true);
-    api.get(`/machines/factory/${factoryId}`)
+    api.get(`/sensors/machine/${machineId}`)
       .then((response) => {
-        setMachines(response.data.data);
+        setSensors(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar as máquinas:', error);
-        Alert.alert('Erro', 'Não foi possível carregar as máquinas.');
+        console.error('Erro ao carregar os sensores:', error);
+        Alert.alert('Erro', 'Não foi possível carregar os sensores.');
       })
       .finally(() => {
         setRefreshing(false);
@@ -43,11 +43,11 @@ export default function MachineListScreen() {
   };
 
   useEffect(() => {
-    fetchMachines();
-  }, [factoryId]);
+    fetchSensors();
+  }, [machineId]);
 
-  const renderMachineCard = ({ item }: { item: Machine }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('MachineDetail', { machineId: item.machineId })}>
+  const renderSensorCard = ({ item }: { item: Sensor }) => (
+    <TouchableOpacity onPress={() => navigation.navigate('SensorDetail', { sensorId: item.sensorId })}>
         <Box
         shadow={2}
         borderRadius="md"
@@ -56,13 +56,13 @@ export default function MachineListScreen() {
         bg="light.50"
         >
         <HStack space={3} alignItems="center">
-            <Icon as={MaterialIcons} name="precision-manufacturing" size="lg" color="darkBlue.500" />
+            <Icon as={MaterialIcons} name="sensors" size="lg" color="darkBlue.500" />
             <VStack>
             <Text bold fontSize="md">
-                {item.machineName}
+                {item.name}
             </Text>
             <Text fontSize="sm" color="coolGray.600">
-                {item.state}
+                {item.sensorType}
             </Text>
             </VStack>
         </HStack>
@@ -77,12 +77,12 @@ export default function MachineListScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={machines}
-        renderItem={renderMachineCard}
-        keyExtractor={(item) => item.machineId}
+        data={sensors}
+        renderItem={renderSensorCard}
+        keyExtractor={(item) => item.sensorId}
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
-        onRefresh={fetchMachines}
+        onRefresh={fetchSensors}
       />
     </View>
   );
