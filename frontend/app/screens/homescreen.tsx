@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, TouchableOpacity  } from 'react-native';
 import { Box, FlatList, Text, Icon, VStack, HStack, Spinner } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+
 import api from '../../config/api';
+
+type RootStackParamList = {
+  FactoryDetail: { factoryId: string };
+};
 
 interface Factory {
     factoryId: string;
@@ -13,6 +19,7 @@ interface Factory {
 export default function HomeScreen() {
   const [factories, setFactories] = useState<Factory[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const fetchFactories = () => {
     setRefreshing(true);
@@ -33,25 +40,27 @@ export default function HomeScreen() {
   }, []);
 
   const renderFactoryCard = ({ item }: { item: Factory }) => (
-    <Box
-      shadow={2}
-      borderRadius="md"
-      padding="4"
-      marginBottom="4"
-      bg="light.50"
-    >
-      <HStack space={3} alignItems="center">
-        <Icon as={MaterialIcons} name="factory" size="lg" color="darkBlue.500" />
-        <VStack>
-          <Text bold fontSize="md">
-            {item.factoryName}
-          </Text>
-          <Text fontSize="sm" color="coolGray.600">
-            {item.location}
-          </Text>
-        </VStack>
-      </HStack>
-    </Box>
+    <TouchableOpacity onPress={() => navigation.navigate('FactoryDetail', { factoryId: item.factoryId })}>
+      <Box
+        shadow={2}
+        borderRadius="md"
+        padding="4"
+        marginBottom="4"
+        bg="light.50"
+      >
+        <HStack space={3} alignItems="center">
+          <Icon as={MaterialIcons} name="factory" size="lg" color="darkBlue.500" />
+          <VStack>
+            <Text bold fontSize="md">
+              {item.factoryName}
+            </Text>
+            <Text fontSize="sm" color="coolGray.600">
+              {item.location}
+            </Text>
+          </VStack>
+        </HStack>
+      </Box>
+    </TouchableOpacity>
   );
 
   return (

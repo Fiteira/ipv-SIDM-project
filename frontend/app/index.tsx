@@ -11,6 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
 import LoginScreen from './screens/loginscreen';
+import FactoryDetailScreen from './screens/factories/factorydetailscreen';
+
 import avatar from '../assets/avatar.png';
 
 const Drawer = createDrawerNavigator();
@@ -67,15 +69,8 @@ function DrawerNavigator({ setIsAuthenticated }: { setIsAuthenticated: (isAuthen
     <Drawer.Navigator
       initialRouteName="Homepage"
       drawerContent={(props) => <CustomDrawerContent {...props} setIsAuthenticated={setIsAuthenticated} />}
-      screenOptions={({ navigation }) => ({
-        headerTitle: () => (
-          <TouchableOpacity onPress={() => navigation.navigate('Homepage')}>
-            <Text style={{ fontSize: 18 }}>Home</Text>
-          </TouchableOpacity>
-        ),
-      })}
     >
-      <Drawer.Screen name="Homepage" component={AdminAppHomeScreen} options={{ drawerItemStyle: { display: 'none' } }} />
+      <Drawer.Screen name="Homepage" component={AdminAppHomeScreen} />
       <Drawer.Screen name="Profile Screen" component={ProfileScreen} options={{ drawerItemStyle: { display: 'none' } }} />
     </Drawer.Navigator>
   );
@@ -193,7 +188,11 @@ export default function App() {
 
   return (
     <NativeBaseProvider>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          headerBackTitle: '', // Remove o texto do botão de voltar em todas as telas
+        }}
+      >
         {!isAuthenticated ? (
           <Stack.Screen
             name="Login"
@@ -202,12 +201,19 @@ export default function App() {
             {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} deviceToken={expoPushToken} />}
           </Stack.Screen>
         ) : (
-          <Stack.Screen
-            name="Main"
-            options={{ headerShown: false }}
-          >
-            {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
-          </Stack.Screen>
+          <>
+            <Stack.Screen
+              name="Main"
+              options={{ headerShown: false }}
+            >
+              {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name="FactoryDetail"
+              component={FactoryDetailScreen}
+              options={{ title: 'Factory Details' }}
+          />
+        </>
         )}
       </Stack.Navigator>
     </NativeBaseProvider>
