@@ -10,11 +10,13 @@ import { UserModel } from '../models/user.model';
 import jwt from 'jsonwebtoken';
 import cacheNode from '../config/cache';
 import dotenv from "dotenv";
+import { enviarNotificacao } from '../config/notifications';
+import { cache } from 'joi';
 
 dotenv.config();
 
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const { userNumber, password } = req.body;
+  const { userNumber, password, deviceToken } = req.body; // Incluindo o deviceToken no corpo da requisição
 
   if (!userNumber || !password) {
     res.status(400).json({
@@ -37,17 +39,27 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     
     const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
     const token = jwt.sign(userDTO, process.env.JWT_SECRET_KEY as string, { expiresIn: '30d' });
-    console.log("Token generate: ", token);
     cacheNode.set(`user_${token}`, userDTO);
-
-      res.status(200).json({
-        success: true,
-        token: token,
-      });
+    
+    // Atualiza o token do dispositivo no banco de dados
+    if (deviceToken) {
+      // Atualiza o token do dispositivo na cache do Node
+      userDTO.deviceToken = deviceToken;
+      cacheNode.set(`user_${token}`, userDTO);
+      console.log("Device token updated in cache: ", cacheNode.get(`user_${token}`));
+      enviarNotificacao(deviceToken, 'Login', 'Login realizado com sucesso!');
+    } else {
+      console.log('Device token not found. Notification not sent.');
+    }
+    
+    res.status(200).json({
+      success: true,
+      token: token,
+      user: userDTO
+    });
 
   } catch (error) {
     console.log(error);
-    
     handleServerError(res, "Authentication error", error);
   }
 };
@@ -88,7 +100,7 @@ export const sensorLogin = async (req: Request, res: Response): Promise<any> => 
     console.log("Sensor found: ", JSON.stringify(sensor));
 
     const sensorData = nestRawResults(sensor);
-    console.log("Sensor data: ", sensorData);
+    //console.log("Sensor data: ", sensorData);
 
     const token = jwt.sign({ sensor: sensorData }, process.env.JWT_SECRET_KEY as string, { expiresIn: '1h' });
 

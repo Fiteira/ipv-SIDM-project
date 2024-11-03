@@ -74,12 +74,15 @@ httpServer.listen(PORT, () => {
 });
 
 /*
-tensor([
-  [298,308,1455,41,202], //Failure 
-  [298,308,1379,46,204], //No Failure
-  [298,308,1727,27,37], //No Failure
-  [298,308,1412,52,218], //Failure
-  [298,308,1924,20,29] //No Failure
-]).catch(console.error);
+tensor({
+  columns: ['Air temperature [K]','Process temperature [K]','Rotational speed [rpm]','Torque [Nm]','Tool wear [min]'],
+  values: [
+    [298, 308, 1455, 41, 202], // Failure
+    [298, 308, 1379, 46, 204], // No Failure
+    [298, 308, 1727, 27, 37],  // No Failure
+    [298, 308, 1412, 52, 218], // Failure
+    [298, 308, 1924, 20, 29]   // No Failure
+  ]
+}).catch(console.error);
 */
 export default app;
