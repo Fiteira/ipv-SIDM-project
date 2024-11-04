@@ -56,6 +56,9 @@ export const configureSocketEvents = (io: SocketIOServer) => {
         socket.data.user = user;
         socket.join(`${socket.data.user.factoryId}`);
         socket.data.room = `${socket.data.user.factoryId}`;
+        if (socket.data.user.role === 'adminSystem') {
+          console.warn('ALERT: O administrador do sistema está conectado ao websocket, mas não tem fabricas associadas, pelo que não receberá os dados dos sensores.');
+        }
       }
       next();
     });
@@ -111,7 +114,7 @@ export const configureSocketEvents = (io: SocketIOServer) => {
 
 const handleSensorDisconnect = (socket: Socket) => {
   const sensorToken = `sensor_${socket.handshake.auth.token}`;
-  const cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [];
+  const cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [2];
 
   if (cachedData.length === 0) {
     cacheNode.del(sensorToken);
