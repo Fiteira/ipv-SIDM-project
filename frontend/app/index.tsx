@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { NativeBaseProvider, Avatar, HStack, VStack, Text } from 'native-base';
-import { TouchableOpacity, Alert, Platform } from 'react-native';
+import { NativeBaseProvider, Avatar, HStack, VStack, Text, extendTheme  } from 'native-base';
+import { TouchableOpacity, Alert, Platform, Appearance } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
@@ -18,6 +18,17 @@ import SensorListScreen from './screens/machines/sensors/sensorlistscreen';
 import SensorDetailScreen from './screens/machines/sensors/sensordetailscreen';
 
 import avatar from '../assets/avatar.png';
+
+// Força o modo claro no nível do sistema
+Appearance.setColorScheme('light');
+
+// Configura o tema para forçar o modo claro
+const theme = extendTheme({
+  config: {
+    initialColorMode: 'light',
+    useSystemColorMode: false, // Ignora o tema do sistema
+  },
+});
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -191,7 +202,7 @@ export default function App() {
   };
 
   return (
-    <NativeBaseProvider>
+    <NativeBaseProvider theme={theme}>
       <Stack.Navigator
         screenOptions={{
           headerBackTitle: '', // Remove o texto do botão de voltar em todas as telas
