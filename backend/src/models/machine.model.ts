@@ -2,6 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/sequelize"; 
 import { Machine } from "../interfaces/machine.interface";
 import { SensorModel } from "./sensor.model";
+import {AlertModel } from "./alert.model";
 import { FactoryModel } from "./factory.model";
 
 // Define the Machine model

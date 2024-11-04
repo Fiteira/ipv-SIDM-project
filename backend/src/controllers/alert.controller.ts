@@ -26,7 +26,7 @@ export const getAllAlertsByFactoryId = async (req: Request, res: Response): Prom
     return;
   }
   try {
-    const alerts = await AlertModel.findAll( { include: { model: MachineModel, where: { factoryId } } });
+    const alerts = await AlertModel.findAll( { include: { model: MachineModel, as: 'machine', where: { factoryId } } });
     res.status(200).json({ success: true, data: alerts });
   } catch (error) {
     handleServerError(res, 'Error fetching alerts', error);

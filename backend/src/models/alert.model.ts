@@ -54,5 +54,9 @@ export const AlertModel = sequelize.define<Alert>('Alert', {
   freezeTableName: true, // Prevents table name pluralization
 });
 
+AlertModel.belongsTo(MachineModel, { foreignKey: 'machineId', as: 'machine' });
+
 AlertModel.belongsTo(SensorModel, { foreignKey: 'sensorId', as: 'sensor' });
+
+MachineModel.hasMany(AlertModel, { foreignKey: 'machineId', as: 'alerts' });
 

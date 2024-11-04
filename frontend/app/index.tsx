@@ -18,6 +18,7 @@ import SensorListScreen from './screens/machines/sensors/sensorlistscreen';
 import SensorDetailScreen from './screens/machines/sensors/sensordetailscreen';
 import UserListScreen from './screens/users/userlistscreen';
 import UserDetailScreen from './screens/users/userdetailscreen';
+import AlertListScreen from './screens/alerts/alertlistscreen';
 
 import avatar from '../assets/avatar.png';
 
@@ -259,6 +260,11 @@ export default function App() {
               name="UserDetail"
               component={UserDetailScreen}
               options={{ title: 'User Details' }}
+            />
+            <Stack.Screen
+              name="AlertList"
+              component={AlertListScreen}
+              options={{ title: 'Alerts List' }}
             />
         </>
         )}

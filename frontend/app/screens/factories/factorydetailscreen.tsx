@@ -10,6 +10,7 @@ type RootStackParamList = {
   FactoryDetail: { factoryId: string };
   MachineList: { factoryId: string };
   UserList: { factoryId: string };
+  AlertList: { factoryId: string };
 };
 
 type FactoryDetailRouteProp = RouteProp<RootStackParamList, 'FactoryDetail'>;
@@ -68,7 +69,10 @@ export default function FactoryDetailScreen() {
         >
           Users
         </Button>
-        <Button colorScheme="darkBlue">
+        <Button 
+          colorScheme="darkBlue"
+          onPress={() => navigation.navigate('AlertList', { factoryId })}
+          >
           Alerts
         </Button>
       </VStack>
