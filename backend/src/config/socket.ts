@@ -198,7 +198,7 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
             alertDate: correspondingData.timestamp,
             severity,
             message: alertMessage,
-            state: 'new',
+            state: 'awaiting analysis',
           });
           console.log(`Alert created with ID ${alert.alertId} for sensor ${sensorId} with severity ${severity}`);
           inAnomaly = true;
