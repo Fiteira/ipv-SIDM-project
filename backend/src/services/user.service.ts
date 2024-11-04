@@ -13,6 +13,10 @@ export const findUserByUserNumber = async (userNumber: number): Promise<User | n
   return UserModel.findOne({ where: { userNumber }});
 };
 
+export const findUserDTOByUserNumber = async (userNumber: number): Promise<User | null> => {
+  return UserModel.findOne({ where: { userNumber }, attributes: { exclude: ['password'] } });
+};
+
 export const createUserService = async (userData: any): Promise<User> => {
 
   const user = await findUserByUserNumber(userData.userNumber);

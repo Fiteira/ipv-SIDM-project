@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/user.model';
 import { handleServerError } from '../utils/helpers';
-import { createUserService, findUserByUserNumber } from '../services/user.service';
+import { createUserService, findUserByUserNumber, findUserDTOByUserNumber } from '../services/user.service';
 import bcrypt from 'bcryptjs';
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
@@ -12,7 +12,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
   try {
 
-    const user = await findUserByUserNumber(Number(userId));
+    const user = await findUserDTOByUserNumber(Number(userId));
     //const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
 
     if (!user) {
@@ -35,7 +35,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getUserByFactoryId = async (req: Request, res: Response): Promise<void> => {
+export const getUsersByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   if (!factoryId) {
     res.status(400).json({ success: false, message: 'FactoryId is required' });
