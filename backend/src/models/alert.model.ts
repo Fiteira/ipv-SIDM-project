@@ -22,6 +22,16 @@ export const AlertModel = sequelize.define<Alert>('Alert', {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
   },
+  sensorId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: SensorModel, 
+      key: 'sensorId'
+    },
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  },
   alertDate: {
     type: DataTypes.DATE,
     allowNull: false
