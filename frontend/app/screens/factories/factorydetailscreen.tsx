@@ -9,6 +9,7 @@ import api from '../../../config/api';
 type RootStackParamList = {
   FactoryDetail: { factoryId: string };
   MachineList: { factoryId: string };
+  UserList: { factoryId: string };
 };
 
 type FactoryDetailRouteProp = RouteProp<RootStackParamList, 'FactoryDetail'>;
@@ -61,7 +62,10 @@ export default function FactoryDetailScreen() {
         >
           Machines
         </Button>
-        <Button colorScheme="darkBlue">
+        <Button 
+          colorScheme="darkBlue"
+          onPress={() => navigation.navigate('UserList', { factoryId })}
+        >
           Users
         </Button>
         <Button colorScheme="darkBlue">

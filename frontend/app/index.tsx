@@ -16,6 +16,8 @@ import MachineListScreen from './screens/machines/machinelistscreen';
 import MachineDetailScreen from './screens/machines/machinedetailscreen';
 import SensorListScreen from './screens/machines/sensors/sensorlistscreen';
 import SensorDetailScreen from './screens/machines/sensors/sensordetailscreen';
+import UserListScreen from './screens/users/userlistscreen';
+import UserDetailScreen from './screens/users/userdetailscreen';
 
 import avatar from '../assets/avatar.png';
 
@@ -247,6 +249,16 @@ export default function App() {
               name="SensorDetail"
               component={SensorDetailScreen}
               options={{ title: 'Sensor Details' }}
+            />
+            <Stack.Screen
+              name="UserList"
+              component={UserListScreen}
+              options={{ title: 'Users List' }}
+            />
+            <Stack.Screen
+              name="UserDetail"
+              component={UserDetailScreen}
+              options={{ title: 'User Details' }}
             />
         </>
         )}
