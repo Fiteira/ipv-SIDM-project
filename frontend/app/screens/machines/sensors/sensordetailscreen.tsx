@@ -94,7 +94,6 @@ export default function SensorDetailScreen() {
         socket.on("sensor_data", (data) => {
           const { timestamp, value } = data;
           const { columns, values } = value;
-          console.log("Received sensor data:", data);
 
           setDataPoints((prevData) => {
             const isDuplicate = prevData.length > 0 &&
