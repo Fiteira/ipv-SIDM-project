@@ -23,7 +23,8 @@
         "package": "com.sidm.sensormonitor",
         "googleServicesFile": "./google-services.json",
         "useNextNotificationsApi": true
-      }
+      },
+      "package": "com.sidm.sensormonitor"
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +36,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3ecaa0d9-d31c-49ab-b43c-cf31f7617b1a"
+      }
     }
   }
 }

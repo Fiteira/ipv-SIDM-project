@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { View, Text, Alert, StyleSheet, Dimensions, FlatList } from 'react-native';
 import { Box, Spinner } from 'native-base';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
 import api from '../../../../config/api';
-import io from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DefaultEventsMap } from '@socket.io/component-emitter';
 
 type RootStackParamList = {
   SensorDetail: { sensorId: string };
@@ -32,33 +35,36 @@ export default function SensorDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [dataPoints, setDataPoints] = useState<SensorData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const socketRef = useRef<Socket<DefaultEventsMap, DefaultEventsMap> | null>(null);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const userString = await AsyncStorage.getItem('user');
-      if (userString) {
-        const user = JSON.parse(userString);
-        setUserRole(user.role);
-      }
-    };
 
-    fetchUserRole();
+  
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserRole = async () => {
+        const userString = await AsyncStorage.getItem('user');
+        if (userString) {
+          const user = JSON.parse(userString);
+          setUserRole(user.role);
+        }
+      };
 
-    const fetchSensorData = async () => {
-      try {
-        const response = await api.get(`/sensors/${sensorId}`);
-        setSensor(response.data.data);
-      } catch (error) {
-        Alert.alert('Error', 'Failed to get sensor details.');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const fetchSensorData = async () => {
+        try {
+          const response = await api.get(`/sensors/${sensorId}`);
+          setSensor(response.data.data);
+        } catch (error) {
+          Alert.alert('Error', 'Failed to get sensor details.');
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchSensorData();
+      fetchUserRole();
+      fetchSensorData();
 
-    const connectSocket = async () => {
-      try {
+      // Função para conectar o socket
+      const connectSocket = async () => {
         const apiUrl = process.env.EXPO_PUBLIC_API_URL ? process.env.EXPO_PUBLIC_API_URL.replace(/\/api$/, '') : '';
         const token = await AsyncStorage.getItem('token');
 
@@ -67,9 +73,18 @@ export default function SensorDetailScreen() {
           return;
         }
 
+        // Evitar múltiplas conexões
+        if (socketRef.current) {
+          console.log("Socket already connected.");
+          return;
+        }
+
+        // Inicializa a conexão do socket
         const socket = io(apiUrl, { auth: { token }, transports: ["websocket"] });
+        socketRef.current = socket;
 
         socket.on("connect", () => {
+          console.log("Socket connected.");
           if (userRole === 'adminSystem') {
             Alert.alert("ALERT", 'System admin connected, no sensor data will be received.');
           }
@@ -79,39 +94,45 @@ export default function SensorDetailScreen() {
         socket.on("sensor_data", (data) => {
           const { timestamp, value } = data;
           const { columns, values } = value;
-        
+
           setDataPoints((prevData) => {
-            // Verifica se o novo ponto de dados é idêntico ao último ponto armazenado
-            const isDuplicate = prevData.length > 0 && 
-                                prevData[prevData.length - 1].timestamp === timestamp && 
+            const isDuplicate = prevData.length > 0 &&
+                                prevData[prevData.length - 1].timestamp === timestamp &&
                                 JSON.stringify(prevData[prevData.length - 1].values) === JSON.stringify(values);
-        
+
             if (isDuplicate) {
-              return prevData; // Retorna o estado anterior sem adicionar o ponto duplicado
+              return prevData;
             }
-        
+
             const newDataPoints = [...prevData.slice(-4), { timestamp, columns, values }];
             return newDataPoints;
           });
         });
 
-        socket.on("connect_error", () => {
-          Alert.alert('Error', 'Failed getting real-time data from the sensor.');
+        socket.on("connect_error", (message) => {
+          Alert.alert('Error', message.toString() || 'Failed connecting to the real-time data server.');
           console.error("Socket connection error.");
         });
 
-        return () => {
-          socket.disconnect();
-          console.log("Socket disconnected.");
-        };
-      } catch (error) {
-        Alert.alert('Error', 'Failed connecting to the real-time data server.');
-        
-      }
-    };
+        socket.on("unauthorized", (message) => {
+          Alert.alert('Error', message);
+          console.error("Socket unauthorized.");
+        });
+      };
 
-    connectSocket();
-  }, [sensorId, userRole]);
+      connectSocket();
+
+      // Função de limpeza para desconectar o socket ao sair da tela
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          console.log("Socket disconnected.");
+          socketRef.current = null; // Reseta o ref após desconectar
+        }
+      };
+    }, [sensorId, userRole])
+  );
+  
 
   if (loading) {
     return <Spinner color="blue.500" />;
