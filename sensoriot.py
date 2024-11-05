@@ -108,7 +108,7 @@ def connect_to_websocket(token):
             sensor_data = sensor_simulator.generateReading()
             sio.emit('sensor_data', sensor_data)
             print(f"Data sent: {sensor_data}")
-            time.sleep(1.5)
+            time.sleep(5)
 
     except Exception as e:
         print(f"Error connecting to WebSocket: {e}")

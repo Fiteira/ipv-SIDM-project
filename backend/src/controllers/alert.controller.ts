@@ -27,50 +27,112 @@ export const getAlert = async (req: Request, res: Response): Promise<void> => {
 
 export const getAllAlertsByFactoryId = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
   if (!factoryId) {
     res.status(400).json({ success: false, message: 'FactoryId is required' });
     return;
   }
+
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const offset = (pageNumber - 1) * limitNumber;
+
   try {
-    const alerts = await AlertModel.findAll( { include: [
-      {
-        model: MachineModel, 
-        as: 'machine', 
-        where: { factoryId }, 
-      },
-      {
-        model: SensorModel, 
-        as: 'sensor'
-      } 
-    ]});
-    res.status(200).json({ success: true, data: alerts });
+    const alerts = await AlertModel.findAll({
+      include: [
+        {
+          model: MachineModel, 
+          as: 'machine', 
+          where: { factoryId }, 
+        },
+        {
+          model: SensorModel, 
+          as: 'sensor'
+        } 
+      ],
+      order: [['alertDate', 'DESC']],
+      limit: limitNumber,
+      offset
+    });
+
+    const totalAlerts = await AlertModel.count({
+      include: [
+        {
+          model: MachineModel, 
+          as: 'machine', 
+          where: { factoryId }, 
+        },
+        {
+          model: SensorModel, 
+          as: 'sensor'
+        } 
+      ]
+    });
+
+    const totalPages = Math.ceil(totalAlerts / limitNumber);
+
+    res.status(200).json({
+      success: true,
+      data: alerts,
+      pagination: {
+        totalAlerts,
+        totalPages,
+        currentPage: pageNumber,
+        perPage: limitNumber
+      }
+    });
   } catch (error) {
     handleServerError(res, 'Error fetching alerts', error);
   }
 };
 
-
 export const getAlertByMachineId = async (req: Request, res: Response): Promise<void> => {
-    const { machineId } = req.params;
-    if (!machineId) {
-      res.status(400).json({ success: false, message: 'MachineId is required' });
+  const { machineId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
+  if (!machineId) {
+    res.status(400).json({ success: false, message: 'MachineId is required' });
+    return;
+  }
+
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const offset = (pageNumber - 1) * limitNumber;
+
+  try {
+    const alerts = await AlertModel.findAll({
+      where: { machineId },
+      order: [['alertDate', 'DESC']],
+      limit: limitNumber,
+      offset
+    });
+
+    const totalAlerts = await AlertModel.count({
+      where: { machineId }
+    });
+
+    const totalPages = Math.ceil(totalAlerts / limitNumber);
+
+    if (!alerts.length) {
+      res.status(404).json({ success: false, message: 'No alerts found for this machine' });
       return;
     }
-  
-    try {
-      const alerts = await AlertModel.findAll({ where: { machineId: machineId } });
 
-      if (!alerts.length) {
-        res.status(404).json({ success: false, message: 'No alerts found for this machine' });
-        return;
+    res.status(200).json({
+      success: true,
+      data: alerts,
+      pagination: {
+        totalAlerts,
+        totalPages,
+        currentPage: pageNumber,
+        perPage: limitNumber
       }
-
-      res.status(200).json({ success: true, data: alerts });
-
-    } catch (error) {
-      handleServerError(res, 'Error fetching alerts by MachineId', error);
-    }
-}
+    });
+  } catch (error) {
+    handleServerError(res, 'Error fetching alerts by MachineId', error);
+  }
+};
 
 export const createAlert = async (req: Request, res: Response): Promise<void> => {
   const { machineId, alertDate, severity, message } = req.body;
