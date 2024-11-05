@@ -56,6 +56,7 @@ export const getSensorsByMachineId = async (req: Request, res: Response): Promis
       res.status(200).json({ success: true, data: sensors });
     } catch (error) {
       handleServerError(res, 'Error fetching sensors by machineId', error);
+      console.log(error);
     }
   };
 

@@ -37,4 +37,4 @@ export const MachineModel = sequelize.define<Machine>('Machine', {
   freezeTableName: true, // Prevents table name pluralization
 });
 SensorModel.belongsTo(MachineModel, { foreignKey: 'machineId', as: 'machine' });
-MachineModel.hasMany(SensorModel, { foreignKey: 'sensorId', as: 'sensors' });
+MachineModel.hasMany(SensorModel, { foreignKey: 'machineId', as: 'sensors' });

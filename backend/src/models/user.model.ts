@@ -102,11 +102,11 @@ const createDefaultUser = async () => {
       { machineName: "Machine 1", factoryId: 1 },
       { machineName: "Machine 2", factoryId: 1 }
     ]);
-    const sensor = await SensorModel.bulkCreate([
+    await SensorModel.bulkCreate([
       { name: "Sensor 1", machineId: 1, apiKey: "123", sensorType: "xpto_32" },
-      { name: "Sensor 2", machineId: 2, apiKey: "456", sensorType: "xpto_43" }
+      { name: "Sensor 2", machineId: 2, apiKey: "456", sensorType: "xpto_43" },
+      { name: "Sensor 3", machineId: 1, apiKey: "789", sensorType: "xpto_54" }
     ]);
-    console.log('Sensor created: ', sensor);
   } catch (error) {
     console.error('Error to create User', error);
   }
