@@ -9,6 +9,7 @@ import moment from 'moment';
 import tensor from "./tensor";
 import { Sensor } from '../interfaces/sensor.interface';
 import { COLUMNS_TO_USE } from './tensor';
+import { SensorModel } from '../models/sensor.model';
 
 interface CachedSensorData {
   sensorId: number;
@@ -78,10 +79,29 @@ export const configureSocketEvents = (io: SocketIOServer) => {
     } else {
       console.log('Socket type not defined!');
     }
-    socket.on('join_sensor', (sensorId: number) => {
-      socket.leave(socket.data.room);
-      socket.data.roomsensorId = sensorId;
-      socket.join(`sensor_${sensorId}`);
+    socket.on('join_sensor', async (sensorId: number) => {
+      const sensor = await SensorModel.findByPk(sensorId);
+      const user = socket.data.user;
+      console.log(`User ${user.name} is trying to connect to sensor ${sensorId}.`);
+      if (!user) {
+        console.error('User not found.');
+        return;
+      }
+      if (!sensor) {
+        console.error(`Sensor ${sensorId} not found.`);
+        socket.emit('unauthorized', 'Sensor not found or sensor disconnected.');
+        return new Error('Sensor not found or sensor disconnected.');
+      }
+      if (socket.data.user.role === 'adminSystem' || socket.data.user.role === 'admin' || socket.data.user.factoryId === sensor?.machine?.factoryId) {
+        socket.leave(socket.data.room);
+        socket.data.roomsensorId = `sensor_${sensorId}`;
+        socket.join(socket.data.roomsensorId);
+      } else {
+        console.error(`User ${socket.data.user.name} does not have permission to access sensor ${sensorId}.`);
+        socket.emit('unauthorized', 'You do not have permission to access this sensor.');
+        socket.disconnect();
+        return;
+      }
     });
     socket.on('sensor_data', (value: any) => {
       try {
@@ -107,20 +127,28 @@ export const configureSocketEvents = (io: SocketIOServer) => {
       }
     });
 
-    socket.on('disconnect', () => {
-      socket.leave(socket.data.room);
-      if (socket.data.roomsensorId)
-        socket.leave(`sensor_${socket.data.roomsensorId}`);
-      socket.disconnect();
+    socket.on('disconnecting', () => {
+
+      if (socket.data.room) {
+        socket.leave(socket.data.room);
+      }
+      if (socket.data.roomsensorId) {
+        socket.leave(socket.data.roomsensorId);
+      }
+    
       if (socket.data.sensor) {
-        console.log(`Sensor ${socket.data.sensor.sensorId} from machine ${socket.data.sensor.machine.machineName} disconnected.`);
+        console.log(`Sensor ${socket.data.sensor.sensorId} from machine ${socket.data.sensor.machine.machineName} is disconnecting.`);
         setTimeout(() => handleSensorDisconnect(socket), 5000);
       } else if (socket.data.user) {
-        console.log(`User ${socket.data.user.name} disconnected.`);
-        cacheNode.del(`user_${socket.handshake.auth.token}`);
+        console.log(`User ${socket.data.user.name} is disconnecting.`);
       } else {
-        console.log('Undefined socket type disconnected.');
+        console.log('Undefined socket type is disconnecting.');
       }
+    });
+    
+    // Confirme que o socket será desconectado ao ser removido das salas
+    socket.on('disconnect', () => {
+      console.log('Socket fully disconnected.');
     });
   });
 };
