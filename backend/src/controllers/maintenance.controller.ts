@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { MaintenanceModel } from '../models/maintenance.model';
 import { handleServerError } from '../utils/helpers';
 import { MachineModel } from '../models/machine.model';
+import { UserModel } from '../models/user.model';
 
 export const getMaintenance = async (req: Request, res: Response): Promise<void> => {
   const { maintenanceId } = req.params;
@@ -52,7 +53,19 @@ export const getMaintenanceByMachineId = async (req: Request, res: Response): Pr
       return;
     }
     try {
-      const maintenances = await MaintenanceModel.findAll({ where: { machineId } });
+      const maintenances = await MaintenanceModel.findAll({
+        where: { machineId },
+        include: [
+          {
+            model: MachineModel,
+            as: "machine", // Certifique-se de que o alias está correto
+          },
+          {
+            model: UserModel,
+            as: "performedUser", // Supondo que você tenha um relacionamento com UserModel
+          },
+        ],
+      });
       if (!maintenances.length) {
         res.status(404).json({ success: false, message: 'No maintenance records found for this machine' });
         return;

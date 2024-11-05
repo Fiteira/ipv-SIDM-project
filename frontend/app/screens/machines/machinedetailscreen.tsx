@@ -8,6 +8,7 @@ import api from '../../../config/api';
 type RootStackParamList = {
   MachineDetail: { machineId: string };
   SensorList: { machineId: string };
+  MaintenanceList: { machineId: string };
 };
 
 type MachineDetailRouteProp = RouteProp<RootStackParamList, 'MachineDetail'>;
@@ -61,7 +62,10 @@ export default function MachineDetailScreen() {
         >
             Sensors
         </Button>
-        <Button colorScheme="darkBlue">
+        <Button
+            colorScheme="darkBlue"
+            onPress={() => navigation.navigate('MaintenanceList', { machineId })}
+        >
             Maintenances
         </Button>
       </VStack>
