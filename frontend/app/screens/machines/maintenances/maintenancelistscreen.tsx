@@ -72,7 +72,7 @@ export default function MaintenanceListScreen() {
         bg="light.50"
         >
         <HStack space={3} alignItems="center">
-          <Icon as={MaterialIcons} name="build" size="lg" color="darkBlue.700" />
+          <Icon as={MaterialIcons} name="build" size="lg" color="darkBlue.500" />
           <VStack flex={1}>
             <HStack justifyContent="space-between" alignItems="center">
                 <Text bold fontSize="lg">
@@ -82,8 +82,8 @@ export default function MaintenanceListScreen() {
                 {new Date(item.maintenanceDate).toLocaleDateString()}
                 </Text>
             </HStack>
-            <Text fontSize="xs" color="coolGray.600">
-                Performed by: {item.performedUser.name}
+            <Text fontSize="xs" color="coolGray.500">
+                {item.performedUser.name}
             </Text>
             <Text fontSize="md" color="coolGray.700" mt={1} numberOfLines={2}>
                 {item.description}

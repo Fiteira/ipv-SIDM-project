@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Alert, StyleSheet } from 'react-native';
-import { Box, Spinner, Button, VStack, HStack } from 'native-base';
+import { View, Alert, StyleSheet } from 'react-native';
+import { Box, Spinner, Button, VStack, HStack, Icon, Text } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../../config/api';
@@ -71,10 +72,15 @@ export default function MaintenanceDetailScreen() {
             <Text style={styles.date}>{new Date(maintenance.maintenanceDate).toLocaleDateString()}</Text>
         </HStack>
 
-        <Text style={styles.label}>Performed By:</Text>
-        <Text style={styles.value}>{maintenance.performedUser.name} ({maintenance.performedUser.role})</Text>
-
-        <Text style={styles.label}>Description:</Text>
+        <HStack alignItems="center" space={2}>
+            <Icon as={MaterialIcons} name="person" size="sm"/>
+            <Text style={styles.label}>{maintenance.performedUser.name} ({maintenance.performedUser.role})</Text>
+        </HStack>
+      
+        <HStack alignItems="center" space={2}>
+            <Icon as={MaterialIcons} name="message" size="sm"/>
+            <Text style={styles.label}>Description:</Text>
+        </HStack>
         <Text style={styles.value}>{maintenance.description}</Text>
 
         <Button 

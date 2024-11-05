@@ -7,7 +7,7 @@ import api from '../../../config/api';
 
 type RootStackParamList = {
   AlertList: { factoryId: string };
-  //MachineDetail: { machineId: string };
+  AlertDetail: { alertId: string };
 };
 
 type AlertListRouteProp = RouteProp<RootStackParamList, 'AlertList'>;
@@ -26,7 +26,12 @@ interface Alerta {
       factoryId: string;
       state: string;
     };
-  }
+    sensor: {
+      sensorId: string;
+      name: string;
+      sensorType: string;
+    };
+}
   
 
 export default function AlertListScreen() {
@@ -58,7 +63,7 @@ export default function AlertListScreen() {
   }, [factoryId]);
 
   const renderAlertCard = ({ item }: { item: Alerta }) => (
-    // <TouchableOpacity onPress={() => navigation.navigate('AlertDetail', { alertId: item.alertId })}>
+    <TouchableOpacity onPress={() => navigation.navigate('AlertDetail', { alertId: item.alertId })}>
         <Box
         shadow={2}
         borderRadius="md"
@@ -67,41 +72,44 @@ export default function AlertListScreen() {
         bg="light.50"
         >
         <HStack space={3} alignItems="center">
-            <Icon as={MaterialIcons} name="warning" size="2xl" color="red.500" />
+            <Icon as={MaterialIcons} name="warning" size="2xl" color="darkBlue.500" />
             <VStack flex={1}>
                 <HStack justifyContent="space-between" alignItems="center">
                     <Text bold fontSize="lg">
-                    {item.machine.machineName}
+                    {item.machine.machineName} ({item.sensor.name})
                     </Text>
                     <Text fontSize="xs" color="coolGray.500">
                     {new Date(item.alertDate).toLocaleDateString()}
                     </Text>
                 </HStack>
-                <Text 
-                    fontSize="sm" 
-                    color={
-                        item.severity === 'critical'
-                        ? 'red.800'
-                        : item.severity === 'high'
-                        ? 'red.600'
-                        : item.severity === 'medium'
-                        ? 'yellow.600'
-                        : 'green.600'
-                    } 
-                    bold
-                >
-                    {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
-                </Text>
-                <Text fontSize="xs" color="coolGray.500" italic mt={1}>
-                    State: {item.state}
-                </Text>
+
+                <HStack justifyContent="space-between" alignItems="center">
+                  <Text 
+                      fontSize="sm" 
+                      color={
+                          item.severity === 'critical'
+                          ? 'red.800'
+                          : item.severity === 'high'
+                          ? 'red.600'
+                          : item.severity === 'medium'
+                          ? 'yellow.600'
+                          : 'green.600'
+                      } 
+                      bold
+                  >
+                      {item.severity.charAt(0) + item.severity.slice(1)}
+                  </Text>
+                  <Text fontSize="xs" color="coolGray.500" italic mt={1}>
+                      {item.state}
+                  </Text>
+                </HStack>
                 <Text fontSize="md" color="coolGray.700" mt={1} numberOfLines={2}>
                     {item.message}
                 </Text>
             </VStack>
         </HStack>
         </Box>
-    // </TouchableOpacity>
+    </TouchableOpacity>
   );
 
   if (loading) {
