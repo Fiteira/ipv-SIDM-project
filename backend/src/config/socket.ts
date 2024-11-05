@@ -51,7 +51,9 @@ export const configureSocketEvents = (io: SocketIOServer) => {
       if (sensor) {
         socket.data.sensor = sensor;
         socket.join(`${socket.data.sensor.machine.factoryId}`);
+        socket.join(`sensor_${socket.data.sensor.sensorId}`);
         socket.data.room = `${socket.data.sensor.machine.factoryId}`;
+        socket.data.roomsensorId = socket.data.sensor.sensorId;
       } else if (user) {
         socket.data.user = user;
         socket.join(`${socket.data.user.factoryId}`);
@@ -65,6 +67,10 @@ export const configureSocketEvents = (io: SocketIOServer) => {
   });
 
   io.on('connection', (socket: Socket) => {
+    if (!socket.data) {
+      console.error('Socket data not found.');
+      return;
+    }
     if (socket.data.sensor) {
       console.log(`Authenticated sensor: ${socket.data.sensor.name} with ID ${socket.data.sensor.sensorId} connected.`);
     } else if (socket.data.user) {
@@ -72,7 +78,11 @@ export const configureSocketEvents = (io: SocketIOServer) => {
     } else {
       console.log('Socket type not defined!');
     }
-
+    socket.on('join_sensor', (sensorId: number) => {
+      socket.leave(socket.data.room);
+      socket.data.roomsensorId = sensorId;
+      socket.join(`sensor_${sensorId}`);
+    });
     socket.on('sensor_data', (value: any) => {
       try {
         const sensorId = socket.data.sensor.sensorId;
@@ -84,6 +94,7 @@ export const configureSocketEvents = (io: SocketIOServer) => {
           machineId: socket.data.sensor.machineId
         };
         socket.to(socket.data.room).emit('sensor_data', data);
+        socket.to(`sensor_${sensorId}`).emit('sensor_data', data);
 
         let cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [];
         if (!Array.isArray(cachedData)) cachedData = [];
@@ -98,6 +109,8 @@ export const configureSocketEvents = (io: SocketIOServer) => {
 
     socket.on('disconnect', () => {
       socket.leave(socket.data.room);
+      if (socket.data.roomsensorId)
+        socket.leave(`sensor_${socket.data.roomsensorId}`);
       socket.disconnect();
       if (socket.data.sensor) {
         console.log(`Sensor ${socket.data.sensor.sensorId} from machine ${socket.data.sensor.machine.machineName} disconnected.`);

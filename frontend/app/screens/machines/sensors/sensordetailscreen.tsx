@@ -73,23 +73,40 @@ export default function SensorDetailScreen() {
           if (userRole === 'adminSystem') {
             Alert.alert("ALERT", 'System admin connected, no sensor data will be received.');
           }
+          socket.emit("join_sensor", sensorId);
         });
 
         socket.on("sensor_data", (data) => {
-          const { columns, values } = data.value;
-          const newData = { timestamp: new Date().toLocaleTimeString(), columns, values };
-          setDataPoints((prevData) => [...prevData.slice(-5), newData]);
+          const { timestamp, value } = data;
+          const { columns, values } = value;
+        
+          setDataPoints((prevData) => {
+            // Verifica se o novo ponto de dados é idêntico ao último ponto armazenado
+            const isDuplicate = prevData.length > 0 && 
+                                prevData[prevData.length - 1].timestamp === timestamp && 
+                                JSON.stringify(prevData[prevData.length - 1].values) === JSON.stringify(values);
+        
+            if (isDuplicate) {
+              return prevData; // Retorna o estado anterior sem adicionar o ponto duplicado
+            }
+        
+            const newDataPoints = [...prevData.slice(-4), { timestamp, columns, values }];
+            return newDataPoints;
+          });
         });
 
-        socket.on("connect_error", (error) => {
+        socket.on("connect_error", () => {
           Alert.alert('Error', 'Failed getting real-time data from the sensor.');
+          console.error("Socket connection error.");
         });
 
         return () => {
           socket.disconnect();
+          console.log("Socket disconnected.");
         };
       } catch (error) {
         Alert.alert('Error', 'Failed connecting to the real-time data server.');
+        
       }
     };
 
@@ -108,7 +125,6 @@ export default function SensorDetailScreen() {
     );
   }
 
-  // Configuração para cada gráfico com as unidades adequadas
   const chartConfigs = [
     { label: 'Air Temperature', unit: 'K', index: 0 },
     { label: 'Process Temperature', unit: 'K', index: 1 },
@@ -133,7 +149,7 @@ export default function SensorDetailScreen() {
                 <Text style={styles.chartTitle}>{config.label} ({config.unit})</Text>
                 <LineChart
                   data={{
-                    labels: dataPoints.map((_, index) => `T${index + 1}`),
+                    labels: dataPoints.map((point) => new Date(point.timestamp).toLocaleTimeString()),
                     datasets: [
                       {
                         data: dataPoints.map(point => point.values[config.index]),
@@ -168,7 +184,7 @@ export default function SensorDetailScreen() {
       )}
       renderItem={({ item }) => (
         <View style={styles.listItem}>
-          <Text style={styles.listItemText}>Timestamp: {item.timestamp}</Text>
+          <Text style={styles.listItemText}>Timestamp: {new Date(item.timestamp).toLocaleTimeString()}</Text>
           {item.columns.map((column, index) => (
             <Text key={index} style={styles.listItemText}>
               {column}: {item.values[index]}
