@@ -20,6 +20,7 @@ import UserListScreen from './screens/users/userlistscreen';
 import UserDetailScreen from './screens/users/userdetailscreen';
 import AlertListScreen from './screens/alerts/alertlistscreen';
 import MaintenanceListScreen from './screens/machines/maintenances/maintenancelistscreen';
+import MaintenanceDetailScreen from './screens/machines/maintenances/maintenancedetailscreen';
 
 import avatar from '../assets/avatar.png';
 
@@ -271,6 +272,11 @@ export default function App() {
               name="MaintenanceList"
               component={MaintenanceListScreen}
               options={{ title: 'Maintenances List' }}
+            />
+            <Stack.Screen
+              name="MaintenanceDetail"
+              component={MaintenanceDetailScreen}
+              options={{ title: 'Maintenance Details' }}
             />
         </>
         )}

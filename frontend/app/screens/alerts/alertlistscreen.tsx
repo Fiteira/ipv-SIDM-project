@@ -92,11 +92,11 @@ export default function AlertListScreen() {
                 >
                     {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
                 </Text>
-                <Text fontSize="md" color="coolGray.700" mt={1} numberOfLines={2}>
-                    {item.message}
-                </Text>
                 <Text fontSize="xs" color="coolGray.500" italic mt={1}>
                     State: {item.state}
+                </Text>
+                <Text fontSize="md" color="coolGray.700" mt={1} numberOfLines={2}>
+                    {item.message}
                 </Text>
             </VStack>
         </HStack>
