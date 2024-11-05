@@ -33,8 +33,8 @@ export default function MachineListScreen() {
         setMachines(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar as máquinas:', error);
-        Alert.alert('Erro', 'Não foi possível carregar as máquinas.');
+        console.error('Error fetching machines:', error);
+        Alert.alert('Error', 'Unable to load machines.');
       })
       .finally(() => {
         setRefreshing(false);

@@ -32,8 +32,8 @@ export default function UserDetailScreen() {
         setUser(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar os detalhes do user:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os detalhes do user.');
+        console.error('Error loading user details:', error);
+        Alert.alert('Error', 'Unable to load user details.');
       })
       .finally(() => setLoading(false));
   }, [userId]);
@@ -64,7 +64,7 @@ export default function UserDetailScreen() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>User não encontrado.</Text>
+        <Text style={styles.title}>User not found.</Text>
       </View>
     );
   }

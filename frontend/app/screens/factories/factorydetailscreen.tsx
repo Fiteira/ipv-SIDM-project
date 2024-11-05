@@ -33,8 +33,8 @@ export default function FactoryDetailScreen() {
         setFactory(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar os detalhes da fábrica:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os detalhes da fábrica.');
+        console.error('Error loading factory details:', error);
+        Alert.alert('Erro', 'Unable to load factory details.');
       })
       .finally(() => setLoading(false));
   }, [factoryId]);
@@ -46,7 +46,7 @@ export default function FactoryDetailScreen() {
   if (!factory) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Fábrica não encontrada.</Text>
+        <Text style={styles.title}>Factory not found.</Text>
       </View>
     );
   }

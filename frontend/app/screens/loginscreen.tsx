@@ -48,7 +48,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
       <Text style={styles.title}>Login Page</Text>
       <TextInput
         style={styles.input}
-        placeholder="Número de Utilizador"
+        placeholder="User Number"
         keyboardType="numeric"
         value={userNumber}
         onChangeText={setUserNumber}
@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
         value={password}
         onChangeText={setPassword}
       />
-      <Button title="Entrar" onPress={handleLogin} />
+      <Button title="Confirm" onPress={handleLogin} />
     </View>
   );
 }

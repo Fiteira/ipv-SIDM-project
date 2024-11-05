@@ -29,8 +29,8 @@ export default function HomeScreen() {
         setFactories(response.data.data);
       })
       .catch((error) => {
-        console.log('Erro ao buscar as fábricas:', error);
-        Alert.alert('Erro', 'Não foi possível carregar as fábricas. Tente novamente mais tarde.');
+        console.log('Error fetching factories:', error);
+        Alert.alert('Error', 'Unable to load factories. Try again later.');
       })
       .finally(() => setRefreshing(false));
   };

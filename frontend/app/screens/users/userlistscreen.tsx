@@ -34,8 +34,8 @@ export default function UserListScreen() {
         setUsers(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar os users:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os users.');
+        console.error('Error fetching users:', error);
+        Alert.alert('Error', 'Unable to load users.');
       })
       .finally(() => {
         setRefreshing(false);

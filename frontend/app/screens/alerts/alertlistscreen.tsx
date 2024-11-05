@@ -44,8 +44,8 @@ export default function AlertListScreen() {
         setAlerts(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar os alertas:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os alertas.');
+        console.error('Error fetching alerts:', error);
+        Alert.alert('Error', 'Unable to load alerts.');
       })
       .finally(() => {
         setRefreshing(false);

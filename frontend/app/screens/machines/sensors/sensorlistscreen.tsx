@@ -33,8 +33,8 @@ export default function SensorListScreen() {
         setSensors(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar os sensores:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os sensores.');
+        console.error('Error fetching sensors:', error);
+        Alert.alert('Error', 'Unable to load sensors.');
       })
       .finally(() => {
         setRefreshing(false);

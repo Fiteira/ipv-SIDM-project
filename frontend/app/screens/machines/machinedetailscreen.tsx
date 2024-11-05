@@ -32,8 +32,8 @@ export default function MachineDetailScreen() {
         setMachine(response.data.data);
       })
       .catch((error) => {
-        console.error('Erro ao carregar os detalhes da máquina:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os detalhes da máquina.');
+        console.error('Error loading machine details:', error);
+        Alert.alert('Error', 'Unable to load machine details.');
       })
       .finally(() => setLoading(false));
   }, [machineId]);
@@ -45,7 +45,7 @@ export default function MachineDetailScreen() {
   if (!machine) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Máquina não encontrada.</Text>
+        <Text style={styles.title}>Machine not found.</Text>
       </View>
     );
   }
