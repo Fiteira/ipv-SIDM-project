@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Alert, StyleSheet } from 'react-native';
+import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Icon, HStack, VStack, Spinner, Text } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, NavigationProp, useNavigation } from '@react-navigation/native';
@@ -38,6 +38,7 @@ export default function AlertListScreen() {
   const route = useRoute<AlertListRouteProp>();
   const { factoryId } = route.params;
   const [alerts, setAlerts] = useState<Alerta[]>([]);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [isFetching, setIsFetching] = useState(true); // Estado para carregamento inicial
   const [isLoadingMore, setIsLoadingMore] = useState(false); // Estado para carregamento adicional
   const [page, setPage] = useState(1);
@@ -95,7 +96,7 @@ export default function AlertListScreen() {
         bg="light.50"
         >
         <HStack space={3} alignItems="center">
-            <Icon as={MaterialIcons} name="warning" size="2xl" color="darkBlue.500" />
+            <Icon as={MaterialIcons} name="warning" size="2xl" color="red.600" />
             <VStack flex={1}>
                 <HStack justifyContent="space-between" alignItems="center">
                     <Text bold fontSize="lg">
