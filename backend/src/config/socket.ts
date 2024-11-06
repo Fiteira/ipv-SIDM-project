@@ -10,6 +10,8 @@ import tensor from "./tensor";
 import { Sensor } from '../interfaces/sensor.interface';
 import { COLUMNS_TO_USE } from './tensor';
 import { SensorModel } from '../models/sensor.model';
+import { enviarNotificacao } from './notifications';
+import { UserDTO } from '../interfaces/user.interface';
 
 interface CachedSensorData {
   sensorId: number;
@@ -211,7 +213,6 @@ const persistSensorDataFromCache = async () => {
 const anomalyState = new Map<number, boolean>();
 
 const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machineId: number, cachedData: CachedSensorData[]) => {
-  
   const formattedData = {
     columns: data.columns,
     values: Array.isArray(data.values) && Array.isArray(data.values[0]?.values)
@@ -231,9 +232,17 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
       const correspondingData = cachedData[index];
       if (correspondingData) {
         const severity = determineSeverity(anomalyData.prediction);
-        const alertMessage = `Anomaly detected: value ${JSON.stringify(correspondingData.value)}`;
+
+        // Building the detailed alert message
+        const details = Object.entries(correspondingData.value).map(([column, value]) => {
+          const level = determineLevel(value as number);
+          return `${column}: ${value} (${level})`;
+        }).join(', ');
+
+        const alertMessage = `Anomaly detected for sensor ${sensorId} on machine ${machineId}. Values: ${details}. Severity: ${severity}.`;
+
         if (anomalyData.prediction > 0.5 && !inAnomaly) {
-          const alert =  await AlertModel.create({
+          const alert = await AlertModel.create({
             machineId,
             sensorId,
             alertDate: correspondingData.timestamp,
@@ -243,6 +252,22 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
           });
           console.log(`Alert created with ID ${alert.alertId} for sensor ${sensorId} with severity ${severity}`);
           inAnomaly = true;
+
+          // Retrieve users from cache with valid device tokens
+          const users: UserDTO[] = cacheNode.keys().filter(key => key.startsWith('user_')).map(key => cacheNode.get(key) as UserDTO);
+          console.log(`Sending notification to ${users.length} users.`);
+
+          // Send notification to users
+          users.forEach((user: UserDTO) => {
+            if (user?.deviceToken) {
+              enviarNotificacao(
+                user.deviceToken,
+                `Anomaly detected for sensor ${sensorId}`,
+                alertMessage
+              );
+              console.log(`Notification sent to user ${user.name} with deviceToken ${user.deviceToken}`);
+            }
+          });
         } else {
           console.warn("Insufficient data to create alert: machineId or sensorId is missing.");
           inAnomaly = false;
@@ -259,6 +284,11 @@ function determineSeverity(predictionScore: number): string {
   if (predictionScore > 0.7) return 'high';
   if (predictionScore > 0.5) return 'medium';
   return 'low';
+}
+
+function determineLevel(value: number): string {
+  // Example criterion, adjust as needed for your context
+  return value > 100 ? 'High' : 'Low';
 }
 
 setInterval(persistSensorDataFromCache, 10000);
