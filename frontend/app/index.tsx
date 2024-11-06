@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { NativeBaseProvider, Avatar, HStack, VStack, Text, extendTheme  } from 'native-base';
+import { NativeBaseProvider, Avatar, HStack, VStack, Text } from 'native-base';
 import { TouchableOpacity, Alert, Platform, Appearance } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
@@ -12,6 +12,7 @@ import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
 import LoginScreen from './screens/loginscreen';
 import FactoryDetailScreen from './screens/factories/factorydetailscreen';
+import FactoryDashboardScreen from './screens/factories/factorydashboardscreen';
 import MachineListScreen from './screens/machines/machinelistscreen';
 import MachineDetailScreen from './screens/machines/machinedetailscreen';
 import SensorListScreen from './screens/machines/sensors/sensorlistscreen';
@@ -27,14 +28,6 @@ import avatar from '../assets/avatar.png';
 
 // Força o modo claro no nível do sistema
 Appearance.setColorScheme('light');
-
-// Configura o tema para forçar o modo claro
-const theme = extendTheme({
-  config: {
-    initialColorMode: 'light',
-    useSystemColorMode: false, // Ignora o tema do sistema
-  },
-});
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -208,12 +201,8 @@ export default function App() {
   };
 
   return (
-    <NativeBaseProvider theme={theme}>
-      <Stack.Navigator
-        screenOptions={{
-          headerBackTitle: '', // Remove o texto do botão de voltar em todas as telas
-        }}
-      >
+    <NativeBaseProvider>
+      <Stack.Navigator screenOptions={{ headerBackTitle: '' }}>
         {!isAuthenticated ? (
           <Stack.Screen
             name="Login"
@@ -229,62 +218,19 @@ export default function App() {
             >
               {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
             </Stack.Screen>
-            <Stack.Screen
-              name="FactoryDetail"
-              component={FactoryDetailScreen}
-              options={{ title: 'Factory Details' }}
-            />
-            <Stack.Screen
-              name="MachineList"
-              component={MachineListScreen}
-              options={{ title: 'Machines List' }}
-            />
-            <Stack.Screen
-              name="MachineDetail"
-              component={MachineDetailScreen}
-              options={{ title: 'Machine Details' }}
-            />
-            <Stack.Screen
-              name="SensorList"
-              component={SensorListScreen}
-              options={{ title: 'Sensors List' }}
-            />
-            <Stack.Screen
-              name="SensorDetail"
-              component={SensorDetailScreen}
-              options={{ title: 'Sensor Details' }}
-            />
-            <Stack.Screen
-              name="UserList"
-              component={UserListScreen}
-              options={{ title: 'Users List' }}
-            />
-            <Stack.Screen
-              name="UserDetail"
-              component={UserDetailScreen}
-              options={{ title: 'User Details' }}
-            />
-            <Stack.Screen
-              name="AlertList"
-              component={AlertListScreen}
-              options={{ title: 'Alerts List' }}
-            />
-            <Stack.Screen
-              name="AlertDetail"
-              component={AlertDetailScreen}
-              options={{ title: 'Alert Details' }}
-            />
-            <Stack.Screen
-              name="MaintenanceList"
-              component={MaintenanceListScreen}
-              options={{ title: 'Maintenances List' }}
-            />
-            <Stack.Screen
-              name="MaintenanceDetail"
-              component={MaintenanceDetailScreen}
-              options={{ title: 'Maintenance Details' }}
-            />
-        </>
+            <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
+            <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
+            <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
+            <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
+            <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
+            <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
+            <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+            <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
+            <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
+            <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />
+            <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
+            <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
+          </>
         )}
       </Stack.Navigator>
     </NativeBaseProvider>

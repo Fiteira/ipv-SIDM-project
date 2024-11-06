@@ -3,8 +3,8 @@ import socketio
 import random
 import time
 
-API_URL = "http://localhost:3000/api/auth/loginsensor"
-WS_URL = "http://localhost:3000"
+API_URL = "https://ipv-sidm-project.onrender.com/api/auth/loginsensor"
+WS_URL = "https://ipv-sidm-project.onrender.com"
 
 def authenticate_sensor(api_key):
     try:

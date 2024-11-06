@@ -8,6 +8,7 @@ import api from '../../../config/api';
 
 type RootStackParamList = {
   FactoryDetail: { factoryId: string };
+  FactoryDashboard: { factoryId: string };
   MachineList: { factoryId: string };
   UserList: { factoryId: string };
   AlertList: { factoryId: string };
