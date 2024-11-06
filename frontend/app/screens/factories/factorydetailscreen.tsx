@@ -58,6 +58,12 @@ export default function FactoryDetailScreen() {
       <Text style={styles.location}>Location: {factory.location}</Text>
 
       <VStack space={4} marginTop={6}>
+        <Button 
+          colorScheme="darkBlue"
+          onPress={() => navigation.navigate('FactoryDashboard', { factoryId })}
+          >
+          Dashboard
+        </Button>
         <Button
           colorScheme="darkBlue"
           onPress={() => navigation.navigate('MachineList', { factoryId })}
