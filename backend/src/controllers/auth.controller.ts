@@ -10,8 +10,7 @@ import { UserModel } from '../models/user.model';
 import jwt from 'jsonwebtoken';
 import cacheNode from '../config/cache';
 import dotenv from "dotenv";
-import { enviarNotificacao } from '../config/notifications';
-import { cache } from 'joi';
+
 
 dotenv.config();
 
@@ -47,9 +46,6 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       userDTO.deviceToken = deviceToken;
       cacheNode.set(`user_${token}`, userDTO);
       console.log("Device token updated in cache: ", cacheNode.get(`user_${token}`));
-      enviarNotificacao(deviceToken, 'Login', 'Login realizado com sucesso!');
-    } else {
-      console.log('Device token not found. Notification not sent.');
     }
     
     res.status(200).json({

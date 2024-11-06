@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, DrawerContentComponentProps } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { NativeBaseProvider, Avatar, HStack, VStack, Text, extendTheme  } from 'native-base';
-import { TouchableOpacity, Alert, Platform, Appearance } from 'react-native';
+import { NativeBaseProvider, Avatar, HStack, VStack, Text, extendTheme } from 'native-base';
+import { TouchableOpacity, Alert, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import AdminAppHomeScreen from './screens/homescreen';
@@ -25,42 +24,30 @@ import MaintenanceDetailScreen from './screens/machines/maintenances/maintenance
 
 import avatar from '../assets/avatar.png';
 
-// Força o modo claro no nível do sistema
-Appearance.setColorScheme('light');
-
-// Configura o tema para forçar o modo claro
 const theme = extendTheme({
   config: {
     initialColorMode: 'light',
-    useSystemColorMode: false, // Ignora o tema do sistema
+    useSystemColorMode: false,
   },
 });
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
-import { DrawerContentComponentProps } from '@react-navigation/drawer';
+
 
 interface CustomDrawerContentProps extends DrawerContentComponentProps {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
 }
 
-function CustomDrawerContent(props: CustomDrawerContentProps) {
+function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerContentProps) {
   const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUserName = async () => {
-      try {
-        const user = await AsyncStorage.getItem('user');
-        if (user) {
-          const parsedUser = JSON.parse(user);
-          setUserName(parsedUser.name);
-        }
-      } catch (error) {
-        console.error("Failed to load user name:", error);
-      }
+      const user = await AsyncStorage.getItem('user');
+      if (user) setUserName(JSON.parse(user).name);
     };
-
     loadUserName();
   }, []);
 
@@ -79,7 +66,7 @@ function CustomDrawerContent(props: CustomDrawerContentProps) {
         label="Logout"
         icon={() => <MaterialIcons name="logout" size={22} color="red" />}
         labelStyle={{ color: 'red' }}
-        onPress={() => props.setIsAuthenticated(false)}
+        onPress={() => setIsAuthenticated(false)}
       />
     </DrawerContentScrollView>
   );
@@ -100,12 +87,10 @@ function DrawerNavigator({ setIsAuthenticated }: { setIsAuthenticated: (isAuthen
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<Notifications.Notification | null>(null);
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
-    // Configura o handler de notificações
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -114,56 +99,34 @@ export default function App() {
       }),
     });
 
-    // Registra o dispositivo para notificações push
-    registerForPushNotificationsAsync().then(token => {
-      if (token) {
-        setExpoPushToken(token);
-        // Envia uma notificação de teste após obter o token
-        sendTestNotification(token);
-      }
-    });
+    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
 
-    // Listener para notificações recebidas enquanto o app está em primeiro plano
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      setNotification(notification);
-      handleNotification(notification);
+      console.log('Notificação Recebida:', notification);
     });
 
-    // Listener para resposta a notificações (quando o usuário interage com a notificação)
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log(response);
-      handleNotificationResponse(response);
+      console.log('Resposta à Notificação:', response);
     });
 
     return () => {
-      if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
-      }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
-      }
+      if (notificationListener.current) Notifications.removeNotificationSubscription(notificationListener.current);
+      if (responseListener.current) Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, []);
 
   const registerForPushNotificationsAsync = async () => {
-    let token;
-   // if (Constants.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        Alert.alert('Falha ao obter permissões para notificações!');
-        return;
-      }
-      token = (await Notifications.getExpoPushTokenAsync({ projectId: process.env.EXPO_PUBLIC_PROJECT_ID})).data;
-      console.log('Token de Notificação:', token);
-    //} else {
-    //  Alert.alert('Deve usar um dispositivo físico para notificações push.');
-   // }
-
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      Alert.alert('Falha ao obter permissões para notificações!');
+      return null;
+    }
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
     if (Platform.OS === 'android') {
       Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -172,48 +135,19 @@ export default function App() {
         lightColor: '#FF231F7C',
       });
     }
-
     return token;
   };
 
-  const sendTestNotification = async (token: string) => {
-    if (!token) return;
-
-    const message = {
-      to: token,
-      sound: 'default',
-      title: 'Notificação de Teste',
-      body: 'Esta é uma notificação de teste enviada do aplicativo!',
-      data: { someData: 'goes here' },
-    };
-
-    await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
+  async function sendLocalNotification(title: string, body: string) {
+    await Notifications.scheduleNotificationAsync({
+      content: { title, body, sound: true },
+      trigger: null,
     });
-  };
-
-  const handleNotification = (notification: Notifications.Notification) => {
-    console.log('Notificação Recebida:', notification);
-
-    // Aqui pode atualizar o estado da aplicação ou navegar para um ecrã específico
-  };
-  
-  const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
-    console.log('Resposta à Notificação:', response);
-    // Aqui pode processar a resposta à notificação, como navegar para um ecrã específico
-  };
+  }
 
   return (
     <NativeBaseProvider theme={theme}>
-      <Stack.Navigator
-        screenOptions={{
-          headerBackTitle: '', // Remove o texto do botão de voltar em todas as telas
-        }}
-      >
+      <Stack.Navigator screenOptions={{ headerBackTitle: '' }}>
         {!isAuthenticated ? (
           <Stack.Screen
             name="Login"
@@ -229,62 +163,16 @@ export default function App() {
             >
               {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
             </Stack.Screen>
-            <Stack.Screen
-              name="FactoryDetail"
-              component={FactoryDetailScreen}
-              options={{ title: 'Factory Details' }}
-            />
-            <Stack.Screen
-              name="MachineList"
-              component={MachineListScreen}
-              options={{ title: 'Machines List' }}
-            />
-            <Stack.Screen
-              name="MachineDetail"
-              component={MachineDetailScreen}
-              options={{ title: 'Machine Details' }}
-            />
-            <Stack.Screen
-              name="SensorList"
-              component={SensorListScreen}
-              options={{ title: 'Sensors List' }}
-            />
-            <Stack.Screen
-              name="SensorDetail"
-              component={SensorDetailScreen}
-              options={{ title: 'Sensor Details' }}
-            />
-            <Stack.Screen
-              name="UserList"
-              component={UserListScreen}
-              options={{ title: 'Users List' }}
-            />
-            <Stack.Screen
-              name="UserDetail"
-              component={UserDetailScreen}
-              options={{ title: 'User Details' }}
-            />
-            <Stack.Screen
-              name="AlertList"
-              component={AlertListScreen}
-              options={{ title: 'Alerts List' }}
-            />
-            <Stack.Screen
-              name="AlertDetail"
-              component={AlertDetailScreen}
-              options={{ title: 'Alert Details' }}
-            />
-            <Stack.Screen
-              name="MaintenanceList"
-              component={MaintenanceListScreen}
-              options={{ title: 'Maintenances List' }}
-            />
-            <Stack.Screen
-              name="MaintenanceDetail"
-              component={MaintenanceDetailScreen}
-              options={{ title: 'Maintenance Details' }}
-            />
-        </>
+            <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
+            <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
+            <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
+            <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
+            <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
+            <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+            <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
+            <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
+            <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
+          </>
         )}
       </Stack.Navigator>
     </NativeBaseProvider>
