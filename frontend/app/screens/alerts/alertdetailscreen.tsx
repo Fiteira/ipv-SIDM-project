@@ -66,7 +66,7 @@ export default function AlertDetailScreen() {
 
   return (
     <Box style={styles.container}>
-        <VStack space={4}>
+      <VStack space={4}>
         <HStack justifyContent="space-between" alignItems="center">
             <Text style={styles.title}>{alerta.machine.machineName} ({alerta.sensor.name})</Text>
             <Text style={styles.date}>{new Date(alerta.alertDate).toLocaleDateString()}</Text>
@@ -98,14 +98,27 @@ export default function AlertDetailScreen() {
         </HStack>
         <Text style={styles.value}>{alerta.message}</Text>
 
-        <Button 
-            colorScheme="darkBlue"
-            marginTop={4}
-            _text={{ fontWeight: 'bold', fontSize: 'md' }}
-        >
-            Start Maintenance Process
-        </Button>
-        </VStack>
+        {alerta.state === 'awaiting analysis' && (
+          <VStack space={4} marginTop={6}>
+            <Button colorScheme="darkBlue">Check Sensor Readings</Button>
+            <Button colorScheme="darkBlue">Start Maintenance Process</Button>
+            <Button colorScheme="darkBlue">Ignore Alert</Button>
+          </VStack>
+        )}
+
+        {alerta.state === 'in progress' && (
+          <VStack space={4} marginTop={6}>
+            <Button colorScheme="darkBlue">Check Sensor Readings</Button>
+            <Button colorScheme="darkBlue">Finish Maintenance Process</Button>
+          </VStack>
+        )}
+
+        {alerta.state === 'solved' && (
+          <VStack space={4} marginTop={6}>
+            <Button colorScheme="darkBlue">Check Associated Maintenance</Button>
+          </VStack>
+        )}
+      </VStack>
     </Box>
   );
 }
