@@ -89,7 +89,7 @@ async function detectAnomalies(model: tf.Sequential, sensorData: SensorData) {
         return [];
     }
 
-    console.log("SENSOR DATA" + JSON.stringify(sensorData));
+    console.log("SENSOR DATA: " + JSON.stringify(sensorData));
 
     const data = sensorData.values.map((row) => {
         return expectedColumns.map((col) => {

@@ -39,7 +39,7 @@ class SensorSimulator:
 
     def generateReading(self):
         # Define the chance to start an anomaly (15%)
-        anomaly_chance = 0.15
+        anomaly_chance = 0.99
 
         # Check if in anomaly mode or if a new anomaly should start
         if self.in_anomaly_mode or random.random() < anomaly_chance:
