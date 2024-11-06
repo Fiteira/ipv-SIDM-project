@@ -8,6 +8,7 @@ import api from '../../../config/api';
 
 type RootStackParamList = {
   AlertDetail: { alertId: string };
+  SensorDetail: { sensorId: string };
 };
 
 type AlertDetailRouteProp = RouteProp<RootStackParamList, 'AlertDetail'>;
@@ -100,7 +101,7 @@ export default function AlertDetailScreen() {
 
         {alerta.state === 'awaiting analysis' && (
           <VStack space={4} marginTop={6}>
-            <Button colorScheme="darkBlue">Check Sensor Readings</Button>
+            <Button colorScheme="darkBlue" onPress={() => navigation.navigate('SensorDetail', { sensorId: alerta.sensor.sensorId })}>Check Sensor Readings</Button>
             <Button colorScheme="darkBlue">Start Maintenance Process</Button>
             <Button colorScheme="darkBlue">Ignore Alert</Button>
           </VStack>
@@ -108,7 +109,7 @@ export default function AlertDetailScreen() {
 
         {alerta.state === 'in progress' && (
           <VStack space={4} marginTop={6}>
-            <Button colorScheme="darkBlue">Check Sensor Readings</Button>
+            <Button colorScheme="darkBlue" onPress={() => navigation.navigate('SensorDetail', { sensorId: alerta.sensor.sensorId })}>Check Sensor Readings</Button>
             <Button colorScheme="darkBlue">Finish Maintenance Process</Button>
           </VStack>
         )}
