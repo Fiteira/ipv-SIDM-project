@@ -1,13 +1,19 @@
 import { Request, Response } from 'express';
 import { AlertModel } from '../models/alert.model';
 import { MachineModel } from '../models/machine.model';
+import { SensorModel } from '../models/sensor.model';
 import { handleServerError } from '../utils/helpers';
 
 export const getAlert = async (req: Request, res: Response): Promise<void> => {
   const { alertId } = req.params;
 
   try {
-    const alert = await AlertModel.findByPk(alertId);
+    const alert = await AlertModel.findByPk(alertId, {
+      include: [
+        { model: MachineModel, as: 'machine' }, // Inclui a máquina associada
+        { model: SensorModel, as: 'sensor' } // Inclui o sensor
+      ]
+    });
     if (!alert) {
       res.status(404).json({ success: false, message: 'Alert not found' });
       return;
@@ -34,14 +40,34 @@ export const getAllAlertsByFactoryId = async (req: Request, res: Response): Prom
 
   try {
     const alerts = await AlertModel.findAll({
-      include: { model: MachineModel, as: 'machine', where: { factoryId } },
+      include: [
+        {
+          model: MachineModel, 
+          as: 'machine', 
+          where: { factoryId }, 
+        },
+        {
+          model: SensorModel, 
+          as: 'sensor'
+        } 
+      ],
       order: [['alertDate', 'DESC']],
       limit: limitNumber,
       offset
     });
 
     const totalAlerts = await AlertModel.count({
-      include: { model: MachineModel, as: 'machine', where: { factoryId } }
+      include: [
+        {
+          model: MachineModel, 
+          as: 'machine', 
+          where: { factoryId }, 
+        },
+        {
+          model: SensorModel, 
+          as: 'sensor'
+        } 
+      ]
     });
 
     const totalPages = Math.ceil(totalAlerts / limitNumber);

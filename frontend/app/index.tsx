@@ -18,7 +18,9 @@ import SensorDetailScreen from './screens/machines/sensors/sensordetailscreen';
 import UserListScreen from './screens/users/userlistscreen';
 import UserDetailScreen from './screens/users/userdetailscreen';
 import AlertListScreen from './screens/alerts/alertlistscreen';
+import AlertDetailScreen from './screens/alerts/alertdetailscreen';
 import MaintenanceListScreen from './screens/machines/maintenances/maintenancelistscreen';
+import MaintenanceDetailScreen from './screens/machines/maintenances/maintenancedetailscreen';
 
 import avatar from '../assets/avatar.png';
 

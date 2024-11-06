@@ -11,7 +11,12 @@ export const getMaintenance = async (req: Request, res: Response): Promise<void>
     return;
   }
   try {
-    const maintenance = await MaintenanceModel.findByPk(maintenanceId);
+    const maintenance = await MaintenanceModel.findByPk(maintenanceId, {
+      include: [
+        { model: MachineModel, as: 'machine' }, // Inclui a máquina associada
+        { model: UserModel, as: 'performedUser' } // Inclui o usuário que realizou a manutenção
+      ]
+    });
     if (!maintenance) {
       res.status(404).json({ success: false, message: 'Maintenance not found' });
       return;
