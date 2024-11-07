@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity  } from 'react-native';
-import { Box, FlatList, Text, Icon, VStack, HStack, Spinner } from 'native-base';
+import { Box, FlatList, Text, Icon, VStack, HStack, Spinner, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-
+import { useNavigation, NavigationProp, useFocusEffect, RouteProp } from '@react-navigation/native';
 import api from '../../config/api';
 
 type RootStackParamList = {
   FactoryDetail: { factoryId: string };
+  FactoryCreate: undefined;
 };
 
 interface Factory {
@@ -34,9 +34,36 @@ export default function HomeScreen() {
       .finally(() => setRefreshing(false));
   };
 
-  useEffect(() => {
-    fetchFactories();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchFactories();
+    }, [])
+  );
+
+  const deleteFactory = (factoryId: string) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this factory?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.delete(`/factories/${factoryId}`);
+              Alert.alert('Deleted', 'Factory deleted successfully');
+              fetchFactories(); // Refresh list after deletion
+            } catch (error) {
+              console.error('Error deleting factory:', error);
+              Alert.alert('Error', 'Failed to delete factory. Please try again later.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const renderFactoryCard = ({ item }: { item: Factory }) => (
     <TouchableOpacity onPress={() => navigation.navigate('FactoryDetail', { factoryId: item.factoryId })}>
@@ -72,9 +99,22 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
         onRefresh={fetchFactories}
+        ListFooterComponent={
+          <Button
+            onPress={() => navigation.navigate('FactoryCreate')}
+            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+            colorScheme="blue"
+            marginTop="4"
+            borderRadius="md"
+            padding="4"
+          >
+            Create New Factory
+          </Button>
+        }
       />
     </View>
   );
+
 }
 
 const styles = StyleSheet.create({
