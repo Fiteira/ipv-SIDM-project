@@ -6,6 +6,7 @@ import { TouchableOpacity, Alert, Platform, Appearance } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
@@ -23,6 +24,7 @@ import AlertDetailScreen from './screens/alerts/alertdetailscreen';
 import MaintenanceListScreen from './screens/machines/maintenances/maintenancelistscreen';
 import MaintenanceDetailScreen from './screens/machines/maintenances/maintenancedetailscreen';
 import RegisterMaintenanceScreen from './screens/machines/maintenances/registermaintenancescreen';
+import FactoryCreateScreen from './screens/factories/factortorycreate'; 
 
 import avatar from '../assets/avatar.png';
 
@@ -162,6 +164,7 @@ export default function App() {
               {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
             </Stack.Screen>
             <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
+            <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
             <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
             <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
             <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
@@ -174,6 +177,7 @@ export default function App() {
             <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
             <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
             <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
+          
           </>
         )}
       </Stack.Navigator>
