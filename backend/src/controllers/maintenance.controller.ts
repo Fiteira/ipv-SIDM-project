@@ -82,13 +82,13 @@ export const getMaintenanceByMachineId = async (req: Request, res: Response): Pr
   };
 
 export const createMaintenance = async (req: Request, res: Response): Promise<void> => {
-    const { machineId, maintenanceDate, description, performedBy } = req.body;
-    if (!machineId || !maintenanceDate || !description || !performedBy) {
-      res.status(400).json({ success: false, message: 'MachineId, maintenanceDate, description, and performedBy are required' });
+    const { machineId, alertId, maintenanceDate, description, performedBy } = req.body;
+    if (!machineId || !alertId || !maintenanceDate || !description || !performedBy) {
+      res.status(400).json({ success: false, message: 'machineId, alertId, maintenanceDate, description, and performedBy are required' });
       return;
     }
     try {
-      const newMaintenance = await MaintenanceModel.create({ machineId, maintenanceDate, description, performedBy });
+      const newMaintenance = await MaintenanceModel.create({ machineId, alertId, maintenanceDate, description, performedBy });
       res.status(201).json({ success: true, data: newMaintenance });
     } catch (error) {
       handleServerError(res, 'Error creating maintenance', error);

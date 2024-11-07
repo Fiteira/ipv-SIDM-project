@@ -6,6 +6,7 @@ import {
   updateAlert,
   deleteAlert,
   getAlertByMachineId,
+  updateAlertState,
 } from '../controllers/alert.controller';
 
 const router: Router = Router();
@@ -21,6 +22,7 @@ router.put('/:alertId', updateAlert);
 router.delete('/:alertId', deleteAlert);
 
 router.get('/machine/:machineId', getAlertByMachineId);
-;
+
+router.patch('/state/:alertId', updateAlertState);
 
 export default router;

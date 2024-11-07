@@ -89,10 +89,10 @@ export default function UserDetailScreen() {
           </Modal.Body>
           <Modal.Footer>
             <Button.Group space={2}>
-              <Button variant="ghost" onPress={() => setShowModal(false)}>
+              <Button variant="unstyled" onPress={() => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button colorScheme="darkBlue" onPress={handleResetPassword}>
+              <Button colorScheme="red" onPress={handleResetPassword}>
                 Confirm
               </Button>
             </Button.Group>

@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Alert, StyleSheet } from 'react-native';
-import { Box, Spinner, Button, VStack, HStack, Icon, Text } from 'native-base';
+import { Box, Spinner, Button, VStack, HStack, Icon, Text, AlertDialog } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
 import api from '../../../config/api';
 
 type RootStackParamList = {
   AlertDetail: { alertId: string };
   SensorDetail: { sensorId: string };
+  RegisterMaintenance: { alertId: string,  machineId: string};
 };
 
 type AlertDetailRouteProp = RouteProp<RootStackParamList, 'AlertDetail'>;
@@ -39,9 +39,14 @@ export default function AlertDetailScreen() {
   const { alertId } = route.params;
   const [alerta, setAlertas] = useState<Alerta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showIgnoreDialog, setShowIgnoreDialog] = useState(false);
+  const [showStartMaintenanceDialog, setShowStartMaintenanceDialog] = useState(false);
+  const [showFinishMaintenanceDialog, setShowFinishMaintenanceDialog] = useState(false);
+  const cancelRef = useRef(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  useEffect(() => {
+  const fetchAlertDetails = useCallback(() => {
+    setLoading(true);
     api.get(`/alerts/${alertId}`)
       .then((response) => {
         setAlertas(response.data.data);
@@ -52,6 +57,41 @@ export default function AlertDetailScreen() {
       })
       .finally(() => setLoading(false));
   }, [alertId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAlertDetails(); // Atualiza os dados sempre que a tela é focada
+    }, [fetchAlertDetails])
+  );
+
+  const handleIgnoreAlert = async () => {
+    try {
+      await api.patch(`/alerts/state/${alertId}`, { state: 'ignored' });
+      setAlertas((prev) => prev ? { ...prev, state: 'ignored' } : null);
+      setShowIgnoreDialog(false);
+      Alert.alert('Sucess', 'Alert has been ignored.');
+    } catch (error) {
+      console.error('Error updating alert state:', error);
+      Alert.alert('Error', 'Unable to ignore alert.');
+    }
+  };
+
+  const handleStartMaintenance = async () => {
+    try {
+      await api.patch(`/alerts/state/${alertId}`, { state: 'in progress' });
+      setAlertas((prev) => prev ? { ...prev, state: 'in progress' } : null);
+      setShowStartMaintenanceDialog(false);
+      Alert.alert('Success', 'Maintenance process started.');
+    } catch (error) {
+      console.error('Error starting maintenance process:', error);
+      Alert.alert('Error', 'Unable to start maintenance process.');
+    }
+  };
+
+  const handleFinishMaintenance = () => {
+    setShowFinishMaintenanceDialog(false);
+    navigation.navigate('RegisterMaintenance', { alertId: alerta!.alertId, machineId: alerta!.machine.machineId });
+  };
 
   if (loading) {
     return <Spinner color="blue.500" />;
@@ -102,17 +142,86 @@ export default function AlertDetailScreen() {
         {alerta.state === 'awaiting analysis' && (
           <VStack space={4} marginTop={6}>
             <Button colorScheme="darkBlue" onPress={() => navigation.navigate('SensorDetail', { sensorId: alerta.sensor.sensorId })}>Check Sensor Readings</Button>
-            <Button colorScheme="darkBlue">Start Maintenance Process</Button>
-            <Button colorScheme="darkBlue">Ignore Alert</Button>
+            <Button colorScheme="darkBlue" onPress={() => setShowStartMaintenanceDialog(true)}>Start Maintenance Process</Button>
+            <Button colorScheme="darkBlue" onPress={() => setShowIgnoreDialog(true)}>Ignore Alert</Button>
           </VStack>
         )}
+
+        <AlertDialog
+          leastDestructiveRef={cancelRef}
+          isOpen={showIgnoreDialog}
+          onClose={() => setShowIgnoreDialog(false)}
+        >
+          <AlertDialog.Content>
+            <AlertDialog.Header>Ignore Alert</AlertDialog.Header>
+            <AlertDialog.Body>
+              Are you sure you want to ignore this alert?
+            </AlertDialog.Body>
+            <AlertDialog.Footer>
+              <Button.Group space={2}>
+                <Button variant="unstyled" onPress={() => setShowIgnoreDialog(false)} ref={cancelRef}>
+                  Cancel
+                </Button>
+                <Button colorScheme="red" onPress={handleIgnoreAlert}>
+                  Confirm
+                </Button>
+              </Button.Group>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
+        </AlertDialog>
+
+        <AlertDialog
+          leastDestructiveRef={cancelRef}
+          isOpen={showStartMaintenanceDialog}
+          onClose={() => setShowStartMaintenanceDialog(false)}
+        >
+          <AlertDialog.Content>
+            <AlertDialog.Header>Start Maintenance</AlertDialog.Header>
+            <AlertDialog.Body>
+              Are you sure you want to start the maintenance process?
+            </AlertDialog.Body>
+            <AlertDialog.Footer>
+              <Button.Group space={2}>
+                <Button variant="unstyled" onPress={() => setShowStartMaintenanceDialog(false)} ref={cancelRef}>
+                  Cancel
+                </Button>
+                <Button colorScheme="darkBlue" onPress={handleStartMaintenance}>
+                  Confirm
+                </Button>
+              </Button.Group>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
+        </AlertDialog>
 
         {alerta.state === 'in progress' && (
           <VStack space={4} marginTop={6}>
             <Button colorScheme="darkBlue" onPress={() => navigation.navigate('SensorDetail', { sensorId: alerta.sensor.sensorId })}>Check Sensor Readings</Button>
-            <Button colorScheme="darkBlue">Finish Maintenance Process</Button>
+            <Button colorScheme="darkBlue" onPress={() => setShowFinishMaintenanceDialog(true)}>Finish Maintenance Process</Button>
           </VStack>
         )}
+
+        <AlertDialog
+          leastDestructiveRef={cancelRef}
+          isOpen={showFinishMaintenanceDialog}
+          onClose={() => setShowFinishMaintenanceDialog(false)}
+        >
+          <AlertDialog.Content>
+            <AlertDialog.Header>Finish Maintenance Process</AlertDialog.Header>
+            <AlertDialog.Body>
+              Are you sure you want to finish the maintenance process? Maintenance registration is required.
+            </AlertDialog.Body>
+            <AlertDialog.Footer>
+              <Button.Group space={2}>
+                <Button variant="unstyled" onPress={() => setShowFinishMaintenanceDialog(false)} ref={cancelRef}>
+                  Cancel
+                </Button>
+                <Button colorScheme="darkBlue" onPress={handleFinishMaintenance}>
+                  Confirm
+                </Button>
+              </Button.Group>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
+        </AlertDialog>
 
         {alerta.state === 'solved' && (
           <VStack space={4} marginTop={6}>

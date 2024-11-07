@@ -22,6 +22,7 @@ import AlertListScreen from './screens/alerts/alertlistscreen';
 import AlertDetailScreen from './screens/alerts/alertdetailscreen';
 import MaintenanceListScreen from './screens/machines/maintenances/maintenancelistscreen';
 import MaintenanceDetailScreen from './screens/machines/maintenances/maintenancedetailscreen';
+import RegisterMaintenanceScreen from './screens/machines/maintenances/registermaintenancescreen';
 
 import avatar from '../assets/avatar.png';
 
@@ -172,6 +173,7 @@ export default function App() {
             <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />
             <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
             <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
+            <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
           </>
         )}
       </Stack.Navigator>

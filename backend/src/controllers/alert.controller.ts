@@ -197,3 +197,45 @@ export const deleteAlert = async (req: Request, res: Response): Promise<void> =>
     handleServerError(res, 'Error deleting alert', error);
   }
 };
+
+export const updateAlertState = async (req: Request, res: Response): Promise<void> => {
+  const { alertId } = req.params;
+  const { state } = req.body;
+
+  if (!alertId) {
+    res.status(400).json({ success: false, message: 'AlertId is required' });
+    return;
+  }
+  if (!state || typeof state !== 'string') {
+    res.status(400).json({ success: false, message: 'State is required and must be a string' });
+    return;
+  }
+
+  try {
+    const alert = await AlertModel.findByPk(alertId, { include: { model: MachineModel, as: 'machine' } });
+    if (!alert) {
+      res.status(404).json({ success: false, message: 'Alert not found' });
+      return;
+    }
+
+    // Atualiza o estado do alerta
+    alert.state = state;
+    await alert.save();
+
+    // Caso se esteja a iniciar o processo de manutenção, atualiza o estado da máquina associada para "in maintenance"
+    if (state === 'in progress' && alert.machine) {
+      alert.machine.state = 'in maintenance';
+      await alert.machine.save();
+    }
+
+    // Caso se esteja a finalizar o processo de manutenção, atualiza o estado da máquina associada para "active"
+    if (state === 'solved' && alert.machine) {
+      alert.machine.state = 'active';
+      await alert.machine.save();
+    }
+
+    res.status(200).json({ success: true, data: alert });
+  } catch (error) {
+    handleServerError(res, 'Error updating alert state', error);
+  }
+};
