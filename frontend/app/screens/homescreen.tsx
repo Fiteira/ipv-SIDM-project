@@ -25,7 +25,6 @@ export default function HomeScreen() {
     setRefreshing(true);
     api.get('/factories')
       .then((response) => {
-        console.log(response.data);
         setFactories(response.data.data);
       })
       .catch((error) => {

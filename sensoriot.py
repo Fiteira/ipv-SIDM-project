@@ -39,7 +39,7 @@ class SensorSimulator:
 
     def generateReading(self):
         # Define the chance to start an anomaly (15%)
-        anomaly_chance = 0.99
+        anomaly_chance = 0.10
 
         # Check if in anomaly mode or if a new anomaly should start
         if self.in_anomaly_mode or random.random() < anomaly_chance:
@@ -108,7 +108,7 @@ def connect_to_websocket(token):
             sensor_data = sensor_simulator.generateReading()
             sio.emit('sensor_data', sensor_data)
             print(f"Data sent: {sensor_data}")
-            time.sleep(5)
+            time.sleep(7.5)
 
     except Exception as e:
         print(f"Error connecting to WebSocket: {e}")
