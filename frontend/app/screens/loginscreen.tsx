@@ -31,7 +31,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
         // Armazena o token e user no armazenamento seguro
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
-        await AsyncStorage.setItem('fabricaId', response.data.user.factoryId? response.data.user.factoryId.toString() : '');
+        await AsyncStorage.setItem('factoryId', response.data.user.factoryId? response.data.user.factoryId.toString() : '');
         setIsAuthenticated(true);
         navigation.navigate('Homepage');
       } else {

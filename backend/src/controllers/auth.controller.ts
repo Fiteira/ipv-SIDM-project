@@ -38,6 +38,18 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     
     const userDTO: UserDTO = { userId: user.userId, userNumber: user.userNumber, name: user.name, role: user.role, factoryId: user.factoryId };
     const token = jwt.sign(userDTO, process.env.JWT_SECRET_KEY as string, { expiresIn: '30d' });
+
+    const keys = cacheNode.keys();
+    keys.forEach((key: string) => {
+      if (key.includes(`user_`)) {
+        console.log("User encontrado na cache: ", key);
+        const userCache = cacheNode.get(key);
+        if (userCache && (userCache as any).userNumber !== userNumber) {
+          cacheNode.del(key);
+        }
+      }
+    });
+    // Atualiza o token do usuário na cache do Node
     cacheNode.set(`user_${token}`, userDTO);
     
     // Atualiza o token do dispositivo no banco de dados

@@ -233,7 +233,6 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
       if (correspondingData) {
         const severity = determineSeverity(anomalyData.prediction);
 
-        // Building the detailed alert message
         const details = Object.entries(correspondingData.value).map(([column, value]) => {
           const level = determineLevel(value as number);
           return `${column}: ${value} (${level})`;
@@ -251,13 +250,11 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
             state: 'awaiting analysis',
           });
           console.log(`Alert created with ID ${alert.alertId} for sensor ${sensorId} with severity ${severity}`);
-          inAnomaly = true;
+          anomalyState.set(sensorId, true);  // Atualiza o estado de anomalia para true
 
-          // Retrieve users from cache with valid device tokens
           const users: UserDTO[] = cacheNode.keys().filter(key => key.startsWith('user_')).map(key => cacheNode.get(key) as UserDTO);
           console.log(`Sending notification to ${users.length} users.`);
 
-          // Send notification to users
           users.forEach((user: UserDTO) => {
             if (user?.deviceToken) {
               enviarNotificacao(
@@ -268,16 +265,19 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
               console.log(`Notification sent to user ${user.name} with deviceToken ${user.deviceToken}`);
             }
           });
-        } else {
-          console.warn("Insufficient data to create alert: machineId or sensorId is missing.");
-          inAnomaly = false;
+        } else if (anomalyData.prediction <= 0.5 && inAnomaly) {
+          anomalyState.set(sensorId, false);
+          console.log(`Sensor ${sensorId} anomaly resolved.`);
         }
       }
     });
     return anomalies;
   }
+
+  anomalyState.set(sensorId, false);
   return null;
 };
+
 
 function determineSeverity(predictionScore: number): string {
   if (predictionScore > 0.9) return 'critical';
