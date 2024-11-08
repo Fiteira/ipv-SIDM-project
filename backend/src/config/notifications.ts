@@ -5,16 +5,16 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 });
 
-export const enviarNotificacao = async (
+export const sendNotification = async (
   token: string,
-  titulo: string,
-  corpo: string
+  title: string,
+  body: string
 ) => {
-  const mensagem = {
+  const message = {
     to: token,
     sound: 'default',
-    title: titulo,
-    body: corpo,
+    title: title,
+    body: body,
     data: { someData: 'goes here' },
   };
 
@@ -24,17 +24,17 @@ export const enviarNotificacao = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(mensagem),
+      body: JSON.stringify(message),
     });
 
     if (response.ok) {
       const data = await response.json();
-      console.log('Notificação enviada com sucesso:', data);
+      console.log('Notification sent successfully:', data);
     } else {
       const errorData = await response.json();
-      console.error('Erro ao enviar notificação:', errorData);
+      console.error('Error sending notification:', errorData);
     }
   } catch (error) {
-    console.error('Erro ao enviar notificação:', error);
+    console.error('Error sending notification:', error);
   }
 };

@@ -10,7 +10,7 @@ import tensor from "./tensor";
 import { Sensor } from '../interfaces/sensor.interface';
 import { COLUMNS_TO_USE } from './tensor';
 import { SensorModel } from '../models/sensor.model';
-import { enviarNotificacao } from './notifications';
+import { sendNotification } from './notifications';
 import { UserDTO } from '../interfaces/user.interface';
 
 interface CachedSensorData {
@@ -260,7 +260,7 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
 
           users.forEach((user: UserDTO) => {
             if (user?.deviceToken) {
-              enviarNotificacao(
+              sendNotification(
                 user.deviceToken,
                 `Anomaly detected for sensor ${sensorId}`,
                 alertMessage
