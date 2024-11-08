@@ -5,14 +5,14 @@ import { createUserService, findUserByUserNumber, findUserDTOByUserNumber } from
 import bcrypt from 'bcryptjs';
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req.params;
-  if (!userId) {
+  const { userNumber } = req.params;
+  if (!userNumber) {
     res.status(400).json({ success: false, message: 'UserId is required' });
     return
   }
   try {
 
-    const user = await findUserDTOByUserNumber(Number(userId));
+    const user = await findUserDTOByUserNumber(Number(userNumber));
     //const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
 
     if (!user) {
