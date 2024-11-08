@@ -18,17 +18,10 @@ export const findUserDTOByUserNumber = async (userNumber: number): Promise<User 
 };
 
 export const createUserService = async (userData: any): Promise<User> => {
-
-  const user = await findUserByUserNumber(userData.userNumber);
-  if (user) {
-    throw new Error('User already exists');
-  }
-
   const salt = await bcrypt.genSalt();
-  const hashedPassword = await bcrypt.hash("123456", salt);
+  const hashedPassword = await bcrypt.hash(process.env.DEFAULT_PASSWORD as string, salt); // Adicionei "await" aqui
   const newUser = { ...userData, password: hashedPassword };
   return UserModel.create(newUser);
-
 };
 
 export const generateToken = (data: any, expiresIn: string | undefined = '30d'): string => {

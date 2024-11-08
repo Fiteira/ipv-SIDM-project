@@ -56,12 +56,9 @@ export const getUsersByFactoryId = async (req: Request, res: Response): Promise<
 
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
-
-
-
-  const { userNumber, name, role, factoryId } = req.body;
-  if (!userNumber || !name || !role || !factoryId) {
-    res.status(400).json({ success: false, message: 'UserNumber, name, role, factoryId, and password are required' });
+  const { name, role, factoryId } = req.body;
+  if (!name || !role || !factoryId) {
+    res.status(400).json({ success: false, message: 'Name, role, factoryId are required' });
     return;
   }
   try {
@@ -139,7 +136,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await user.destroy();
+    await user.update({ name: 'deleted', password: 'deleted', factoryId: null });
     res.status(200).json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     handleServerError(res, 'Error deleting user', error);
