@@ -157,13 +157,16 @@ export const configureSocketEvents = (io: SocketIOServer) => {
 
 const handleSensorDisconnect = (socket: Socket) => {
   const sensorToken = `sensor_${socket.handshake.auth.token}`;
-  const cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [2];
+  const cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [];
 
-  if (cachedData.length === 0) {
+  const hasValues = cachedData.some(item => item.value && Array.isArray(item.value.values) && item.value.values.length > 0);
+
+  if (!hasValues) {
     cacheNode.del(sensorToken);
     console.log(`Cache for sensor ${socket.data.sensor.sensorId} has been cleared.`);
   } else {
     console.log(`Data still present in cache for sensor ${socket.data.sensor.sensorId}, postponing removal.`);
+    setTimeout(() => handleSensorDisconnect(socket), 5000);
   }
 };
 

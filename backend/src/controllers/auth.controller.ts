@@ -42,7 +42,6 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     const keys = cacheNode.keys();
     keys.forEach((key: string) => {
       if (key.includes(`user_`)) {
-        console.log("User encontrado na cache: ", key);
         const userCache = cacheNode.get(key);
         if (userCache && (userCache as any).userNumber !== userNumber) {
           cacheNode.del(key);
@@ -57,7 +56,6 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       // Atualiza o token do dispositivo na cache do Node
       userDTO.deviceToken = deviceToken;
       cacheNode.set(`user_${token}`, userDTO);
-      console.log("Device token updated in cache: ", cacheNode.get(`user_${token}`));
     }
     
     res.status(200).json({
@@ -108,9 +106,20 @@ export const sensorLogin = async (req: Request, res: Response): Promise<any> => 
     console.log("Sensor found: ", JSON.stringify(sensor));
 
     const sensorData = nestRawResults(sensor);
-    //console.log("Sensor data: ", sensorData);
 
     const token = jwt.sign({ sensor: sensorData }, process.env.JWT_SECRET_KEY as string, { expiresIn: '1h' });
+
+    const keys = cacheNode.keys();
+    console.log("Keys: ", keys);
+    for (const key of keys) {
+      if (key.includes(`sensor_`)) {
+        const sensorCache = cacheNode.get(key);
+        if (sensorCache && (sensorCache as any).apiKey !== apiKey) {
+          console.log("Já existe um sensor autenticado com essa chave, rejeitando a autenticação");
+          return res.status(401).json({ message: 'The sensor is already logged in!' });
+        }
+      }
+    }
 
     cacheNode.set(`sensor_${token}`, sensorData);
     return res.status(200).json({ token });
