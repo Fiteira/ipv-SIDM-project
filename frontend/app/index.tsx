@@ -25,6 +25,7 @@ import MaintenanceListScreen from './screens/machines/maintenances/maintenanceli
 import MaintenanceDetailScreen from './screens/machines/maintenances/maintenancedetailscreen';
 import RegisterMaintenanceScreen from './screens/machines/maintenances/registermaintenancescreen';
 import FactoryCreateScreen from './screens/factories/factortorycreate'; 
+import UserCreateScreen from './screens/users/usercreate';
 
 import avatar from '../assets/avatar.png';
 
@@ -171,6 +172,7 @@ export default function App() {
             <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
             <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
             <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+            <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
             <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
             <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
             <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />

@@ -143,6 +143,7 @@ export default function FactoryDetailScreen() {
       </Modal>
     </Box>
   );
+
 }
 
 const styles = StyleSheet.create({
