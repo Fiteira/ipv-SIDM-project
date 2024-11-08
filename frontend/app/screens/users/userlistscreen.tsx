@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { Box, FlatList, Icon, HStack, VStack, Spinner, Text } from 'native-base';
+import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../config/api';
 
 type RootStackParamList = {
   UserList: { factoryId: string };
-  UserDetail: { userId: string };
+  UserDetail: { userNumber: string };
+  UserCreate: { factoryId: string };
 };
 
 type UserListRouteProp = RouteProp<RootStackParamList, 'UserList'>;
@@ -48,28 +49,29 @@ export default function UserListScreen() {
   }, [factoryId]);
 
   const renderUserCard = ({ item }: { item: User }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('UserDetail', { userId: item.userId })}>
-        <Box
+    <TouchableOpacity onPress={() => navigation.navigate('UserDetail', { userNumber: item.userNumber })}>
+      <Box
         shadow={2}
         borderRadius="md"
         padding="4"
         marginBottom="4"
         bg="light.50"
-        >
+      >
         <HStack space={3} alignItems="center">
-            <Icon as={MaterialIcons} name="person" size="lg" color="darkBlue.500" />
-            <VStack>
+          <Icon as={MaterialIcons} name="person" size="lg" color="darkBlue.500" />
+          <VStack>
             <Text bold fontSize="md">
-                {item.name}
+              {item.name}
             </Text>
             <Text fontSize="sm" color="coolGray.600">
-                {item.role}
+              {item.role}
             </Text>
-            </VStack>
+          </VStack>
         </HStack>
-        </Box>
+      </Box>
     </TouchableOpacity>
   );
+  
 
   if (loading) {
     return <Spinner color="blue.500" />;
@@ -84,9 +86,21 @@ export default function UserListScreen() {
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
         onRefresh={fetchUsers}
+        ListFooterComponent={
+          <Button
+            onPress={() => navigation.navigate('UserCreate', { factoryId })}
+            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+            colorScheme="blue"
+            marginTop="4"
+            borderRadius="md"
+          >
+            Create User
+          </Button>
+        }
       />
     </View>
   );
+
 }
 
 const styles = StyleSheet.create({

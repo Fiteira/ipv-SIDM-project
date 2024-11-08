@@ -6,7 +6,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../config/api';
 
 type RootStackParamList = {
-  UserDetail: { userId: string };
+  UserDetail: { userNumber: string };
 };
 
 type UserDetailRouteProp = RouteProp<RootStackParamList, 'UserDetail'>;
@@ -20,14 +20,14 @@ interface User {
 
 export default function UserDetailScreen() {
   const route = useRoute<UserDetailRouteProp>();
-  const { userId } = route.params;
+  const { userNumber } = route.params;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false); // Controle do modal
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
-    api.get(`/users/${userId}`)
+    api.get(`/users/${userNumber}`)
       .then((response) => {
         setUser(response.data.data);
       })
@@ -36,7 +36,7 @@ export default function UserDetailScreen() {
         Alert.alert('Error', 'Unable to load user details.');
       })
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [userNumber]);
 
   const handleResetPassword = async () => {
     if (!user) return;
