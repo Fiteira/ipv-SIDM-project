@@ -11,7 +11,7 @@ import {
 const router: Router = Router();
 
 
-router.get('/:userId', getUser);
+router.get('/:userNumber', getUser);
 
 router.get('/', getAllUsers);
 
