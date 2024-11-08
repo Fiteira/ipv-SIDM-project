@@ -40,31 +40,6 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const deleteFactory = (factoryId: string) => {
-    Alert.alert(
-      'Confirm Delete',
-      'Are you sure you want to delete this factory?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/factories/${factoryId}`);
-              Alert.alert('Deleted', 'Factory deleted successfully');
-              fetchFactories(); // Refresh list after deletion
-            } catch (error) {
-              console.error('Error deleting factory:', error);
-              Alert.alert('Error', 'Failed to delete factory. Please try again later.');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
   const renderFactoryCard = ({ item }: { item: Factory }) => (
     <TouchableOpacity onPress={() => navigation.navigate('FactoryDetail', { factoryId: item.factoryId })}>
       <Box
