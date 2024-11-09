@@ -44,6 +44,12 @@ interface CustomDrawerContentProps extends DrawerContentComponentProps {
 function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerContentProps) {
   const [userName, setUserName] = useState<string | null>(null);
 
+  function handleLogout() {
+    AsyncStorage.removeItem('token');
+    AsyncStorage.removeItem('user');
+    setIsAuthenticated(false);
+  }
+
   useEffect(() => {
     const loadUserName = async () => {
       const user = await AsyncStorage.getItem('user');
@@ -67,7 +73,7 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
         label="Logout"
         icon={() => <MaterialIcons name="logout" size={22} color="red" />}
         labelStyle={{ color: 'red' }}
-        onPress={() => setIsAuthenticated(false)}
+        onPress={() => handleLogout()}
       />
     </DrawerContentScrollView>
   );

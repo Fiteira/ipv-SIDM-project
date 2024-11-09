@@ -1,7 +1,8 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Configura a URL base da API
 let api_url = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-console.log('------------------------SE A API ESTIVER EM OUTRO IP, MUDE O IP NO ARQUIVO frontend/config/api.ts----------------------------');
 
 const api = axios.create({
   baseURL: api_url,
@@ -9,5 +10,20 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Configura um interceptor para incluir o token nas requisições
+api.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    console.log('Token:', token); 
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default api;

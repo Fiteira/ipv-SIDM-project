@@ -7,19 +7,20 @@ import {
   deleteSensor,
   getSensorsByMachineId,
 } from '../controllers/sensor.controller';
+import { jwtAuthMiddleware } from '../config/middleware';
 
 const router: Router = Router();
 
-router.get('/:sensorId', getSensor);
+router.get('/:sensorId', jwtAuthMiddleware, getSensor);
 
-router.get('/factory/:factoryId', getAllSensorsByFactoryId);
+router.get('/factory/:factoryId', jwtAuthMiddleware, getAllSensorsByFactoryId);
 
-router.post('/', createSensor);
+router.post('/', jwtAuthMiddleware, createSensor);
 
-router.put('/:sensorId', updateSensor);
+router.put('/:sensorId', jwtAuthMiddleware, updateSensor);
 
-router.delete('/:sensorId', deleteSensor);
+router.delete('/:sensorId', jwtAuthMiddleware, deleteSensor);
 
-router.get('/machine/:machineId', getSensorsByMachineId);
+router.get('/machine/:machineId', jwtAuthMiddleware, getSensorsByMachineId);
 
 export default router;

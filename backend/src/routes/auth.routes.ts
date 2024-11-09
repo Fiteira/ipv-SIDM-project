@@ -14,10 +14,10 @@ router.post("/resetpassword", resetUserPassword);
 
 router.get('/checktoken', passport.authenticate('jwt', { session: false }), (req: Request, res: Response) => {
   if (req.user) {
-    const { userId, userName, roleId, companyId, email, status } = (req.user as any).dataValues;
+    const { userId, userName, role, factoryId } = (req.user as any).dataValues;
     res.status(200).json({
       success: true,
-      message: { userId, userName, roleId, companyId, email, status }
+      message: { userId, userName, role, factoryId }
     });
   } else {
     res.status(401).json({

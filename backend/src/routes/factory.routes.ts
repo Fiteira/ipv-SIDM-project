@@ -6,17 +6,18 @@ import {
   updateFactory,
   deleteFactory,
 } from '../controllers/factory.controller';
+import { jwtAuthMiddleware } from '../config/middleware';
 
 const router: Router = Router();
 
-router.get('/:factoryId', getFactory);
+router.get('/:factoryId', jwtAuthMiddleware, getFactory);
 
-router.get('/', getAllFactories);
+router.get('/', jwtAuthMiddleware, getAllFactories);
 
-router.post('/', createFactory);
+router.post('/', jwtAuthMiddleware, createFactory);
 
-router.put('/:factoryId', updateFactory);
+router.put('/:factoryId', jwtAuthMiddleware, updateFactory);
 
-router.delete('/:factoryId', deleteFactory);
+router.delete('/:factoryId', jwtAuthMiddleware, deleteFactory);
 
 export default router;

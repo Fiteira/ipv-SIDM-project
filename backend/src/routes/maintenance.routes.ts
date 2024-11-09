@@ -7,19 +7,20 @@ import {
   deleteMaintenance,
   getMaintenanceByMachineId,
 } from '../controllers/maintenance.controller';
+import { jwtAuthMiddleware } from '../config/middleware';
 
 const router: Router = Router();
 
-router.get('/:maintenanceId', getMaintenance);
+router.get('/:maintenanceId', jwtAuthMiddleware, getMaintenance);
 
-router.get('/factory/:factoryId', getMaintenanceByFactoryId);
+router.get('/factory/:factoryId', jwtAuthMiddleware, getMaintenanceByFactoryId);
 
-router.post('/', createMaintenance);
+router.post('/', jwtAuthMiddleware, createMaintenance);
 
-router.put('/:maintenanceId', updateMaintenance);
+router.put('/:maintenanceId', jwtAuthMiddleware, updateMaintenance);
 
-router.delete('/:maintenanceId', deleteMaintenance);
+router.delete('/:maintenanceId', jwtAuthMiddleware, deleteMaintenance);
 
-router.get('/machine/:machineId', getMaintenanceByMachineId);
+router.get('/machine/:machineId', jwtAuthMiddleware, getMaintenanceByMachineId);
 
 export default router;

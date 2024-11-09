@@ -8,21 +8,22 @@ import {
   getAlertByMachineId,
   updateAlertState,
 } from '../controllers/alert.controller';
+import { jwtAuthMiddleware } from '../config/middleware';
 
 const router: Router = Router();
 
-router.get('/:alertId', getAlert);
+router.get('/:alertId', jwtAuthMiddleware, getAlert);
 
-router.get('/factory/:factoryId', getAllAlertsByFactoryId);
+router.get('/factory/:factoryId', jwtAuthMiddleware, getAllAlertsByFactoryId);
 
-router.post('/', createAlert);
+router.post('/', jwtAuthMiddleware, createAlert);
 
-router.put('/:alertId', updateAlert);
+router.put('/:alertId', jwtAuthMiddleware, updateAlert);
 
-router.delete('/:alertId', deleteAlert);
+router.delete('/:alertId', jwtAuthMiddleware, deleteAlert);
 
-router.get('/machine/:machineId', getAlertByMachineId);
+router.get('/machine/:machineId', jwtAuthMiddleware, getAlertByMachineId);
 
-router.patch('/state/:alertId', updateAlertState);
+router.patch('/state/:alertId', jwtAuthMiddleware, updateAlertState);
 
 export default router;

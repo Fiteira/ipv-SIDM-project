@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import Constants from 'expo-constants'; // Importe o Constants
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Para armazenar o token
@@ -10,21 +11,41 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
 
-  async function handleLogin() {
-    try {/*
-      // Obtém o token do dispositivo
-      const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? process.env.EXPO_PUBLIC_PROJECT_ID;
-      if (!projectId) {
-        return;
+  useFocusEffect(
+    React.useCallback(() => {
+      Notifications.getPermissionsAsync().then((status) => {
+        if (status.status !== 'granted') {
+          Notifications.requestPermissionsAsync();
+        }
+      });
+      async function autoLogIn() {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          try {
+            const response = await api.get('/auth/checktoken');
+            if (response.data && response.data.success) {
+              setIsAuthenticated(true);
+              navigation.navigate('Homepage');
+            } else {
+              await AsyncStorage.removeItem('token');
+              await AsyncStorage.removeItem('user');
+              setIsAuthenticated(false);
+            }
+          } catch (error: AxiosError | any) {
+            console.log(error);
+          }
+        }
       }
-  
-      const token = await Notifications.getExpoPushTokenAsync({ projectId });
-      setExpoPushToken(token.data); // Armazena o token correto
-      console.log("Token criado")*/
+      autoLogIn();
+    }, [])
+  );
+
+  async function handleLogin() {
+    try {
       const response = await api.post('/auth/login', {
         userNumber,
         password,
-        deviceToken: deviceToken, // Envia o token do dispositivo no corpo da requisição
+        deviceToken: deviceToken,
       });
       
       if (response.data && response.data.success) {
