@@ -14,10 +14,10 @@ export const sendNotification = async (
     to: token,
     sound: 'default',
     title: title,
-    body: body,
-    data: { someData: 'goes here' },
+    body: body
   };
 
+  console.log(message);
   try {
     const response = await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
