@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, Modal, TextInput } from 'react-native';
 import { Box, Spinner, Button, VStack, HStack, Icon } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+
 
 import api from '../../../config/api';
 
@@ -29,7 +30,9 @@ export default function FactoryDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [inputFactoryName, setInputFactoryName] = useState('');
   const fetchFactoryDetails = async () => {
     try {
       const response = await api.get(`/factories/${factoryId}`);
@@ -43,14 +46,18 @@ export default function FactoryDetailScreen() {
   };
 
   const handleDelete = async () => {
-    setModalVisible(false);
-    try {
-      await api.delete(`/factories/${factoryId}`);
-      alert('Factory deleted successfully');
-      navigation.goBack();
-    } catch (error) {
-      console.error('Error deleting factory:', error);
-      alert('Failed to delete factory. Please try again later.');
+    if (inputFactoryName === factory?.factoryName) {
+      setConfirmModalVisible(false);
+      try {
+        await api.delete(`/factories/${factoryId}`);
+        alert('Factory deleted successfully');
+        navigation.goBack();
+      } catch (error) {
+        console.error('Error deleting factory:', error);
+        alert('Failed to delete factory. Please try again later.');
+      }
+    } else {
+      setErrorModalVisible(true); // Exibe o modal de erro se o nome estiver incorreto
     }
   };
 
@@ -105,14 +112,14 @@ export default function FactoryDetailScreen() {
         <HStack space={3} justifyContent="center" marginTop={4}>
           <Button 
             colorScheme="yellow"
-            onPress={() => navigation.navigate('FactoryEdit', { factoryId })} // Navegação para tela de edição
+            onPress={() => navigation.navigate('FactoryEdit', { factoryId })}
             leftIcon={<Icon as={MaterialIcons} name="edit" size="sm" color="white" />}
           >
             Edit
           </Button>
           <Button 
             colorScheme="red"
-            onPress={() => setModalVisible(true)} // Exibe o modal de confirmação
+            onPress={() => setModalVisible(true)}
             leftIcon={<Icon as={MaterialIcons} name="delete" size="sm" color="white" />}
           >
             Delete
@@ -120,7 +127,7 @@ export default function FactoryDetailScreen() {
         </HStack>
       </VStack>
 
-      {/* Modal para confirmação de exclusão */}
+      {/* Primeiro Modal para confirmação inicial de exclusão */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -129,21 +136,67 @@ export default function FactoryDetailScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Are you sure you want to delete this factory?</Text>
+            <Text style={styles.modalText}>You are about to delete factory "{factory.factoryName}".</Text>
+            <Text style={styles.modalText}>Do you want to continue?</Text>
+            <HStack space={3} justifyContent="center" marginTop={4}>
+              <Button colorScheme="red" onPress={() => { setModalVisible(false); setConfirmModalVisible(true); }}>
+                Yes
+              </Button>
+              <Button onPress={() => setModalVisible(false)} colorScheme="coolGray">
+                No
+              </Button>
+            </HStack>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Segundo Modal para confirmação final com nome */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={confirmModalVisible}
+        onRequestClose={() => setConfirmModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>To confirm deletion, type the factory name:</Text>
+            <Text style={styles.modalText}>{factory.factoryName}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter factory name"
+              value={inputFactoryName}
+              onChangeText={setInputFactoryName}
+            />
             <HStack space={3} justifyContent="center" marginTop={4}>
               <Button colorScheme="red" onPress={handleDelete}>
                 Confirm Delete
               </Button>
-              <Button onPress={() => setModalVisible(false)} colorScheme="coolGray">
+              <Button onPress={() => setConfirmModalVisible(false)} colorScheme="coolGray">
                 Cancel
               </Button>
             </HStack>
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Erro para nome incorreto */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>The factory name is incorrect. Please try again.</Text>
+            <Button colorScheme="coolGray" onPress={() => setErrorModalVisible(false)} marginTop={4}>
+              Close
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </Box>
   );
-
 }
 
 const styles = StyleSheet.create({
@@ -177,5 +230,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    width: '100%',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+    fontSize: 16,
   },
 });
