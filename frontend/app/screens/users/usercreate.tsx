@@ -34,7 +34,7 @@ export default function UserCreateScreen() {
         factoryId, // `factoryId` is directly sent from the route params
       });
       Alert.alert('Success', 'User created successfully');
-      navigation.goBack();
+      navigation.navigate('UserList', { factoryId }); // Força o `fetch` ao voltar para a lista
     } catch (error) {
       console.error('Error creating user:', error);
       Alert.alert('Error', 'Failed to create user. Please try again later.');
