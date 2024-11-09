@@ -32,7 +32,7 @@ app.use(passport.initialize());
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`[${new Date().toLocaleString()}] ${req.method} ${req.url}`);
 
-  if (req.body && Object.keys(req.body).length > 0) {
+  if (req.body && Object.keys(req.body).length > 0 && req.url !== '/api/auth/login' && req.url !== '/api/auth/loginsensor') {
     console.log('Body:', req.body);
   } else {
     console.log('Body: No data');

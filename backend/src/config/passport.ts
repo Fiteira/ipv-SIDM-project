@@ -8,31 +8,35 @@ dotenv.config();
 
 const jwtOptions: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET_KEY as string, 
+  secretOrKey: process.env.JWT_SECRET_KEY as string,
 };
 
 // Configure Passport JWT strategy
-passport.use(new JwtStrategy(jwtOptions, async (jwtPayload: any, done: (error: any, user?: any, info?: any) => void) => {
-  try {
-    // Try to fetch the user from the cache
-    let user = await cache.get(jwtPayload.id);
+passport.use(
+  new JwtStrategy(jwtOptions, async (jwtPayload: any, done: (error: any, user?: any, info?: any) => void) => {
+    try {
+      let user = cache.get(`user_${jwtPayload.userId}`);
 
-    if (!user) {
-      console.log("User not found in cache, fetching from database...");
-      
-      // If user is not in cache, fetch from the database
-      user = await UserModel.findByPk(jwtPayload.id, {
-        attributes: ['userId', 'roleId', 'companyId', 'email', 'userName', 'status']
-      });
+      if (!user) {
 
-      // Store the user in cache for 4 minutes (240 seconds)
-      cache.set(jwtPayload.id, user, 240);
+        user = await UserModel.findByPk(jwtPayload.userId, {
+          attributes: ['userId', 'role', 'factoryId', 'name', 'userNumber'],
+        });
+
+        if (user) {
+          cache.set(`user_${jwtPayload.userId}`, user);
+        } else {
+          console.log("User not found in database.");
+        }
+      } else {
+        console.log("User found in cache.");
+      }
+
+      return done(null, user || false);
+    } catch (err) {
+      return done(err, false);
     }
-
-    return done(null, user);
-  } catch (err) {
-    return done(err, false);
-  }
-}));
+  })
+);
 
 export default passport;

@@ -7,21 +7,22 @@ import {
   deleteUser,
   getUsersByFactoryId
 } from '../controllers/user.controller';
+import { jwtAuthMiddleware } from '../config/middleware';
 
 const router: Router = Router();
 
 
-router.get('/:userNumber', getUser);
+router.get('/:userNumber', jwtAuthMiddleware, getUser);
 
-router.get('/', getAllUsers);
+router.get('/', jwtAuthMiddleware, getAllUsers);
 
-router.get('/factory/:factoryId', getUsersByFactoryId);
+router.get('/factory/:factoryId', jwtAuthMiddleware, getUsersByFactoryId);
 
-router.post('/', createUser);
+router.post('/', jwtAuthMiddleware, createUser);
 
-router.put('/:userId', updateUser);
+router.put('/:userId', jwtAuthMiddleware, updateUser);
 
-router.delete('/:userId', deleteUser);
+router.delete('/:userId', jwtAuthMiddleware, deleteUser);
 
 
 export default router;
