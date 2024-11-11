@@ -2,6 +2,9 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
 import dotenv from 'dotenv';
 import { UserModel } from '../models/user.model';
+import { SensorModel } from '../models/sensor.model';
+import { MachineModel } from '../models/machine.model';
+import { FactoryModel } from '../models/factory.model';
 import cache from './cache';
 
 dotenv.config();
@@ -13,26 +16,48 @@ const jwtOptions: StrategyOptions = {
 
 // Configure Passport JWT strategy
 passport.use(
-  new JwtStrategy(jwtOptions, async (jwtPayload: any, done: (error: any, user?: any, info?: any) => void) => {
+  new JwtStrategy(jwtOptions, async (jwtPayload: any, done: (error: any, userOrSensor?: any) => void) => {
     try {
-      let user = cache.get(`user_${jwtPayload.userId}`);
-
-      if (!user) {
-
-        user = await UserModel.findByPk(jwtPayload.userId, {
-          attributes: ['userId', 'role', 'factoryId', 'name', 'userNumber'],
-        });
-
-        if (user) {
-          cache.set(`user_${jwtPayload.userId}`, user);
-        } else {
-          console.log("User not found in database.");
+      if (jwtPayload.userId) {
+        // User authentication
+        let user = cache.get(`user_${jwtPayload.userId}`);
+        if (!user) {
+          user = await UserModel.findByPk(jwtPayload.userId, {
+            attributes: ['userId', 'role', 'factoryId', 'name', 'userNumber'],
+          });
+          if (user) {
+            cache.set(`user_${jwtPayload.userId}`, user);
+          }
         }
+        return done(null, user || false);
+      } else if (jwtPayload.sensorId) {
+        // Sensor authentication
+        let sensor = cache.get(`sensor_${jwtPayload.sensorId}`);
+        if (!sensor) {
+          sensor = await SensorModel.findByPk(jwtPayload.sensorId, {
+            include: [
+              {
+                model: MachineModel,
+                as: 'machine',
+                attributes: ['machineId', 'machineName', 'factoryId'],
+                include: [
+                  {
+                    model: FactoryModel,
+                    as: 'factory',
+                    attributes: ['factoryId', 'factoryName', 'location'],
+                  },
+                ],
+              },
+            ],
+          });
+          if (sensor) {
+            cache.set(`sensor_${jwtPayload.sensorId}`, sensor);
+          }
+        }
+        return done(null, sensor || false);
       } else {
-        console.log("User found in cache.");
+        return done(null, false);
       }
-
-      return done(null, user || false);
     } catch (err) {
       return done(err, false);
     }
