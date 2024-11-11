@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 import api from '../../../config/api';
 
 type RootStackParamList = {
@@ -29,7 +29,7 @@ export default function UserListScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const fetchUsers = () => {
-    setRefreshing(true);
+    setLoading(true);
     api.get(`/users/factory/${factoryId}`)
       .then((response) => {
         setUsers(response.data.data);
@@ -38,16 +38,15 @@ export default function UserListScreen() {
         console.error('Error fetching users:', error);
         Alert.alert('Error', 'Unable to load users.');
       })
-      .finally(() => {
-        setRefreshing(false);
-        setLoading(false);
-      });
+      .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [factoryId]);
-
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUsers();
+    }, [factoryId])
+  );
+  
   const renderUserCard = ({ item }: { item: User }) => (
     <TouchableOpacity onPress={() => navigation.navigate('UserDetail', { userNumber: item.userNumber })}>
       <Box
@@ -99,6 +98,7 @@ export default function UserListScreen() {
         }
       />
     </View>
+    
   );
 
 }

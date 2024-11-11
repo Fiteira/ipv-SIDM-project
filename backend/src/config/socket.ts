@@ -12,7 +12,7 @@ import { COLUMNS_TO_USE } from './tensor';
 import { SensorModel } from '../models/sensor.model';
 import { MachineModel } from '../models/machine.model';
 import { UserModel } from '../models/user.model';
-import { enviarNotificacao } from './notifications';
+import { sendNotification } from './notifications';
 import { UserDTO } from '../interfaces/user.interface';
 
 interface CachedSensorData {
@@ -288,12 +288,17 @@ const persistSensorDataFromCache = async () => {
 
 const anomalyState = new Map<number, boolean>();
 
-const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machineId: number, cachedData: CachedSensorData[]) => {
+const anomalyDetectionHandler = async (
+  data: SensorData,
+  sensorId: number,
+  machineId: number,
+  cachedData: CachedSensorData[]
+) => {
   const formattedData = {
     columns: data.columns,
     values: Array.isArray(data.values) && Array.isArray(data.values[0]?.values)
       ? (data.values as unknown as Array<{ values: number[] }>).map((sensorData: { values: number[] }) => sensorData.values)
-      : data.values as number[][]
+      : (data.values as number[][])
   };
 
   const anomalies = await tensor(formattedData).catch((error) => {
@@ -309,12 +314,18 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
       if (correspondingData) {
         const severity = determineSeverity(anomalyData.prediction);
 
-        const details = Object.entries(correspondingData.value).map(([column, value]) => {
-          const level = determineLevel(value as number);
+        // Ajuste aqui: Mapear colunas e valores corretamente
+        const details = correspondingData.value.columns.map((column: ColumnName, idx: number) => {
+          const value = correspondingData.value.values[idx];
+          const level = determineLevel(value as number, column);
           return `${column}: ${value} (${level})`;
         }).join(', ');
 
-        const alertMessage = `Anomaly detected for sensor ${sensorId} on machine ${machineId}. Values: ${details}. Severity: ${severity}.`;
+        console.log("-------------------");
+        console.log("Details:", details);
+        console.log("-------------------");
+
+        const alertMessage = `Severity: ${severity} \nDetails: ${details}.`;
 
         if (anomalyData.prediction > 0.5 && !inAnomaly) {
           const alert = await AlertModel.create({
@@ -325,35 +336,31 @@ const anomalyDetectionHandler = async (data: SensorData, sensorId: number, machi
             message: alertMessage,
             state: 'awaiting analysis',
           });
-          console.log(`Alert created with ID ${alert.alertId} for sensor ${sensorId} with severity ${severity}`);
-          anomalyState.set(sensorId, true);  // Atualiza o estado de anomalia para true
+          inAnomaly = true;
 
           const users: UserDTO[] = cacheNode.keys().filter(key => key.startsWith('user_')).map(key => cacheNode.get(key) as UserDTO);
           console.log(`Sending notification to ${users.length} users.`);
 
           users.forEach((user: UserDTO) => {
             if (user?.deviceToken) {
-              enviarNotificacao(
+              sendNotification(
                 user.deviceToken,
-                `Anomaly detected for sensor ${sensorId}`,
+                `Anomaly detected for sensor ${sensorId} on machine ${machineId}`,
                 alertMessage
               );
               console.log(`Notification sent to user ${user.name} with deviceToken ${user.deviceToken}`);
             }
           });
-        } else if (anomalyData.prediction <= 0.5 && inAnomaly) {
-          anomalyState.set(sensorId, false);
-          console.log(`Sensor ${sensorId} anomaly resolved.`);
+        } else {
+          console.warn("Insufficient data to create alert: machineId or sensorId is missing.");
+          inAnomaly = false;
         }
       }
     });
     return anomalies;
   }
-
-  anomalyState.set(sensorId, false);
   return null;
 };
-
 
 function determineSeverity(predictionScore: number): string {
   if (predictionScore > 0.9) return 'critical';
@@ -362,9 +369,21 @@ function determineSeverity(predictionScore: number): string {
   return 'low';
 }
 
-function determineLevel(value: number): string {
-  // Example criterion, adjust as needed for your context
-  return value > 100 ? 'High' : 'Low';
+type ColumnName = 'Air temperature [K]' | 'Process temperature [K]' | 'Rotational speed [rpm]' | 'Torque [Nm]' | 'Tool wear [min]';
+
+function determineLevel(value: number, column: ColumnName): string {
+  const thresholds: Record<ColumnName, number> = {
+    'Air temperature [K]': 300,
+    'Process temperature [K]': 310,
+    'Rotational speed [rpm]': 1500,
+    'Torque [Nm]': 50,
+    'Tool wear [min]': 100,
+  };
+
+  const threshold = thresholds[column];
+  console.log(`Processing ${column}: threshold is ${threshold}, value is ${value}`);
+
+  return value > threshold ? 'High' : 'Normal';
 }
 
 setInterval(persistSensorDataFromCache, 10000);
