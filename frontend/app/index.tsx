@@ -28,6 +28,7 @@ import FactoryCreateScreen from './screens/factories/factortorycreate';
 import UserCreateScreen from './screens/users/usercreate';
 
 import avatar from '../assets/avatar.png';
+import { setupAxiosInterceptors } from '@/config/api';
 
 // Força o modo claro no nível do sistema
 //Appearance.setColorScheme('light');
@@ -98,6 +99,7 @@ export default function App() {
   const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
+    setupAxiosInterceptors(setIsAuthenticated);
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,

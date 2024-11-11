@@ -1,58 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import Constants from 'expo-constants'; // Importe o Constants
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Para armazenar o token
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/config/api';
-import * as Notifications from 'expo-notifications'; // Importe o expo-notifications
-import { Axios, AxiosError } from 'axios';
+import * as Notifications from 'expo-notifications';
+import { AxiosError } from 'axios';
 
 export default function LoginScreen({ navigation, setIsAuthenticated, deviceToken }: any) {
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(true); // Estado para controlar o spinner
 
-  useFocusEffect(
-    React.useCallback(() => {
-      Notifications.getPermissionsAsync().then((status) => {
-        if (status.status !== 'granted') {
-          Notifications.requestPermissionsAsync();
-        }
-      });
-      async function autoLogIn() {
-        const token = await AsyncStorage.getItem('token');
-        if (token) {
-          try {
-            const response = await api.get('/auth/checktoken');
-            if (response.data && response.data.success) {
-              setIsAuthenticated(true);
-              navigation.navigate('Homepage');
-            } else {
-              await AsyncStorage.removeItem('token');
-              await AsyncStorage.removeItem('user');
-              setIsAuthenticated(false);
-            }
-          } catch (error: AxiosError | any) {
-            console.log(error);
+  useEffect(() => {
+    const checkTokenAndAutoLogin = async () => {
+
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await api.get('/auth/checktoken');
+          if (response.data && response.data.success) {
+            setIsAuthenticated(true);
+            navigation.navigate('Homepage');
+          } else {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('user');
+            setIsAuthenticated(false);
           }
+        } catch (error: AxiosError | any) {
+          console.log(error);
         }
       }
-      autoLogIn();
-    }, [])
-  );
+      // Finaliza o carregamento (exibe a tela de login se o token for inválido ou ausente)
+      setLoading(false);
+    };
+
+    checkTokenAndAutoLogin();
+  }, []);
 
   async function handleLogin() {
     try {
       const response = await api.post('/auth/login', {
         userNumber,
         password,
-        deviceToken: deviceToken,
+        deviceToken,
       });
-      
+
       if (response.data && response.data.success) {
         // Armazena o token e user no armazenamento seguro
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
-        await AsyncStorage.setItem('factoryId', response.data.user.factoryId? response.data.user.factoryId.toString() : '');
+        await AsyncStorage.setItem(
+          'factoryId',
+          response.data.user.factoryId ? response.data.user.factoryId.toString() : ''
+        );
         setIsAuthenticated(true);
         navigation.navigate('Homepage');
       } else {
@@ -60,10 +60,20 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
       }
     } catch (error: AxiosError | any) {
       Alert.alert('Error', error.response?.data?.message || "There was an error trying to login.");
-      console.log(error)
+      console.log(error);
     }
-  };
+  }
 
+  if (loading) {
+
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  // Exibe a tela de login se o token não estiver presente ou for inválido
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login Page</Text>

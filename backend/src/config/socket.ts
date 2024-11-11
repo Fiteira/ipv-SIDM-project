@@ -10,6 +10,8 @@ import tensor from "./tensor";
 import { Sensor } from '../interfaces/sensor.interface';
 import { COLUMNS_TO_USE } from './tensor';
 import { SensorModel } from '../models/sensor.model';
+import { MachineModel } from '../models/machine.model';
+import { UserModel } from '../models/user.model';
 import { enviarNotificacao } from './notifications';
 import { UserDTO } from '../interfaces/user.interface';
 
@@ -26,18 +28,11 @@ interface SensorData {
 }
 
 export const configureSocketEvents = (io: SocketIOServer) => {
-  io.use((socket: Socket, next) => {
+  io.use(async (socket: Socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
       console.error('Authentication error: Token required.');
       return next(new Error('Authentication error: Token required.'));
-    }
-
-    const sensor = cacheNode.get(`sensor_${token}`);
-    const user = cacheNode.get(`user_${token}`);
-    if (!sensor && !user) {
-      console.error('Sensor or user not found in cache for token:', token);
-      return next(new Error('Invalid or expired token. Connection rejected.'));
     }
 
     const secretKey = process.env.JWT_SECRET_KEY;
@@ -46,28 +41,81 @@ export const configureSocketEvents = (io: SocketIOServer) => {
       return next(new Error('Internal server error: JWT secret key is missing.'));
     }
 
-    jwt.verify(token, secretKey, (err: VerifyErrors | null) => { 
+    jwt.verify(token, secretKey, async (err: VerifyErrors | null, decoded: any) => {
       if (err) {
         console.error('Token verification error:', err);
         return next(new Error('Invalid or expired token. Connection rejected.'));
       }
-      if (sensor) {
-        socket.data.sensor = sensor;
-        socket.join(`${socket.data.sensor.machine.factoryId}`);
-        socket.join(`sensor_${socket.data.sensor.sensorId}`);
-        socket.data.room = `${socket.data.sensor.machine.factoryId}`;
-        socket.data.roomsensorId = socket.data.sensor.sensorId;
-      } else if (user) {
-        socket.data.user = user;
-        socket.join(`${socket.data.user.factoryId}`);
-        socket.data.room = `${socket.data.user.factoryId}`;
-        if (socket.data.user.role === 'adminSystem') {
-          console.warn('ALERT: O administrador do sistema está conectado ao websocket, mas não tem fabricas associadas, pelo que não receberá os dados dos sensores.');
+
+      try {
+        if (decoded.userId) {
+          // User authentication
+          const userId = decoded.userId;
+          let user: any = cacheNode.get(`user_${userId}`);
+
+          if (!user) {
+            console.log('User not found in cache. Retrieving from database.');
+            user = await UserModel.findByPk(userId, {
+              attributes: ['userId', 'role', 'factoryId', 'name', 'userNumber'],
+            });
+            if (user) {
+              cacheNode.set(`user_${userId}`, user);
+            } else {
+              console.error('User not found in database.');
+              return next(new Error('Invalid or expired token. Connection rejected.'));
+            }
+          }
+
+          socket.data.user = user;
+          socket.join(`${user.factoryId}`);
+          socket.data.room = `${user.factoryId}`;
+
+          if (user.role === 'adminSystem') {
+            console.warn(
+              'ALERT: System administrator connected to websocket but has no associated factories, so they will not receive sensor data.'
+            );
+          }
+        } else if (decoded.sensorId) {
+          const sensorId = decoded.sensorId;
+          let sensor: any = cacheNode.get(`sensor_${sensorId}`);
+
+          if (!sensor) {
+            console.log('Sensor not found in cache. Retrieving from database.');
+            sensor = await SensorModel.findByPk(sensorId, {
+              include: [
+                {
+                  model: MachineModel,
+                  as: 'machine',
+                  attributes: ['machineId', 'machineName', 'factoryId'],
+                },
+              ],
+            });
+            if (sensor) {
+              cacheNode.set(`sensor_${sensorId}`, sensor);
+            } else {
+              console.error('Sensor not found in database.');
+              return next(new Error('Invalid or expired token. Connection rejected.'));
+            }
+          }
+
+          socket.data.sensor = sensor;
+          socket.join(`${sensor.machine.factoryId}`);
+          socket.join(`sensor_${sensor.sensorId}`);
+          socket.data.room = `${sensor.machine.factoryId}`;
+          socket.data.roomsensorId = `sensor_${sensor.sensorId}`;
+        } else {
+          console.error('Token payload does not contain userId or sensorId.');
+          return next(new Error('Invalid token payload.'));
         }
+
+        next();
+      } catch (error) {
+        console.error('Error during authentication:', error);
+        return next(new Error('Authentication error.'));
       }
-      next();
     });
   });
+
 
   io.on('connection', (socket: Socket) => {
     if (!socket.data) {
@@ -82,24 +130,47 @@ export const configureSocketEvents = (io: SocketIOServer) => {
       console.log('Socket type not defined!');
     }
     socket.on('join_sensor', async (sensorId: number) => {
-      const sensor = await SensorModel.findByPk(sensorId);
+      const sensor = await SensorModel.findByPk(sensorId, {
+        include: [
+          {
+            model: MachineModel,
+            as: 'machine',
+            attributes: ['machineId', 'factoryId'],
+          },
+        ],
+      });
       const user = socket.data.user;
       console.log(`User ${user.name} is trying to connect to sensor ${sensorId}.`);
+    
       if (!user) {
         console.error('User not found.');
         return;
       }
+    
       if (!sensor) {
         console.error(`Sensor ${sensorId} not found.`);
         socket.emit('unauthorized', 'Sensor not found or sensor disconnected.');
         return new Error('Sensor not found or sensor disconnected.');
       }
-      if (socket.data.user.role === 'adminSystem' || socket.data.user.role === 'admin' || socket.data.user.factoryId === sensor?.machine?.factoryId) {
+    
+      if (socket.data.user.role === 'adminSystem') {
+        // Allow 'adminSystem' to access any sensor
+        socket.leave(socket.data.room);
+        socket.data.roomsensorId = `sensor_${sensorId}`;
+        socket.join(socket.data.roomsensorId);
+      } else if (
+        sensor.machine &&
+        sensor.machine.factoryId &&
+        sensor.machine.factoryId === socket.data.user.factoryId
+      ) {
         socket.leave(socket.data.room);
         socket.data.roomsensorId = `sensor_${sensorId}`;
         socket.join(socket.data.roomsensorId);
       } else {
-        console.error(`User ${socket.data.user.name} does not have permission to access sensor ${sensorId}.`);
+        // Deny access to other sensors
+        console.error(
+          `User ${socket.data.user.name} does not have permission to access sensor ${sensorId}.`
+        );
         socket.emit('unauthorized', 'You do not have permission to access this sensor.');
         socket.disconnect();
         return;
@@ -108,7 +179,7 @@ export const configureSocketEvents = (io: SocketIOServer) => {
     socket.on('sensor_data', (value: any) => {
       try {
         const sensorId = socket.data.sensor.sensorId;
-        const sensorToken = `sensor_${socket.handshake.auth.token}`;
+        const sensorKey = `sensor_${sensorId}`;
         const data = {
           sensorId: sensorId,
           value: value,
@@ -117,15 +188,15 @@ export const configureSocketEvents = (io: SocketIOServer) => {
         };
         socket.to(socket.data.room).emit('sensor_data', data);
         socket.to(`sensor_${sensorId}`).emit('sensor_data', data);
-
-        let cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [];
+    
+        let cachedData = cacheNode.get(sensorKey) as CachedSensorData[] || [];
         if (!Array.isArray(cachedData)) cachedData = [];
         cachedData.push(data);
-        cacheNode.set(sensorToken, cachedData);
-
+        cacheNode.set(sensorKey, cachedData);
+    
         console.log(`Data temporarily stored in cache for sensor ${sensorId}`);
       } catch (error) {
-        console.error(`Error storing data in cache for sensor ${socket.data.sensor.sensorId}:`, error);
+        console.error(`Error storing data in cache for sensor:`, error);
       }
     });
 
@@ -148,7 +219,6 @@ export const configureSocketEvents = (io: SocketIOServer) => {
       }
     });
     
-    // Confirme que o socket será desconectado ao ser removido das salas
     socket.on('disconnect', () => {
       console.log('Socket fully disconnected.');
     });
@@ -156,31 +226,32 @@ export const configureSocketEvents = (io: SocketIOServer) => {
 };
 
 const handleSensorDisconnect = (socket: Socket) => {
-  const sensorToken = `sensor_${socket.handshake.auth.token}`;
-  const cachedData = cacheNode.get(sensorToken) as CachedSensorData[] || [];
+  const sensorId = socket.data.sensor.sensorId;
+  const sensorKey = `sensor_${sensorId}`;
+  const cachedData = cacheNode.get(sensorKey) as CachedSensorData[] || [];
 
   const hasValues = cachedData.some(item => item.value && Array.isArray(item.value.values) && item.value.values.length > 0);
 
   if (!hasValues) {
-    cacheNode.del(sensorToken);
-    console.log(`Cache for sensor ${socket.data.sensor.sensorId} has been cleared.`);
+    cacheNode.del(sensorKey);
+    console.log(`Cache for sensor ${sensorId} has been cleared.`);
   } else {
-    console.log(`Data still present in cache for sensor ${socket.data.sensor.sensorId}, postponing removal.`);
+    console.log(`Data still present in cache for sensor ${sensorId}, postponing removal.`);
     setTimeout(() => handleSensorDisconnect(socket), 5000);
   }
 };
 
-const persistSensorDataFromCache = async () => {
 
+const persistSensorDataFromCache = async () => {
   const allCachedData = cacheNode.keys()
     .filter(key => key.startsWith('sensor_'))
-    .map(sensorToken => ({
-      sensorToken,
-      data: cacheNode.get(sensorToken) as CachedSensorData[] || [],
+    .map(sensorKey => ({
+      sensorKey,
+      data: cacheNode.get(sensorKey) as CachedSensorData[] || [],
     }));
 
   for (const sensor of allCachedData) {
-    const { sensorToken, data: cachedData } = sensor;
+    const { sensorKey, data: cachedData } = sensor;
 
     if (cachedData.length > 0) {
       try {
@@ -203,15 +274,17 @@ const persistSensorDataFromCache = async () => {
 
         const anomalies = await anomalyDetectionHandler(structuredData, sensorId, machineId, cachedData);
         if (!anomalies) console.log(`No anomalies detected for sensor ${sensorId}.`);
-        cacheNode.del(sensorToken);
+        cacheNode.del(sensorKey);
       } catch (error) {
         console.error(`Error saving data for sensor ${cachedData[0]?.sensorId}:`, error);
       }
     } else {
       console.log(`No data in cache for sensor ${cachedData[0]?.sensorId}.`);
+      console.log(`Cached data: ${JSON.stringify(cachedData)}`);
     }
   }
 };
+
 
 const anomalyState = new Map<number, boolean>();
 

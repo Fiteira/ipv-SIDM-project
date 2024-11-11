@@ -12,20 +12,25 @@ router.post("/loginsensor", sensorLogin);
 
 router.post("/resetpassword", resetUserPassword);
 
-router.get('/checktoken', passport.authenticate('jwt', { session: false }), (req: Request, res: Response) => {
-  if (req.user) {
-    const { userId, userName, role, factoryId } = (req.user as any).dataValues;
-    res.status(200).json({
-      success: true,
-      message: { userId, userName, role, factoryId }
-    });
-  } else {
-    res.status(401).json({
-      success: false,
-      message: "Unauthorized"
-    });
+router.get(
+  '/checktoken',
+  passport.authenticate('jwt', { session: false }),
+  (req: Request, res: Response) => {
+    if (req.user && (req.user as any).dataValues.userId) {
+      const user = (req.user as any).dataValues;
+      const { userId, name, role, factoryId } = user;
+      res.status(200).json({
+        success: true,
+        message: { userId, name, role, factoryId },
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
   }
-});
+);
 
 
 export default router;
