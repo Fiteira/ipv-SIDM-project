@@ -10,6 +10,16 @@ export const sendNotification = async (
   title: string,
   body: string
 ) => {
+  if (!token) {
+    console.error('No token provided');
+    return;
+  } else if (!title) {
+    console.error('No title provided');
+    return;
+  } else if (!body) {
+    console.error('No body provided');
+    return;
+  } 
   const message = {
     to: token,
     sound: 'default',
