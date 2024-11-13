@@ -83,30 +83,35 @@ export default function FactoryDetailScreen() {
       <Text style={styles.location}>Location: {factory.location}</Text>
 
       <VStack space={4} marginTop={6}>
-        <Button 
-          colorScheme="darkBlue"
-          onPress={() => navigation.navigate('FactoryDashboard', { factoryId })}
-        >
-          Dashboard
-        </Button>
-        <Button
-          colorScheme="darkBlue"
-          onPress={() => navigation.navigate('MachineList', { factoryId })}
-        >
-          Machines
-        </Button>
-        <Button 
-          colorScheme="darkBlue"
-          onPress={() => navigation.navigate('UserList', { factoryId })}
-        >
-          Users
-        </Button>
-        <Button 
-          colorScheme="darkBlue"
-          onPress={() => navigation.navigate('AlertList', { factoryId })}
-        >
-          Alerts
-        </Button>
+      <HStack space={6} justifyContent="center">
+          <Button
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('FactoryDashboard', { factoryId })}
+          >
+            <Icon as={MaterialIcons} name="dashboard" size="6xl" color="white" />
+          </Button>
+          <Button
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('MachineList', { factoryId })}
+          >
+            <Icon as={MaterialIcons} name="precision-manufacturing" size="6xl" color="white" />
+          </Button>
+        </HStack>
+
+        <HStack space={6} justifyContent="center">
+          <Button
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('UserList', { factoryId })}
+          >
+            <Icon as={MaterialIcons} name="group" size="6xl" color="white" />
+          </Button>
+          <Button
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('AlertList', { factoryId })}
+          >
+            <Icon as={MaterialIcons} name="notifications" size="6xl" color="white" />
+          </Button>
+        </HStack>
 
         {/* Botões de Editar e Deletar */}
         <HStack space={3} justifyContent="center" marginTop={4}>
@@ -239,5 +244,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
     fontSize: 16,
+  },
+  iconButton: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#0077e6', // Dark blue color
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
   },
 });

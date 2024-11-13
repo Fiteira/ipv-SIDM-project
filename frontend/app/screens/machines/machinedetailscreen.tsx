@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, StyleSheet } from 'react-native';
-import { Box, Spinner, Button, VStack } from 'native-base';
+import { Box, Spinner, Button, VStack, Icon, HStack } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../config/api';
@@ -56,18 +57,20 @@ export default function MachineDetailScreen() {
       <Text style={styles.title}>{machine.machineName}</Text>
       <Text style={styles.state}>State: {machine.state}</Text>
       <VStack space={4} marginTop={6}>
-        <Button 
-            colorScheme="darkBlue"
+      <HStack space={6} justifyContent="center">
+          <Button
+            style={styles.iconButton}
             onPress={() => navigation.navigate('SensorList', { machineId })}
-        >
-            Sensors
-        </Button>
-        <Button
-            colorScheme="darkBlue"
+          >
+            <Icon as={MaterialIcons} name="sensors" size="6xl" color="white" />
+          </Button>
+          <Button
+            style={styles.iconButton}
             onPress={() => navigation.navigate('MaintenanceList', { machineId })}
-        >
-            Maintenances
-        </Button>
+          >
+            <Icon as={MaterialIcons} name="build" size="6xl" color="white" />
+          </Button>
+        </HStack>
       </VStack>
     </Box>
   );
@@ -86,5 +89,13 @@ const styles = StyleSheet.create({
   state: {
     fontSize: 16,
     color: 'gray',
+  },
+  iconButton: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#0077e6', // Dark blue color
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
   },
 });
