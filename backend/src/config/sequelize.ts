@@ -12,7 +12,7 @@ const sequelizeInstance = new Sequelize({
   port: Number(process.env.PORT_DB),
   username: String(process.env.USER_DB),
   password: String(process.env.PASSWORD_DB),
-  database:  isProduction ? 'bd_sidm' : 'postgres',  
+  database:  isProduction ? 'bd_sidm_kug7' : 'postgres',  
   dialectOptions: {
     ssl:  isProduction
     ? { require: true, rejectUnauthorized: false }
