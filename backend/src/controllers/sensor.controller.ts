@@ -30,10 +30,6 @@ export const getAllSensorsByFactoryId = async (req: Request, res: Response): Pro
   try {
     const sensors = await SensorModel.findAll({ where: { factoryId },
       include: [{ model: MachineModel, as: 'machines' }]});
-    if (!sensors.length) {
-      res.status(404).json({ success: false, message: 'No sensors found for this factory' });
-      return;
-    }
     res.status(200).json({ success: true, data: sensors });
   } catch (error) {
     handleServerError(res, 'Error fetching sensors by factoryId', error);
@@ -49,10 +45,6 @@ export const getSensorsByMachineId = async (req: Request, res: Response): Promis
     }
     try {
       const sensors = await SensorModel.findAll({ where: { machineId } });
-      if (!sensors.length) {
-        res.status(404).json({ success: false, message: 'No sensors found for this machine' });
-        return;
-      }
       res.status(200).json({ success: true, data: sensors });
     } catch (error) {
       handleServerError(res, 'Error fetching sensors by machineId', error);

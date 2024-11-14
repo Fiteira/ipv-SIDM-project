@@ -287,6 +287,8 @@ const persistSensorDataFromCache = async () => {
 
 
 const anomalyState = new Map<number, boolean>();
+const anomalyCooldown = 5 * 60 * 1000; // Tempo de cooldown em milissegundos (5 minutos)
+const anomalyLastAlert = new Map<number, number>(); // Cache para armazenar o último tempo de alerta por sensor
 
 const anomalyDetectionHandler = async (
   data: SensorData,
@@ -307,6 +309,8 @@ const anomalyDetectionHandler = async (
   });
 
   let inAnomaly = anomalyState.get(sensorId) || false;
+  const lastAlertTime = anomalyLastAlert.get(sensorId) || 0;
+  const currentTime = Date.now();
 
   if (Array.isArray(anomalies) && anomalies.length > 0) {
     anomalies.forEach(async (anomalyData, index) => {
@@ -314,7 +318,6 @@ const anomalyDetectionHandler = async (
       if (correspondingData) {
         const severity = determineSeverity(anomalyData.prediction);
 
-        // Ajuste aqui: Mapear colunas e valores corretamente
         const details = correspondingData.value.columns.map((column: ColumnName, idx: number) => {
           const value = correspondingData.value.values[idx];
           const level = determineLevel(value as number, column);
@@ -327,30 +330,37 @@ const anomalyDetectionHandler = async (
 
         const alertMessage = `Severity: ${severity} \nDetails: ${details}.`;
 
+        // Verificação de cooldown para evitar spam de notificações
         if (anomalyData.prediction > 0.5 && !inAnomaly) {
-          const alert = await AlertModel.create({
-            machineId,
-            sensorId,
-            alertDate: correspondingData.timestamp,
-            severity,
-            message: alertMessage,
-            state: 'awaiting analysis',
-          });
-          inAnomaly = true;
+          if (currentTime - lastAlertTime >= anomalyCooldown) {
+            // Criação de alerta e envio de notificação, pois está fora do período de cooldown
+            const alert = await AlertModel.create({
+              machineId,
+              sensorId,
+              alertDate: correspondingData.timestamp,
+              severity,
+              message: alertMessage,
+              state: 'awaiting analysis',
+            });
+            inAnomaly = true;
+            anomalyLastAlert.set(sensorId, currentTime); // Atualiza o tempo do último alerta para o sensor
 
-          const users: UserDTO[] = cacheNode.keys().filter(key => key.startsWith('user_')).map(key => cacheNode.get(key) as UserDTO);
-          console.log(`Sending notification to ${users.length} users.`);
+            const users: UserDTO[] = cacheNode.keys().filter(key => key.startsWith('user_')).map(key => cacheNode.get(key) as UserDTO);
+            console.log(`Sending notification to ${users.length} users.`);
 
-          users.forEach((user: UserDTO) => {
-            if (user?.deviceToken) {
-              sendNotification(
-                user.deviceToken,
-                `Anomaly detected for sensor ${sensorId} on machine ${machineId}`,
-                alertMessage
-              );
-              console.log(`Notification sent to user ${user.name} with deviceToken ${user.deviceToken}`);
-            }
-          });
+            users.forEach((user: UserDTO) => {
+              if (user?.deviceToken) {
+                sendNotification(
+                  user.deviceToken,
+                  `Anomaly detected for sensor ${sensorId} on machine ${machineId}`,
+                  alertMessage
+                );
+                console.log(`Notification sent to user ${user.name} with deviceToken ${user.deviceToken}`);
+              }
+            });
+          } else {
+            console.log(`Alerta suprimido para o sensor ${sensorId} devido ao período de cooldown.`);
+          }
         } else {
           console.warn("Insufficient data to create alert: machineId or sensorId is missing.");
           inAnomaly = false;
@@ -361,6 +371,7 @@ const anomalyDetectionHandler = async (
   }
   return null;
 };
+
 
 function determineSeverity(predictionScore: number): string {
   if (predictionScore > 0.9) return 'critical';

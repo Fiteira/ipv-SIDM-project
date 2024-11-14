@@ -15,9 +15,15 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
     const checkTokenAndAutoLogin = async () => {
 
       const token = await AsyncStorage.getItem('token');
+      const expoToken = (await Notifications.getExpoPushTokenAsync()).data;
       if (token) {
         try {
-          const response = await api.get('/auth/checktoken');
+          const response = await api.get('/auth/checktoken', {
+            headers: {
+              deviceToken: expoToken
+            }
+          });
+          console.log(expoToken)
           if (response.data && response.data.success) {
             setIsAuthenticated(true);
             navigation.navigate('Homepage');
@@ -30,7 +36,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
           console.log(error);
         }
       }
-      // Finaliza o carregamento (exibe a tela de login se o token for inválido ou ausente)
       setLoading(false);
     };
 

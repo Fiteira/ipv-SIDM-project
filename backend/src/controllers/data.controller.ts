@@ -30,10 +30,6 @@ export const getDataBySensorId = async (req: Request, res: Response): Promise<vo
 
     try {
       const data = await DataModel.findAll({ where: { sensorId } });
-      if (!data.length) {
-        res.status(404).json({ success: false, message: 'No data found for this sensor' });
-        return;
-      }
       res.status(200).json({ success: true, data });
     } catch (error) {
       handleServerError(res, 'Error fetching data by sensorId', error);

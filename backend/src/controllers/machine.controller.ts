@@ -28,10 +28,6 @@ export const getMachinesByFactoryId = async (req: Request, res: Response): Promi
   }
   try {
     const machines = await MachineModel.findAll({ where: { factoryId } });
-    if (!machines.length) {
-      res.status(404).json({ success: false, message: 'No machines found for this factory' });
-      return;
-    }
     res.status(200).json({ success: true, data: machines });
   } catch (error) {
     handleServerError(res, 'Error fetching machines by factoryId', error);

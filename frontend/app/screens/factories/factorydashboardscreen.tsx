@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { Box, Spinner } from 'native-base';
 import { LineChart } from 'react-native-chart-kit';
 import io, { Socket } from 'socket.io-client';
@@ -29,7 +29,12 @@ export default function SensorDashboardScreen() {
   const [sensorData, setSensorData] = useState<SensorDataset>({});
   const [machines, setMachines] = useState<MachineData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedSensors, setExpandedSensors] = useState<{ [sensorId: string]: boolean }>({});
   const socketRef = useRef<Socket | null>(null);
+
+  const toggleSensorExpansion = (sensorId: string) => {
+    setExpandedSensors((prev) => ({ ...prev, [sensorId]: !prev[sensorId] }));
+  };
 
   useEffect(() => {
     const fetchMachineData = async () => {
@@ -108,7 +113,6 @@ export default function SensorDashboardScreen() {
 
       connectSocket();
 
-      // Função de limpeza para desconectar o socket ao sair da tela
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -134,39 +138,45 @@ export default function SensorDashboardScreen() {
 
           {Object.keys(sensorData).filter(sensorId => sensorData[sensorId][0]?.machineId === machine.machineId).map((sensorId) => (
             <Box key={sensorId} style={styles.sensorContainer}>
-              <Text style={styles.sensorTitle}>Sensor ID: {sensorId}</Text>
+              <TouchableOpacity onPress={() => toggleSensorExpansion(sensorId)}>
+                <Text style={styles.sensorTitle}>Sensor ID: {sensorId} {expandedSensors[sensorId] ? '▲' : '▼'}</Text>
+              </TouchableOpacity>
 
-              {sensorData[sensorId][0]?.columns.map((column, columnIndex) => (
+              {expandedSensors[sensorId] && sensorData[sensorId][0]?.columns.map((column, columnIndex) => (
                 <View key={columnIndex} style={styles.chartContainer}>
                   <Text style={styles.chartTitle}>{column}</Text>
-                  <LineChart
-                    data={{
-                      labels: sensorData[sensorId].map((point) => new Date(point.timestamp).toLocaleTimeString()),
-                      datasets: [
-                        {
-                          data: sensorData[sensorId].map((point) => point.values[columnIndex]),
+                  {sensorData[sensorId].length > 0 ? (
+                    <LineChart
+                      data={{
+                        labels: sensorData[sensorId].map((point) => new Date(point.timestamp).toLocaleTimeString()),
+                        datasets: [
+                          {
+                            data: sensorData[sensorId].map((point) => point.values[columnIndex]),
+                          },
+                        ],
+                      }}
+                      width={Dimensions.get('window').width - 32}
+                      height={220}
+                      yAxisSuffix=""
+                      chartConfig={{
+                        backgroundColor: '#1E2923',
+                        backgroundGradientFrom: '#08130D',
+                        backgroundGradientTo: '#1F8A70',
+                        decimalPlaces: 1,
+                        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                        style: {
+                          borderRadius: 16,
                         },
-                      ],
-                    }}
-                    width={Dimensions.get('window').width - 32}
-                    height={220}
-                    yAxisSuffix=""
-                    chartConfig={{
-                      backgroundColor: '#1E2923',
-                      backgroundGradientFrom: '#08130D',
-                      backgroundGradientTo: '#1F8A70',
-                      decimalPlaces: 1,
-                      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                      style: {
+                      }}
+                      style={{
+                        marginVertical: 8,
                         borderRadius: 16,
-                      },
-                    }}
-                    style={{
-                      marginVertical: 8,
-                      borderRadius: 16,
-                    }}
-                  />
+                      }}
+                    />
+                  ) : (
+                    <Text style={styles.noDataText}>Sem dados</Text>
+                  )}
                 </View>
               ))}
             </Box>
@@ -187,4 +197,5 @@ const styles = StyleSheet.create({
   sensorTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
   chartContainer: { marginBottom: 20 },
   chartTitle: { fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 },
+  noDataText: { textAlign: 'center', color: 'gray', fontSize: 16, marginTop: 20 },
 });
