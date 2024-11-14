@@ -9,37 +9,40 @@ import { AxiosError } from 'axios';
 export default function LoginScreen({ navigation, setIsAuthenticated, deviceToken }: any) {
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(true); // Estado para controlar o spinner
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkTokenAndAutoLogin = async () => {
-
-      const token = await AsyncStorage.getItem('token');
-      const expoToken = (await Notifications.getExpoPushTokenAsync()).data;
-      if (token) {
-        try {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          const expoToken = (await Notifications.getExpoPushTokenAsync()).data;
           const response = await api.get('/auth/checktoken', {
-            headers: {
-              deviceToken: expoToken
-            }
+            headers: { deviceToken: expoToken },
           });
-          console.log(expoToken)
+          
           if (response.data && response.data.success) {
             setIsAuthenticated(true);
             navigation.navigate('Homepage');
-          } else {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('user');
-            setIsAuthenticated(false);
+            return;
           }
-        } catch (error: AxiosError | any) {
-          console.log(error);
         }
+        // Se o token estiver ausente ou inválido
+        setIsAuthenticated(false);
+      } catch (error) {
+        console.log("Erro ao verificar o token:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
+    // Adiciona um timeout para definir `loading` como `false` caso o AsyncStorage falhe
+    const timeoutId = setTimeout(() => setLoading(false), 5000);
+
     checkTokenAndAutoLogin();
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   async function handleLogin() {
@@ -51,7 +54,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
       });
 
       if (response.data && response.data.success) {
-        // Armazena o token e user no armazenamento seguro
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
         await AsyncStorage.setItem(
@@ -70,7 +72,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
   }
 
   if (loading) {
-
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -78,7 +79,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
     );
   }
 
-  // Exibe a tela de login se o token não estiver presente ou for inválido
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login Page</Text>

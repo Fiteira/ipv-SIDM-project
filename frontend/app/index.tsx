@@ -30,8 +30,9 @@ import UserCreateScreen from './screens/users/usercreate';
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
 
-// Força o modo claro no nível do sistema
-Appearance.setColorScheme('light');
+if (Platform.OS !== 'web') {
+  Appearance.setColorScheme('light');
+}
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
