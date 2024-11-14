@@ -114,11 +114,6 @@ export const getAlertByMachineId = async (req: Request, res: Response): Promise<
 
     const totalPages = Math.ceil(totalAlerts / limitNumber);
 
-    if (!alerts.length) {
-      res.status(404).json({ success: false, message: 'No alerts found for this machine' });
-      return;
-    }
-
     res.status(200).json({
       success: true,
       data: alerts,

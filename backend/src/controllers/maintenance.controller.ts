@@ -13,8 +13,8 @@ export const getMaintenance = async (req: Request, res: Response): Promise<void>
   try {
     const maintenance = await MaintenanceModel.findByPk(maintenanceId, {
       include: [
-        { model: MachineModel, as: 'machine' }, // Inclui a máquina associada
-        { model: UserModel, as: 'performedUser' } // Inclui o usuário que realizou a manutenção
+        { model: MachineModel, as: 'machine' },
+        { model: UserModel, as: 'performedUser' }
       ]
     });
     if (!maintenance) {
@@ -41,10 +41,6 @@ export const getMaintenanceByFactoryId = async (req: Request, res: Response): Pr
         as: 'machines' 
       }]
     });
-    if (!maintenances.length) {
-      res.status(404).json({ success: false, message: 'No maintenance records found for this machine' });
-      return;
-    }
     res.status(200).json({ success: true, data: maintenances });
   } catch (error) {
     handleServerError(res, 'Error fetching maintenances by factoryId', error);
@@ -52,34 +48,32 @@ export const getMaintenanceByFactoryId = async (req: Request, res: Response): Pr
 };
 
 export const getMaintenanceByMachineId = async (req: Request, res: Response): Promise<void> => {
-    const { machineId } = req.params;
-    if (!machineId) {
-      res.status(400).json({ success: false, message: 'MachineId is required' });
-      return;
-    }
-    try {
-      const maintenances = await MaintenanceModel.findAll({
-        where: { machineId },
-        include: [
-          {
-            model: MachineModel,
-            as: "machine", // Certifique-se de que o alias está correto
-          },
-          {
-            model: UserModel,
-            as: "performedUser", // Supondo que você tenha um relacionamento com UserModel
-          },
-        ],
-      });
-      if (!maintenances.length) {
-        res.status(404).json({ success: false, message: 'No maintenance records found for this machine' });
-        return;
-      }
-      res.status(200).json({ success: true, data: maintenances });
-    } catch (error) {
-      handleServerError(res, 'Error fetching maintenances by machineId', error);
-    }
-  };
+  const { machineId } = req.params;
+  if (!machineId) {
+    res.status(400).json({ success: false, message: 'MachineId is required' });
+    return;
+  }
+  try {
+    const maintenances = await MaintenanceModel.findAll({
+      where: { machineId },
+      include: [
+        {
+          model: MachineModel,
+          as: "machine",
+        },
+        {
+          model: UserModel,
+          as: "performedUser",
+        },
+      ],
+    });
+
+    res.status(200).json({ success: true, data: maintenances });
+  } catch (error) {
+    handleServerError(res, 'Error fetching maintenances by machineId', error);
+  }
+};
+
 
 export const createMaintenance = async (req: Request, res: Response): Promise<void> => {
     const { machineId, alertId, maintenanceDate, description, performedBy } = req.body;

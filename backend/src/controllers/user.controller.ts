@@ -13,7 +13,6 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   try {
 
     const user = await findUserDTOByUserNumber(Number(userNumber));
-    //const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
 
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
@@ -44,10 +43,6 @@ export const getUsersByFactoryId = async (req: Request, res: Response): Promise<
 
   try {
     const users = await UserModel.findAll({ where: { factoryId }, attributes: { exclude: ['password'] } });
-    if (!users.length) {
-      res.status(404).json({ success: false, message: 'No users found for this factory' });
-      return;
-    }
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     handleServerError(res, 'Error fetching users by factoryId', error);
