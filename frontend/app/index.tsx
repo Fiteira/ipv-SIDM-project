@@ -26,12 +26,14 @@ import MaintenanceDetailScreen from './screens/machines/maintenances/maintenance
 import RegisterMaintenanceScreen from './screens/machines/maintenances/registermaintenancescreen';
 import FactoryCreateScreen from './screens/factories/factortorycreate'; 
 import UserCreateScreen from './screens/users/usercreate';
+import MachineCreateScreen from './screens/machines/machinecreate';
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
 
-// Força o modo claro no nível do sistema
-Appearance.setColorScheme('light');
+if (Platform.OS !== 'web') {
+  Appearance.setColorScheme('light');
+}
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -175,6 +177,7 @@ export default function App() {
             <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
             <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
             <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
+            <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
             <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
             <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
             <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
