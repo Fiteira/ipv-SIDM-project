@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { Box, FlatList, Icon, HStack, VStack, Spinner, Text } from 'native-base';
+import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
 import api from '../../../config/api';
 
 type RootStackParamList = {
   MachineList: { factoryId: string };
   MachineDetail: { machineId: string };
+  MachineCreate: { factoryId: string }; 
 };
 
 type MachineListRouteProp = RouteProp<RootStackParamList, 'MachineList'>;
@@ -26,8 +27,8 @@ export default function MachineListScreen() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  const fetchMachines = () => {
-    setRefreshing(true);
+  const fetchMachines = useCallback(() => {
+    setLoading(true);
     api.get(`/machines/factory/${factoryId}`)
       .then((response) => {
         setMachines(response.data.data);
@@ -37,14 +38,17 @@ export default function MachineListScreen() {
         Alert.alert('Error', 'Unable to load machines.');
       })
       .finally(() => {
-        setRefreshing(false);
         setLoading(false);
+        setRefreshing(false);
       });
-  };
-
-  useEffect(() => {
-    fetchMachines();
   }, [factoryId]);
+
+  // Atualiza a lista ao focar na tela
+  useFocusEffect(
+    useCallback(() => {
+      fetchMachines();
+    }, [fetchMachines])
+  );
 
   const renderMachineCard = ({ item }: { item: Machine }) => (
     <TouchableOpacity onPress={() => navigation.navigate('MachineDetail', { machineId: item.machineId })}>
@@ -83,6 +87,17 @@ export default function MachineListScreen() {
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
         onRefresh={fetchMachines}
+        ListFooterComponent={
+          <Button
+            onPress={() => navigation.navigate('MachineCreate', { factoryId })}
+            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+            colorScheme="blue"
+            marginTop="4"
+            borderRadius="md"
+          >
+            Create Machine
+          </Button>
+        }
       />
     </View>
   );
