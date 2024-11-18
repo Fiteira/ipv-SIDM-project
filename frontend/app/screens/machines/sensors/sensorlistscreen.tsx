@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback  } from 'react';
 import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { Box, FlatList, Icon, HStack, VStack, Spinner, Text } from 'native-base';
+import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { RouteProp, useRoute, useFocusEffect,  useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../../config/api';
 
 type RootStackParamList = {
   SensorList: { machineId: string };
   SensorDetail: { sensorId: string };
+  SensorCreate: { machineId: string }; 
 };
 
 type SensorListRouteProp = RouteProp<RootStackParamList, 'SensorList'>;
@@ -26,7 +27,7 @@ export default function SensorListScreen() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  const fetchSensors = () => {
+  const fetchSensors = useCallback(() => {
     setRefreshing(true);
     api.get(`/sensors/machine/${machineId}`)
       .then((response) => {
@@ -40,11 +41,13 @@ export default function SensorListScreen() {
         setRefreshing(false);
         setLoading(false);
       });
-  };
-
-  useEffect(() => {
-    fetchSensors();
-  }, [machineId]);
+  }, [machineId]); // Recria a função apenas quando `machineId` mudar
+  
+  useFocusEffect(
+    useCallback(() => {
+      fetchSensors(); // Agora estável e não será recriada
+    }, [fetchSensors]) // `useCallback` garante dependências controladas
+  );
 
   const renderSensorCard = ({ item }: { item: Sensor }) => (
     <TouchableOpacity onPress={() => navigation.navigate('SensorDetail', { sensorId: item.sensorId })}>
@@ -83,6 +86,17 @@ export default function SensorListScreen() {
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
         onRefresh={fetchSensors}
+        ListFooterComponent={
+          <Button
+            onPress={() => navigation.navigate('SensorCreate', { machineId })}
+            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+            colorScheme="blue"
+            marginTop="4"
+            borderRadius="md"
+          >
+            Create Sensor
+          </Button>
+        }
       />
     </View>
   );

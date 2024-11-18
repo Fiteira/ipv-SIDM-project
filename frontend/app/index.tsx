@@ -27,6 +27,7 @@ import RegisterMaintenanceScreen from './screens/machines/maintenances/registerm
 import FactoryCreateScreen from './screens/factories/factortorycreate'; 
 import UserCreateScreen from './screens/users/usercreate';
 import MachineCreateScreen from './screens/machines/machinecreate';
+import SensorCreateScreen from './screens/machines/sensors/sensorcreate'
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
@@ -182,6 +183,7 @@ export default function App() {
             <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
             <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
             <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
+            <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
             <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
             <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
             <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
