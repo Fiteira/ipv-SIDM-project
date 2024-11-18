@@ -68,7 +68,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
       console.log(error);
     }
   }
-
+/*
   if (loading) {
 
     return (
@@ -76,7 +76,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
-  }
+  }*/
 
   // Exibe a tela de login se o token não estiver presente ou for inválido
   return (
