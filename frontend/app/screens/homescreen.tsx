@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity  } from 'react-native';
+import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Text, Icon, VStack, HStack, Spinner, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation, NavigationProp, useFocusEffect, RouteProp } from '@react-navigation/native';
+import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
+import { db, insertFactories, getFactories } from '@/config/sqlite'; // Importa as funções SQLite para manipular a tabela
 import api from '../../config/api';
 
 type RootStackParamList = {
@@ -11,44 +12,67 @@ type RootStackParamList = {
 };
 
 interface Factory {
-    factoryId: string;
-    factoryName: string;
-    location: string;
+  factoryId: string;
+  factoryName: string;
+  location: string;
+  updatedAt: string; // Para comparação de sincronização
 }
-//Teste
+
 export default function HomeScreen() {
   const [factories, setFactories] = useState<Factory[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  const fetchFactories = () => {
-    setRefreshing(true);
-    api.get('/factories')
-      .then((response) => {
-        setFactories(response.data.data);
-      })
-      .catch((error) => {
-        console.log('Error fetching factories:', error);
-        Alert.alert('Error', 'Unable to load factories. Try again later.');
-      })
-      .finally(() => setRefreshing(false));
+  // Função para sincronizar dados locais com os do servidor
+  const syncFactories = async () => {
+    try {
+      // Obtém os dados locais
+      const localFactories = await getFactories();
+  
+      // Obtém os dados do servidor
+      const response = await api.get('/factories');
+      const serverFactories: Factory[] = response.data.data;
+  
+      // Identifica novos dados para atualizar/inserir localmente
+      const factoriesToInsertOrUpdate = serverFactories.filter(serverFactory => {
+        const localFactory = localFactories.find(
+          local => local.factoryId === serverFactory.factoryId
+        );
+        // Verifica se é novo ou está desatualizado
+        return (
+          !localFactory ||
+          new Date(serverFactory.updatedAt) > new Date(localFactory.updatedAt)
+        );
+      });
+  
+      // Atualiza ou insere no banco local
+      if (factoriesToInsertOrUpdate.length > 0) {
+        await insertFactories(factoriesToInsertOrUpdate);
+        console.log(`${factoriesToInsertOrUpdate.length} fábricas sincronizadas.`);
+      } else {
+        console.log('Nenhuma atualização necessária.');
+      }
+  
+      // Atualiza o estado
+      setFactories(serverFactories);
+    } catch (error) {
+      console.error('Erro ao sincronizar fábricas:', error);
+      Alert.alert('Erro', 'Não foi possível sincronizar os dados. Tente novamente mais tarde.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchFactories();
+      setRefreshing(true);
+      syncFactories();
     }, [])
   );
 
   const renderFactoryCard = ({ item }: { item: Factory }) => (
     <TouchableOpacity onPress={() => navigation.navigate('FactoryDetail', { factoryId: item.factoryId })}>
-      <Box
-        shadow={2}
-        borderRadius="md"
-        padding="4"
-        marginBottom="4"
-        bg="light.50"
-      >
+      <Box shadow={2} borderRadius="md" padding="4" marginBottom="4" bg="light.50">
         <HStack space={3} alignItems="center">
           <Icon as={MaterialIcons} name="factory" size="lg" color="darkBlue.500" />
           <VStack>
@@ -73,7 +97,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.factoryId}
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
-        onRefresh={fetchFactories}
+        onRefresh={syncFactories}
         ListFooterComponent={
           <Button
             onPress={() => navigation.navigate('FactoryCreate')}
@@ -89,7 +113,6 @@ export default function HomeScreen() {
       />
     </View>
   );
-
 }
 
 const styles = StyleSheet.create({
