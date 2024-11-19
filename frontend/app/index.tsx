@@ -7,6 +7,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { db, createTables } from '@/config/sqlite';
 
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
@@ -31,6 +32,7 @@ import SensorCreateScreen from './screens/machines/sensors/sensorcreate'
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
+import { create } from 'react-test-renderer';
 
 if (Platform.OS !== 'web') {
   Appearance.setColorScheme('light');
@@ -54,12 +56,31 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
     setIsAuthenticated(false);
   }
 
+  function handleDeleteLocalData() {
+    db.transaction((tx) => {
+      tx.executeSql('DROP TABLE IF EXISTS factories');
+      tx.executeSql('DROP TABLE IF EXISTS machines');
+      tx.executeSql('DROP TABLE IF EXISTS sensors');
+      tx.executeSql('DROP TABLE IF EXISTS users');
+      tx.executeSql('DROP TABLE IF EXISTS alerts');
+      tx.executeSql('DROP TABLE IF EXISTS maintenances');
+    });
+    console.log('Local data deleted');
+    db.transaction((tx) => {
+      tx.executeSql("SELECT * FROM Factories", [], (_, { rows }) => {
+        console.log('Factories:', rows);
+      });
+    });
+  }
+
+
   useEffect(() => {
     const loadUserName = async () => {
       const user = await AsyncStorage.getItem('user');
       if (user) setUserName(JSON.parse(user).name);
     };
     loadUserName();
+    createTables()
   }, []);
 
   return (
@@ -78,6 +99,12 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
         icon={() => <MaterialIcons name="logout" size={22} color="red" />}
         labelStyle={{ color: 'red' }}
         onPress={() => handleLogout()}
+      />
+      <DrawerItem
+        label="Delete local data"
+        icon={() => <MaterialIcons name="delete" size={22} color="red" />}
+        labelStyle={{ color: 'red' }}
+        onPress={() => {handleDeleteLocalData()}}
       />
     </DrawerContentScrollView>
   );
