@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite/legacy';
 
+
 const db = SQLite.openDatabase('sensorMonitor.db');
 
 const createTables = () => {
@@ -7,7 +8,7 @@ const createTables = () => {
     // Tabela Factory
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Factory (
-        factoryId INTEGER PRIMARY KEY AUTOINCREMENT,
+        factoryId INTEGER PRIMARY KEY,
         factoryName TEXT NOT NULL,
         location TEXT
       );`,
@@ -22,7 +23,7 @@ const createTables = () => {
     // Tabela User
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS User (
-        userId INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER PRIMARY KEY,
         userNumber INTEGER UNIQUE NOT NULL,
         name TEXT NOT NULL,
         role TEXT NOT NULL,
@@ -40,7 +41,7 @@ const createTables = () => {
     // Tabela Machine
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Machine (
-        machineId INTEGER PRIMARY KEY AUTOINCREMENT,
+        machineId INTEGER PRIMARY KEY,
         machineName TEXT NOT NULL,
         factoryId INTEGER NOT NULL,
         state TEXT NOT NULL DEFAULT 'active',
@@ -57,7 +58,7 @@ const createTables = () => {
     // Tabela Sensor
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Sensor (
-        sensorId INTEGER PRIMARY KEY AUTOINCREMENT,
+        sensorId INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         sensorType TEXT NOT NULL,
         machineId INTEGER NOT NULL,
@@ -75,7 +76,7 @@ const createTables = () => {
     // Tabela Alert
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Alert (
-        alertId INTEGER PRIMARY KEY AUTOINCREMENT,
+        alertId INTEGER PRIMARY KEY,
         machineId INTEGER NOT NULL,
         sensorId INTEGER NOT NULL,
         alertDate DATETIME NOT NULL,
@@ -96,7 +97,7 @@ const createTables = () => {
     // Tabela Data
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Data (
-        dataId INTEGER PRIMARY KEY AUTOINCREMENT,
+        dataId INTEGER PRIMARY KEY,
         sensorId INTEGER NOT NULL,
         timestamp DATETIME NOT NULL,
         value TEXT NOT NULL,
@@ -113,7 +114,7 @@ const createTables = () => {
     // Tabela Maintenance
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS Maintenance (
-        maintenanceId INTEGER PRIMARY KEY AUTOINCREMENT,
+        maintenanceId INTEGER PRIMARY KEY,
         machineId INTEGER NOT NULL,
         maintenanceDate DATETIME NOT NULL,
         description TEXT NOT NULL,
@@ -134,15 +135,15 @@ const createTables = () => {
 
 };
 
-const insertFactories = async (factories: { factoryName: string; location: string }[]) => {
+const insertFactories = async (factories: { factoryId: number; factoryName: string; location: string }[]) => {
   db.transaction(tx => {
-    factories.forEach(({ factoryName, location }) => {
+    factories.forEach(({ factoryId, factoryName, location }) => {
       tx.executeSql(
-        `INSERT INTO Factory (factoryName, location) VALUES (?, ?);`,
-        [factoryName, location],
-        (_, result) => console.log(`Factory inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO Factory (factoryId, factoryName, location) VALUES (?, ?, ?);`,
+        [factoryId, factoryName, location],
+        () => console.log(`Factory inserido/atualizado com sucesso: ID ${factoryId}`),
         (_, error) => {
-          console.error('Erro ao inserir Factory:', error);
+          console.error('Erro ao inserir/atualizar Factory:', error);
           return false;
         }
       );
@@ -150,15 +151,15 @@ const insertFactories = async (factories: { factoryName: string; location: strin
   });
 };
 
-const insertUsers = async (users: { userNumber: number; name: string; role: string; factoryId: number | null }[]) => {
+const insertUsers = async (users: { userId: number; userNumber: number; name: string; role: string; factoryId: number | null }[]) => {
   db.transaction(tx => {
-    users.forEach(({ userNumber, name, role, factoryId }) => {
+    users.forEach(({ userId, userNumber, name, role, factoryId }) => {
       tx.executeSql(
-        `INSERT INTO User (userNumber, name, role, factoryId) VALUES (?, ?, ?, ?, ?);`,
-        [userNumber, name, role, factoryId],
-        (_, result) => console.log(`User inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO User (userId, userNumber, name, role, factoryId) VALUES (?, ?, ?, ?, ?);`,
+        [userId, userNumber, name, role, factoryId],
+        () => console.log(`User inserido/atualizado com sucesso: ID ${userId}`),
         (_, error) => {
-          console.error('Erro ao inserir User:', error);
+          console.error('Erro ao inserir/atualizar User:', error);
           return false;
         }
       );
@@ -166,15 +167,15 @@ const insertUsers = async (users: { userNumber: number; name: string; role: stri
   });
 };
 
-const insertMachines = async (machines: { machineName: string; factoryId: number; state?: string }[]) => {
+const insertMachines = async (machines: { machineId: number; machineName: string; factoryId: number; state?: string }[]) => {
   db.transaction(tx => {
-    machines.forEach(({ machineName, factoryId, state = 'active' }) => {
+    machines.forEach(({ machineId, machineName, factoryId, state = 'active' }) => {
       tx.executeSql(
-        `INSERT INTO Machine (machineName, factoryId, state) VALUES (?, ?, ?);`,
-        [machineName, factoryId, state],
-        (_, result) => console.log(`Machine inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO Machine (machineId, machineName, factoryId, state) VALUES (?, ?, ?, ?);`,
+        [machineId, machineName, factoryId, state],
+        () => console.log(`Machine inserido/atualizado com sucesso: ID ${machineId}`),
         (_, error) => {
-          console.error('Erro ao inserir Machine:', error);
+          console.error('Erro ao inserir/atualizar Machine:', error);
           return false;
         }
       );
@@ -182,15 +183,15 @@ const insertMachines = async (machines: { machineName: string; factoryId: number
   });
 };
 
-const insertSensors = async (sensors: { name: string; sensorType: string; machineId: number; apiKey: string }[]) => {
+const insertSensors = async (sensors: { sensorId: number; name: string; sensorType: string; machineId: number; apiKey: string }[]) => {
   db.transaction(tx => {
-    sensors.forEach(({ name, sensorType, machineId, apiKey }) => {
+    sensors.forEach(({ sensorId, name, sensorType, machineId, apiKey }) => {
       tx.executeSql(
-        `INSERT INTO Sensor (name, sensorType, machineId, apiKey) VALUES (?, ?, ?, ?);`,
-        [name, sensorType, machineId, apiKey],
-        (_, result) => console.log(`Sensor inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO Sensor (sensorId, name, sensorType, machineId, apiKey) VALUES (?, ?, ?, ?, ?);`,
+        [sensorId, name, sensorType, machineId, apiKey],
+        () => console.log(`Sensor inserido/atualizado com sucesso: ID ${sensorId}`),
         (_, error) => {
-          console.error('Erro ao inserir Sensor:', error);
+          console.error('Erro ao inserir/atualizar Sensor:', error);
           return false;
         }
       );
@@ -198,15 +199,15 @@ const insertSensors = async (sensors: { name: string; sensorType: string; machin
   });
 };
 
-const insertAlerts = async (alerts: { machineId: number; sensorId: number; alertDate: string; severity: string; message: string; state?: string }[]) => {
+const insertAlerts = async (alerts: { alertId: number; machineId: number; sensorId: number; alertDate: string; severity: string; message: string; state?: string }[]) => {
   db.transaction(tx => {
-    alerts.forEach(({ machineId, sensorId, alertDate, severity, message, state = 'active' }) => {
+    alerts.forEach(({ alertId, machineId, sensorId, alertDate, severity, message, state = 'active' }) => {
       tx.executeSql(
-        `INSERT INTO Alert (machineId, sensorId, alertDate, severity, message, state) VALUES (?, ?, ?, ?, ?, ?);`,
-        [machineId, sensorId, alertDate, severity, message, state],
-        (_, result) => console.log(`Alert inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO Alert (alertId, machineId, sensorId, alertDate, severity, message, state) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+        [alertId, machineId, sensorId, alertDate, severity, message, state],
+        () => console.log(`Alert inserido/atualizado com sucesso: ID ${alertId}`),
         (_, error) => {
-          console.error('Erro ao inserir Alert:', error);
+          console.error('Erro ao inserir/atualizar Alert:', error);
           return false;
         }
       );
@@ -214,15 +215,15 @@ const insertAlerts = async (alerts: { machineId: number; sensorId: number; alert
   });
 };
 
-const insertDataEntries = async (dataEntries: { sensorId: number; timestamp: string; value: string }[]) => {
+const insertDataEntries = async (dataEntries: { dataId: number; sensorId: number; timestamp: string; value: string }[]) => {
   db.transaction(tx => {
-    dataEntries.forEach(({ sensorId, timestamp, value }) => {
+    dataEntries.forEach(({ dataId, sensorId, timestamp, value }) => {
       tx.executeSql(
-        `INSERT INTO Data (sensorId, timestamp, value) VALUES (?, ?, ?);`,
-        [sensorId, timestamp, value],
-        (_, result) => console.log(`Data inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO Data (dataId, sensorId, timestamp, value) VALUES (?, ?, ?, ?);`,
+        [dataId, sensorId, timestamp, value],
+        () => console.log(`Data inserido/atualizado com sucesso: ID ${dataId}`),
         (_, error) => {
-          console.error('Erro ao inserir Data:', error);
+          console.error('Erro ao inserir/atualizar Data:', error);
           return false;
         }
       );
@@ -230,15 +231,15 @@ const insertDataEntries = async (dataEntries: { sensorId: number; timestamp: str
   });
 };
 
-const insertMaintenances = (maintenances: { machineId: number; maintenanceDate: string; description: string; alertId: number; performedBy: number | null }[]) => {
+const insertMaintenances = async (maintenances: { maintenanceId: number; machineId: number; maintenanceDate: string; description: string; alertId: number; performedBy: number | null }[]) => {
   db.transaction(tx => {
-    maintenances.forEach(({ machineId, maintenanceDate, description, alertId, performedBy }) => {
+    maintenances.forEach(({ maintenanceId, machineId, maintenanceDate, description, alertId, performedBy }) => {
       tx.executeSql(
-        `INSERT INTO Maintenance (machineId, maintenanceDate, description, alertId, performedBy) VALUES (?, ?, ?, ?, ?);`,
-        [machineId, maintenanceDate, description, alertId, performedBy],
-        (_, result) => console.log(`Maintenance inserido com sucesso: ID ${result.insertId}`),
+        `INSERT OR REPLACE INTO Maintenance (maintenanceId, machineId, maintenanceDate, description, alertId, performedBy) VALUES (?, ?, ?, ?, ?, ?);`,
+        [maintenanceId, machineId, maintenanceDate, description, alertId, performedBy],
+        () => console.log(`Maintenance inserido/atualizado com sucesso: ID ${maintenanceId}`),
         (_, error) => {
-          console.error('Erro ao inserir Maintenance:', error);
+          console.error('Erro ao inserir/atualizar Maintenance:', error);
           return false;
         }
       );
@@ -264,7 +265,7 @@ const getFactories = (): Promise<any[]> => {
 };
 
 // Select de todos os usuários
-const getUsers = (): Promise<any[]> => {
+const getUsers = async (): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -282,7 +283,7 @@ const getUsers = (): Promise<any[]> => {
 };
 
 // Select de todas as máquinas
-const getMachines = (): Promise<any[]> => {
+const getMachines = async (): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -300,7 +301,7 @@ const getMachines = (): Promise<any[]> => {
 };
 
 // Select de todos os sensores
-const getSensors = (): Promise<any[]> => {
+const getSensors = async (): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -318,7 +319,7 @@ const getSensors = (): Promise<any[]> => {
 };
 
 // Select de todos os alertas
-const getAlerts = (): Promise<any[]> => {
+const getAlerts = async (): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -336,7 +337,7 @@ const getAlerts = (): Promise<any[]> => {
 };
 
 // Select de todos os dados (Data table)
-const getData = (): Promise<any[]> => {
+const getData = async (): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -353,14 +354,78 @@ const getData = (): Promise<any[]> => {
   });
 };
 
+interface Maintenance {
+  maintenanceId: number;
+  machineId: number;
+  maintenanceDate: string;
+  description: string;
+  alertId: number;
+  performedBy: string;
+  machine: {
+    machineId: number;
+    machineName: string;
+    factoryId: number;
+    state: string;
+  } | null;
+  performedUser: {
+    factoryId: number;
+    userId: number;
+    userNumber: number;
+    name: string;
+    role: string;
+  } | null;
+}
+
 // Select de todas as manutenções
-const getMaintenances = (): Promise<any[]> => {
+const getMaintenancesByMachineId = async (machineId: number): Promise<Maintenance[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `SELECT * FROM Maintenance;`,
-        [],
-        (_, { rows }) => resolve(rows._array),
+        `
+        SELECT 
+          Maintenance.*, 
+          Machine.machineId AS machineIdFromMachine, 
+          Machine.machineName, 
+          Machine.factoryId, 
+          Machine.state AS machineState, 
+          User.userId AS userIdFromUser, 
+          User.userNumber, 
+          User.name AS userName, 
+          User.role 
+        FROM Maintenance 
+        LEFT JOIN Machine ON Maintenance.machineId = Machine.machineId 
+        LEFT JOIN User ON Maintenance.performedBy = User.userId 
+        WHERE Maintenance.machineId = ?;
+        `,
+        [machineId],
+        (_, { rows }) => {
+          const maintenances: Maintenance[] = rows._array.map(row => ({
+            maintenanceId: row.maintenanceId,
+            machineId: row.machineId,
+            maintenanceDate: row.maintenanceDate,
+            description: row.description,
+            alertId: row.alertId,
+            performedBy: row.performedBy,
+            machine: row.machineIdFromMachine
+              ? {
+                  machineId: row.machineIdFromMachine,
+                  machineName: row.machineName,
+                  factoryId: row.factoryId,
+                  state: row.machineState,
+                }
+              : null,
+            performedUser: row.userIdFromUser
+              ? {
+                  factoryId: row.factoryId,
+                  userId: row.userIdFromUser,
+                  userNumber: row.userNumber,
+                  name: row.userName,
+                  role: row.role,
+                }
+              : null,
+          }));
+          resolve(maintenances);
+        },
         (_, error) => {
           console.error('Erro ao buscar manutenções:', error);
           reject(error);
@@ -371,7 +436,71 @@ const getMaintenances = (): Promise<any[]> => {
   });
 };
 
-const getUsersByFactory = (factoryId: string): Promise<any[]> => {
+const getMaintenanceById = async (maintenanceId: number): Promise<Maintenance> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `
+        SELECT 
+          Maintenance.*, 
+          Machine.machineId AS machineIdFromMachine, 
+          Machine.machineName, 
+          Machine.factoryId,
+          Machine.state AS machineState,
+          User.userId AS userIdFromUser,
+          User.factoryId ,
+          User.userNumber,
+          User.name AS userName,
+          User.role
+        FROM Maintenance
+        LEFT JOIN Machine ON Maintenance.machineId = Machine.machineId
+        LEFT JOIN User ON Maintenance.performedBy = User.userId
+        WHERE Maintenance.maintenanceId = ?;
+        `,
+        [maintenanceId],
+        (_, { rows }) => {
+          const row = rows._array[0];
+          const maintenance: Maintenance = {
+            maintenanceId: row.maintenanceId,
+            machineId: row.machineId,
+            maintenanceDate: row.maintenanceDate,
+            description: row.description,
+            alertId: row.alertId,
+            performedBy: row.performedBy,
+            machine: row.machineIdFromMachine
+              ? {
+                  machineId: row.machineIdFromMachine,
+                  machineName: row.machineName,
+                  factoryId: row.factoryId,
+                  state: row.machineState,
+                }
+              : null,
+            performedUser: row.userIdFromUser
+              ? {
+                  factoryId: row.factoryId,
+                  userId: row.userIdFromUser,
+                  userNumber: row.userNumber,
+                  name: row.userName,
+                  role: row.role,
+                }
+              : null,
+          };
+          resolve(maintenance);
+        },
+        (_, error) => {
+          console.error('Erro ao buscar manutenção por ID:', error);
+          reject(error);
+          return false;
+        }
+      );
+    }
+    );
+  }
+  );
+}
+
+
+const getUsersByFactory = async (factoryId: string): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
@@ -387,6 +516,252 @@ const getUsersByFactory = (factoryId: string): Promise<any[]> => {
     });
   });
 };
+
+const getUserByNumber = async (userNumber: number): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * FROM User WHERE userNumber = ?;`,
+        [userNumber],
+        (_, { rows }) => resolve(rows._array[0]),
+        (_, error) => {
+          console.error('Erro ao buscar usuário por número:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+}
+
+const getFactoryById = async (factoryId: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * FROM Factory WHERE factoryId = ?;`,
+        [factoryId],
+        (_, { rows }) => resolve(rows._array[0]),
+        (_, error) => {
+          console.error('Erro ao buscar fábrica por ID:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+}
+
+const getMachineById = async (machineId: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * FROM Machine WHERE machineId = ?;`,
+        [machineId],
+        (_, { rows }) => resolve(rows._array[0]),
+        (_, error) => {
+          console.error('Erro ao buscar máquina por ID:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+}
+
+const getMachinesByFactory = async (factoryId: string): Promise<any[]> => { 
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * FROM Machine WHERE factoryId = ?;`,
+        [factoryId],
+        (_, { rows }) => resolve(rows._array),
+        (_, error) => {
+          console.error('Erro ao buscar máquina por fábrica:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+}
+
+interface Alerta {
+  alertId: number;
+  alertDate: string;
+  severity: string;
+  message: string;
+  state: string;
+  machineId: number;
+  sensorId: number;
+  machine: {
+    machineId: number;
+    machineName: string;
+    factoryId: number;
+    state: string;
+  } | null;
+  sensor: {
+    sensorId: number;
+    name: string;
+    sensorType: string;
+  } | null;
+}
+
+const getAlertsByFactory = async (factoryId: string, page: number, limit: number): Promise<Alerta[]> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `
+        SELECT 
+          Alert.alertId, 
+          Alert.alertDate, 
+          Alert.severity, 
+          Alert.message, 
+          Alert.state, 
+          Alert.machineId, 
+          Alert.sensorId, 
+          Machine.machineId AS machineIdFromMachine, 
+          Machine.machineName, 
+          Machine.factoryId AS factoryIdFromMachine, 
+          Machine.state AS machineState, 
+          Sensor.sensorId AS sensorIdFromSensor, 
+          Sensor.name AS sensorName, 
+          Sensor.sensorType 
+        FROM Alert 
+        LEFT JOIN Machine ON Alert.machineId = Machine.machineId 
+        LEFT JOIN Sensor ON Alert.sensorId = Sensor.sensorId 
+        WHERE Machine.factoryId = ? OR Machine.factoryId IS NULL
+        ORDER BY Alert.alertDate DESC 
+        LIMIT ? OFFSET ?;
+        `,
+        [factoryId, limit, (page - 1) * limit],
+        (_, { rows }) => {
+          const alerts: Alerta[] = rows._array.map(row => ({
+            alertId: row.alertId,
+            alertDate: row.alertDate,
+            severity: row.severity,
+            message: row.message,
+            state: row.state,
+            machineId: row.machineId,
+            sensorId: row.sensorId,
+            machine: row.machineIdFromMachine
+              ? {
+                  machineId: row.machineIdFromMachine,
+                  machineName: row.machineName,
+                  factoryId: row.factoryIdFromMachine,
+                  state: row.machineState,
+                }
+              : null, // Caso não tenha correspondência na tabela Machine
+            sensor: row.sensorIdFromSensor
+              ? {
+                  sensorId: row.sensorIdFromSensor,
+                  name: row.sensorName,
+                  sensorType: row.sensorType,
+                }
+              : null, // Caso não tenha correspondência na tabela Sensor
+          }));
+          resolve(alerts);
+        },
+        (_, error) => {
+          console.error('Erro ao buscar alertas por fábrica:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+
+
+const getAlertById = async (alertId: string): Promise<Alerta> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `
+        SELECT 
+          Alert.alertId, 
+          Alert.alertDate, 
+          Alert.severity, 
+          Alert.message, 
+          Alert.state, 
+          Alert.machineId, 
+          Alert.sensorId, 
+          Machine.machineId AS machineIdFromMachine, 
+          Machine.machineName, 
+          Machine.factoryId AS factoryIdFromMachine, 
+          Machine.state AS machineState, 
+          Sensor.sensorId AS sensorIdFromSensor, 
+          Sensor.name AS sensorName, 
+          Sensor.sensorType 
+        FROM Alert 
+        LEFT JOIN Machine ON Alert.machineId = Machine.machineId 
+        LEFT JOIN Sensor ON Alert.sensorId = Sensor.sensorId 
+        WHERE Alert.alertId = ?;
+        `,
+        [alertId],
+        (_, { rows }) => {
+          const row = rows._array[0];
+          const alert: Alerta = {
+            alertId: row.alertId,
+            alertDate: row.alertDate,
+            severity: row.severity,
+            message: row.message,
+            state: row.state,
+            machineId: row.machineId,
+            sensorId: row.sensorId,
+            machine: row.machineIdFromMachine
+              ? {
+                  machineId: row.machineIdFromMachine,
+                  machineName: row.machineName,
+                  factoryId: row.factoryIdFromMachine,
+                  state: row.machineState,
+                }
+              : null,
+            sensor: row.sensorIdFromSensor
+              ? {
+                  sensorId: row.sensorIdFromSensor,
+                  name: row.sensorName,
+                  sensorType: row.sensorType,
+                }
+              : null,
+          };
+          resolve(alert);
+        },
+        (_, error) => {
+          console.error('Erro ao buscar alerta por ID:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+const getSensorById = async (sensorId: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `
+        SELECT 
+          *
+        FROM Sensor 
+        WHERE Sensor.sensorId = ?;
+        `,
+        [sensorId],
+        (_, { rows }) => {
+          const row = rows._array[0];
+          resolve(row);
+        },
+        (_, error) => {
+          console.error('Erro ao buscar sensor por ID:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
 
 // Exporta todas as funções para inserção
 export {
@@ -405,6 +780,14 @@ export {
   getSensors,
   getAlerts,
   getData,
-  getMaintenances,
+  getMaintenancesByMachineId,
+  getMaintenanceById,
   getUsersByFactory,
+  getUserByNumber,
+  getFactoryById,
+  getMachineById,
+  getMachinesByFactory,
+  getAlertsByFactory,
+  getAlertById,
+  getSensorById,
 };

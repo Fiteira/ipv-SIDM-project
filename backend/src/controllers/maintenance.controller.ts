@@ -14,7 +14,7 @@ export const getMaintenance = async (req: Request, res: Response): Promise<void>
     const maintenance = await MaintenanceModel.findByPk(maintenanceId, {
       include: [
         { model: MachineModel, as: 'machine' },
-        { model: UserModel, as: 'performedUser' }
+        { model: UserModel, as: 'performedUser', attributes: { exclude: ['password'] } }
       ]
     });
     if (!maintenance) {
@@ -64,6 +64,7 @@ export const getMaintenanceByMachineId = async (req: Request, res: Response): Pr
         {
           model: UserModel,
           as: "performedUser",
+          attributes: { exclude: ["password"] },
         },
       ],
     });

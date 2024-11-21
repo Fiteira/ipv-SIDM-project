@@ -3,8 +3,9 @@ import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Text, Icon, VStack, HStack, Spinner, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
-import { db, insertFactories, getFactories } from '@/config/sqlite'; // Importa as funções SQLite para manipular a tabela
+import { db, insertFactories, getFactories } from '@/config/sqlite'; // SQLite functions
 import api from '../../config/api';
+import { isNetworkAvailable } from '../../config/netinfo'; // Utility to check network status
 
 type RootStackParamList = {
   FactoryDetail: { factoryId: string };
@@ -12,10 +13,10 @@ type RootStackParamList = {
 };
 
 interface Factory {
-  factoryId: string;
+  factoryId: number;
   factoryName: string;
   location: string;
-  updatedAt: string; // Para comparação de sincronização
+  updatedAt: string; // For synchronization comparison
 }
 
 export default function HomeScreen() {
@@ -23,55 +24,65 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  // Função para sincronizar dados locais com os do servidor
+  // Function to load and synchronize data
   const syncFactories = async () => {
     try {
-      // Obtém os dados locais
+      setRefreshing(true);
+
+      // Load local data first
       const localFactories = await getFactories();
-  
-      // Obtém os dados do servidor
+      console.log('Local factories:', localFactories);
+      setFactories(localFactories);
+      if (localFactories.length === 0) {
+        setRefreshing(false);
+      }
+      // Check network availability
+      const isConnected = await isNetworkAvailable();
+
+      if (!isConnected) {
+        console.warn('No internet connection. Displaying offline data.');
+        return; // Exit early if offline
+      }
+
+      // Fetch data from the server
       const response = await api.get('/factories');
       const serverFactories: Factory[] = response.data.data;
-  
-      // Identifica novos dados para atualizar/inserir localmente
+
+      // Find and update or insert data locally
       const factoriesToInsertOrUpdate = serverFactories.filter(serverFactory => {
         const localFactory = localFactories.find(
           local => local.factoryId === serverFactory.factoryId
         );
-        // Verifica se é novo ou está desatualizado
         return (
-          !localFactory ||
-          new Date(serverFactory.updatedAt) > new Date(localFactory.updatedAt)
+          !localFactory || new Date(serverFactory.updatedAt) > new Date(localFactory.updatedAt)
         );
       });
-  
-      // Atualiza ou insere no banco local
+
       if (factoriesToInsertOrUpdate.length > 0) {
         await insertFactories(factoriesToInsertOrUpdate);
-        console.log(`${factoriesToInsertOrUpdate.length} fábricas sincronizadas.`);
+        console.log(`${factoriesToInsertOrUpdate.length} factories synchronized.`);
       } else {
-        console.log('Nenhuma atualização necessária.');
+        console.log('No updates needed.');
       }
-  
-      // Atualiza o estado
+
+      // Update UI with server data
       setFactories(serverFactories);
     } catch (error) {
-      console.error('Erro ao sincronizar fábricas:', error);
-      Alert.alert('Erro', 'Não foi possível sincronizar os dados. Tente novamente mais tarde.');
+      console.error('Error synchronizing factories:', error);
+      Alert.alert('Error', 'Failed to synchronize data. Please try again later.');
     } finally {
-      setRefreshing(false);
+      setRefreshing(false); // Ensure refreshing is stopped
     }
   };
 
   useFocusEffect(
     React.useCallback(() => {
-      setRefreshing(true);
       syncFactories();
     }, [])
   );
 
   const renderFactoryCard = ({ item }: { item: Factory }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('FactoryDetail', { factoryId: item.factoryId })}>
+    <TouchableOpacity onPress={() => navigation.navigate('FactoryDetail', { factoryId: item.factoryId.toString() })}>
       <Box shadow={2} borderRadius="md" padding="4" marginBottom="4" bg="light.50">
         <HStack space={3} alignItems="center">
           <Icon as={MaterialIcons} name="factory" size="lg" color="darkBlue.500" />
@@ -90,11 +101,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {refreshing && <Spinner color="blue.500" />}
+      {refreshing && !factories.length ? <Spinner color="blue.500" /> : null}
       <FlatList
         data={factories}
         renderItem={renderFactoryCard}
-        keyExtractor={(item) => item.factoryId}
+        keyExtractor={(item) => item.factoryId.toString()}
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
         onRefresh={syncFactories}

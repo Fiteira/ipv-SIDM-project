@@ -4,8 +4,9 @@ import { Box, Spinner } from 'native-base';
 import { LineChart } from 'react-native-chart-kit';
 import io, { Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import api from '../../../config/api';
+import { isNetworkAvailable } from '@/config/netinfo';
 
 interface SensorData {
   machineId: string;
@@ -31,6 +32,7 @@ export default function SensorDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [expandedSensors, setExpandedSensors] = useState<{ [sensorId: string]: boolean }>({});
   const socketRef = useRef<Socket | null>(null);
+  const navigation = useNavigation();
 
   const toggleSensorExpansion = (sensorId: string) => {
     setExpandedSensors((prev) => ({ ...prev, [sensorId]: !prev[sensorId] }));
@@ -70,6 +72,15 @@ export default function SensorDashboardScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const connectSocket = async () => {
+        const isConnected = await isNetworkAvailable();
+
+        if (!isConnected) {
+          Alert.alert('No Internet Connection', 'Internet connection is mandatory for accessing the dashboard! Check your connection and try again.', [
+            { text: 'OK', onPress: () => navigation.goBack() },
+          ]);
+          return;
+        }
+
         const apiUrl = process.env.EXPO_PUBLIC_API_URL ? process.env.EXPO_PUBLIC_API_URL.replace(/\/api$/, '') : '';
         const token = await AsyncStorage.getItem('token');
 

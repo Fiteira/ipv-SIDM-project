@@ -27,7 +27,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const users = await UserModel.findAll();
+    const users = await UserModel.findAll({ attributes: { exclude: ['password'] } });
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     handleServerError(res, 'Error fetching users', error);
@@ -72,7 +72,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   const { userNumber, name, role, factoryId } = req.body;
 
   try {
-    const user = await UserModel.findByPk(userId);
+    const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
@@ -100,7 +100,7 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
   }
 
   try {
-    const user = await UserModel.findByPk(userId);
+    const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
@@ -125,7 +125,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     return;
   }
   try {
-    const user = await UserModel.findByPk(userId);
+    const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
