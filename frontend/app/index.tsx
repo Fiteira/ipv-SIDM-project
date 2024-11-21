@@ -58,18 +58,17 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
 
   function handleDeleteLocalData() {
     db.transaction((tx) => {
-      tx.executeSql('DROP TABLE IF EXISTS factories');
-      tx.executeSql('DROP TABLE IF EXISTS machines');
-      tx.executeSql('DROP TABLE IF EXISTS sensors');
-      tx.executeSql('DROP TABLE IF EXISTS users');
-      tx.executeSql('DROP TABLE IF EXISTS alerts');
-      tx.executeSql('DROP TABLE IF EXISTS maintenances');
-    });
-    console.log('Local data deleted');
-    db.transaction((tx) => {
-      tx.executeSql("SELECT * FROM Factories", [], (_, { rows }) => {
-        console.log('Factories:', rows);
-      });
+      tx.executeSql('DROP TABLE IF EXISTS Factory');
+      tx.executeSql('DROP TABLE IF EXISTS Machine');
+      tx.executeSql('DROP TABLE IF EXISTS Sensor');
+      tx.executeSql('DROP TABLE IF EXISTS User');
+      tx.executeSql('DROP TABLE IF EXISTS Alert');
+      tx.executeSql('DROP TABLE IF EXISTS Maintenance');
+    }, (error) => {
+      console.error('Error deleting local data:', error);
+    }, () => {
+      console.log('Local data deleted');
+      createTables();
     });
   }
 

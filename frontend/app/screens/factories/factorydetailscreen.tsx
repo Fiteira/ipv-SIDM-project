@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, Modal, TextInput } from 'react-native';
+import { View, StyleSheet, Text, Modal, TextInput, Alert } from 'react-native';
 import { Box, Spinner, Button, VStack, HStack, Icon } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { getFactoryById, insertFactories } from '../../../config/sqlite';
 
 
 import api from '../../../config/api';
@@ -19,8 +20,10 @@ type RootStackParamList = {
 type FactoryDetailRouteProp = RouteProp<RootStackParamList, 'FactoryDetail'>;
 
 interface Factory {
+  factoryId: number;
   factoryName: string;
   location: string;
+  updatedAt: string;
 }
 
 export default function FactoryDetailScreen() {
@@ -35,11 +38,39 @@ export default function FactoryDetailScreen() {
   const [inputFactoryName, setInputFactoryName] = useState('');
   const fetchFactoryDetails = async () => {
     try {
-      const response = await api.get(`/factories/${factoryId}`);
-      setFactory(response.data.data);
+      setLoading(true);
+
+      // Step 1: Load data from SQLite
+      const localFactory = await getFactoryById(factoryId);
+      if (localFactory) {
+        setFactory(localFactory);
+        setLoading(false);
+      } else {
+        console.warn('Factory not found in local database.');
+      }
+
+      // Step 2: Fetch data from the server if online
+      try {
+        const response = await api.get(`/factories/${factoryId}`);
+        const serverFactory: Factory = response.data.data;
+
+        // Step 3: Update local database if necessary
+        if (
+          !localFactory ||
+          new Date(serverFactory.updatedAt) > new Date(localFactory.updatedAt)
+        ) {
+          await insertFactories([serverFactory]);
+          console.log('Factory details updated in the local database.');
+        }
+
+        // Step 4: Update state with server data
+        setFactory(serverFactory);
+      } catch (networkError) {
+        console.warn('Unable to fetch data from server. Using local data if available.');
+      }
     } catch (error) {
-      console.error('Error loading factory details:', error);
-      alert('Unable to load factory details.');
+      console.error('Error fetching factory details:', error);
+      Alert.alert('Error', 'Failed to load factory details. Please try again later.');
     } finally {
       setLoading(false);
     }

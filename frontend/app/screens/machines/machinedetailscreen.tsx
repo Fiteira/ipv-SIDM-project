@@ -5,6 +5,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../config/api';
+import { isNetworkAvailable } from '../../../config/netinfo';
+import { getMachineById, insertMachines } from '../../../config/sqlite'; // SQLite functions
 
 type RootStackParamList = {
   MachineDetail: { machineId: string };
@@ -16,10 +18,11 @@ type RootStackParamList = {
 type MachineDetailRouteProp = RouteProp<RootStackParamList, 'MachineDetail'>;
 
 interface Machine {
-  machineId: string;
+  machineId: number;
   machineName: string;
   state: string;
-  // Inclua outras propriedades relevantes
+  factoryId: number;
+  updatedAt: string; // For synchronization
 }
 
 export default function MachineDetailScreen() {
@@ -33,29 +36,49 @@ export default function MachineDetailScreen() {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
+  const fetchMachineDetails = async () => {
+    try {
+      setLoading(true);
+
+      // Step 1: Load machine details from SQLite
+      const localMachine = await getMachineById(machineId);
+      if (localMachine) {
+        setMachine(localMachine);
+      }
+
+      // Step 2: Check network availability
+      const isConnected = await isNetworkAvailable();
+      if (!isConnected) {
+        console.warn('Offline mode: Using cached data.');
+        return; // Skip server fetch if offline
+      }
+
+      // Step 3: Fetch machine details from server
+      const response = await api.get(`/machines/${machineId}`);
+      const serverMachine: Machine = response.data.data;
+
+      // Step 4: Update SQLite if necessary
+      if (
+        !localMachine ||
+        new Date(serverMachine.updatedAt) > new Date(localMachine.updatedAt)
+      ) {
+        await insertMachines([serverMachine]);
+        console.log('Machine details synchronized with local database.');
+      }
+
+      // Step 5: Update state with server data
+      setMachine(serverMachine);
+    } catch (error) {
+      console.error('Error fetching machine details:', error);
+      Alert.alert('Error', 'Failed to load machine details. Check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    api.get(`/machines/${machineId}`)
-      .then((response) => {
-        setMachine(response.data.data);
-      })
-      .catch((error) => {
-        console.error('Error loading machine details:', error);
-        Alert.alert('Error', 'Unable to load machine details.');
-      })
-      .finally(() => setLoading(false));
+    fetchMachineDetails();
   }, [machineId]);
-
-  if (loading) {
-    return <Spinner color="blue.500" />;
-  }
-
-  if (!machine) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Machine not found.</Text>
-      </View>
-    );
-  }
 
   const handleDelete = async () => {
     if (inputMachineName === machine?.machineName) {
@@ -73,12 +96,24 @@ export default function MachineDetailScreen() {
     }
   };
 
+  if (loading) {
+    return <Spinner color="blue.500" />;
+  }
+
+  if (!machine) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Machine not found.</Text>
+      </View>
+    );
+  }
+
   return (
     <Box style={styles.container}>
       <Text style={styles.title}>{machine.machineName}</Text>
       <Text style={styles.state}>State: {machine.state}</Text>
       <VStack space={4} marginTop={6}>
-      <HStack space={6} justifyContent="center">
+        <HStack space={6} justifyContent="center">
           <Button
             style={styles.iconButton}
             onPress={() => navigation.navigate('SensorList', { machineId })}
@@ -92,8 +127,8 @@ export default function MachineDetailScreen() {
             <Icon as={MaterialIcons} name="build" size="6xl" color="white" />
           </Button>
           <Button colorScheme="red" onPress={() => setShowDeleteModal(true)}>
-          Delete Machine
-        </Button>
+            Delete Machine
+          </Button>
         </HStack>
       </VStack>
 
@@ -177,7 +212,7 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 120,
     height: 120,
-    backgroundColor: '#0077e6', // Dark blue color
+    backgroundColor: '#0077e6',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 15,

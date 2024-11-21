@@ -3,21 +3,24 @@ import { View, Text, Alert, StyleSheet, TextInput } from 'react-native';
 import { Box, Spinner, Button, VStack, Modal, HStack, Icon } from 'native-base';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { getUserByNumber, insertUsers } from '../../../config/sqlite'; // SQLite functions
 import api from '../../../config/api';
 import { MaterialIcons } from '@expo/vector-icons';
 
 type RootStackParamList = {
-  UserDetail: { userNumber: string };
+  UserDetail: { userNumber: number };
   UserList: { factoryId: string };
 };
 
 type UserDetailRouteProp = RouteProp<RootStackParamList, 'UserDetail'>;
 
 interface User {
-  userId: string;
-  userNumber: string;
+  userId: number;
+  userNumber: number;
   name: string;
   role: string;
+  updatedAt: string; // Para controle de sincronização
+  factoryId: number | null;
 }
 
 export default function UserDetailScreen() {
@@ -32,25 +35,53 @@ export default function UserDetailScreen() {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
+  // Função para buscar os dados do usuário
+  const fetchUserDetails = async () => {
+    try {
+      setLoading(true);
+  
+      // Step 1: Load data from local storage
+      const localUser = await getUserByNumber(userNumber);
+      if (localUser) {
+        console.log('Local user found:', localUser);
+        setUser(localUser); // Set user state immediately with local data
+      } else {
+        console.warn('User not found in local database.');
+      }
+  
+      // Step 2: Fetch data from the server
+      const response = await api.get(`/users/${userNumber}`);
+      const serverUser: User = response.data.data;
+  
+      // Step 3: Sync server data with local storage if needed
+      if (
+        !localUser ||
+        new Date(serverUser.updatedAt) > new Date(localUser.updatedAt)
+      ) {
+        await insertUsers([serverUser]); // Update or insert into local storage
+        console.log('User data synced successfully.');
+      }
+  
+      // Step 4: Update the user state with the most recent data
+      setUser(serverUser);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    } finally {
+      setLoading(false); // Ensure loading is stopped
+    }
+  };
+
   useEffect(() => {
-    api.get(`/users/${userNumber}`)
-      .then((response) => {
-        setUser(response.data.data);
-      })
-      .catch((error) => {
-        console.error('Error loading user details:', error);
-        Alert.alert('Error', 'Unable to load user details.');
-      })
-      .finally(() => setLoading(false));
+    fetchUserDetails();
   }, [userNumber]);
 
   const handleDelete = async () => {
     if (inputUserName === user?.name) {
       setConfirmDeleteModalVisible(false);
       try {
-        await api.delete(`/users/${user.userId}`);
+        await api.delete(`/users/${user?.userId}`);
         Alert.alert('Success', 'User deleted successfully');
-        navigation.goBack(); // Navega para UserList para atualizar a lista
+        navigation.goBack();
       } catch (error) {
         console.error('Error deleting user:', error);
         Alert.alert('Error', 'Failed to delete user. Please try again later.');
@@ -74,7 +105,7 @@ export default function UserDetailScreen() {
       console.error('Error resetting password:', error);
       Alert.alert('Error', 'Unable to reset password.');
     } finally {
-      setShowResetModal(false); // Fecha o modal após a operação
+      setShowResetModal(false);
     }
   };
 
@@ -116,7 +147,6 @@ export default function UserDetailScreen() {
         </HStack>
       </VStack>
 
-      {/* Modal de confirmação de reset de senha */}
       <Modal isOpen={showResetModal} onClose={() => setShowResetModal(false)}>
         <Modal.Content>
           <Modal.Header>Confirm Reset</Modal.Header>
