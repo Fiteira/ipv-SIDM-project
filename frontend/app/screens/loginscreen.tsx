@@ -5,12 +5,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/config/api';
 import * as Notifications from 'expo-notifications';
 import { AxiosError } from 'axios';
+import { useContext } from 'react';
+import { AuthContext } from '../AuthContext';
 
 export default function LoginScreen({ navigation, setIsAuthenticated, deviceToken }: any) {
   const [userNumber, setUserNumber] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
-
+  const { setUserRole } = useContext(AuthContext);
+  console.log(setUserRole)
   useEffect(() => {
     const checkTokenAndAutoLogin = async () => {
       try {
@@ -22,8 +25,21 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
           });
           
           if (response.data && response.data.success) {
+            const userRole = response.data.message.role;
+            await AsyncStorage.setItem('user', JSON.stringify(response.data.message));
+            await AsyncStorage.setItem('userRole', userRole);
+            await AsyncStorage.setItem(
+              'factoryId',
+              response.data.message.factoryId ? response.data.message.factoryId.toString() : ''
+            );
+            setUserRole(userRole);
             setIsAuthenticated(true);
-            navigation.navigate('Homepage');
+            if (userRole === 'adminSystem') {
+              navigation.navigate('Homepage');
+            } else {
+              navigation.navigate('FactoryDetail', { factoryId: response.data.message.factoryId.toString()
+               })
+            } 
             return;
           }
         }
@@ -54,14 +70,24 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
       });
 
       if (response.data && response.data.success) {
+        console.log(response.data);
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        await AsyncStorage.setItem('userRole', response.data.user.role);
         await AsyncStorage.setItem(
           'factoryId',
           response.data.user.factoryId ? response.data.user.factoryId.toString() : ''
         );
+        setUserRole(response.data.user.role);
         setIsAuthenticated(true);
-        navigation.navigate('Homepage');
+        if (response.data.user.role === 'adminSystem') {
+          navigation.navigate('Homepage');
+          console.log('adminSystem')
+        } else {
+          console.log('factory')
+          navigation.navigate('FactoryDetail', { factoryId: response.data.user.factoryId.toString() })
+        } 
+
       } else {
         Alert.alert('Error', 'User number or password is incorrect.');
       }

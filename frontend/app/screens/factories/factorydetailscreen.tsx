@@ -4,6 +4,8 @@ import { Box, Spinner, Button, VStack, HStack, Icon } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import { getFactoryById, insertFactories } from '../../../config/sqlite';
+import { useContext } from 'react';
+import { AuthContext } from '../../AuthContext';
 
 
 import api from '../../../config/api';
@@ -36,6 +38,8 @@ export default function FactoryDetailScreen() {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [inputFactoryName, setInputFactoryName] = useState('');
+  const { userRole } = useContext(AuthContext);
+
   const fetchFactoryDetails = async () => {
     try {
       setLoading(true);
@@ -130,12 +134,14 @@ export default function FactoryDetailScreen() {
         </HStack>
 
         <HStack space={6} justifyContent="center">
+        {(userRole === 'admin' || userRole === 'adminSystem') && (
           <Button
             style={styles.iconButton}
             onPress={() => navigation.navigate('UserList', { factoryId })}
           >
             <Icon as={MaterialIcons} name="group" size="6xl" color="white" />
           </Button>
+        )}
           <Button
             style={styles.iconButton}
             onPress={() => navigation.navigate('AlertList', { factoryId })}

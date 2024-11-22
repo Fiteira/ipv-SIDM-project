@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { db, createTables } from '@/config/sqlite';
+import { AuthProvider } from './AuthContext';
 
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
@@ -184,6 +185,7 @@ export default function App() {
   }
 
   return (
+    <AuthProvider>
     <NativeBaseProvider>
       <Stack.Navigator screenOptions={{ headerBackTitle: '' }}>
         {!isAuthenticated ? (
@@ -223,5 +225,6 @@ export default function App() {
         )}
       </Stack.Navigator>
     </NativeBaseProvider>
+    </AuthProvider>
   );
 }
