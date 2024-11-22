@@ -6,6 +6,8 @@ import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation
 import { db, insertFactories, getFactories } from '@/config/sqlite'; // SQLite functions
 import api from '../../config/api';
 import { isNetworkAvailable } from '../../config/netinfo'; // Utility to check network status
+import { useContext } from 'react';
+import { AuthContext } from '../AuthContext';
 
 type RootStackParamList = {
   FactoryDetail: { factoryId: string };
@@ -22,6 +24,7 @@ interface Factory {
 export default function HomeScreen() {
   const [factories, setFactories] = useState<Factory[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const { userRole } = useContext(AuthContext);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   // Function to load and synchronize data
