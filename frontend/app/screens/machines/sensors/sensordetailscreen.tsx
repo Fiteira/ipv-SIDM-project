@@ -18,6 +18,7 @@ import { getSensorById, insertSensors } from '../../../../config/sqlite'
 type RootStackParamList = {
   SensorDetail: { sensorId: string };
   SensorList: { machineId: string };
+  SensorEdit: { sensorId: string };
 };
 
 type SensorDetailRouteProp = RouteProp<RootStackParamList, 'SensorDetail'>;
@@ -248,6 +249,12 @@ export default function SensorDetailScreen() {
         >
           Delete
         </Button>
+        <Button
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('SensorEdit', { sensorId })}
+        >
+          <Icon as={MaterialIcons} name="edit" size="6xl" color="white" />
+        </Button>
       </View>
 
       {/* Sensor Charts and Data */}
@@ -383,6 +390,9 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     marginBottom: 20,
+  },
+  iconButton: {
+    marginLeft: 8,
   },
   chartTitle: {
     fontSize: 18,
