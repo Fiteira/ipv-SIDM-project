@@ -28,6 +28,9 @@ import FactoryCreateScreen from './screens/factories/factortorycreate';
 import UserCreateScreen from './screens/users/usercreate';
 import MachineCreateScreen from './screens/machines/machinecreate';
 import SensorCreateScreen from './screens/machines/sensors/sensorcreate'
+import FactoryEditScreen from './screens/factories/factortoryedit';
+import MachineEditScreen from './screens/machines/machineedit';
+import SensorEditScreen from './screens/machines/sensors/sensoredit';
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
@@ -178,12 +181,15 @@ export default function App() {
             <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
             <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
             <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
+            <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
             <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
             <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
             <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
+            <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
             <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
             <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
             <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
+            <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
             <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
             <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
             <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
@@ -192,7 +198,6 @@ export default function App() {
             <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
             <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
             <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
-          
           </>
         )}
       </Stack.Navigator>

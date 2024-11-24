@@ -11,6 +11,7 @@ type RootStackParamList = {
   SensorList: { machineId: string };
   MaintenanceList: { machineId: string };
   MachineList: { factoryId: string };
+  MachineEdit: { machineId: string };
 };
 
 type MachineDetailRouteProp = RouteProp<RootStackParamList, 'MachineDetail'>;
@@ -90,6 +91,12 @@ export default function MachineDetailScreen() {
             onPress={() => navigation.navigate('MaintenanceList', { machineId })}
           >
             <Icon as={MaterialIcons} name="build" size="6xl" color="white" />
+          </Button>
+          <Button
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('MachineEdit', { machineId })}
+          >
+            <Icon as={MaterialIcons} name="edit" size="6xl" color="white" />
           </Button>
           <Button colorScheme="red" onPress={() => setShowDeleteModal(true)}>
           Delete Machine

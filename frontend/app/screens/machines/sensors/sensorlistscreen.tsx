@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useFocusEffect,  useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../../config/api';
 
-type RootStackParamList = {
+type RootStackParamList = {  
   SensorList: { machineId: string };
   SensorDetail: { sensorId: string };
   SensorCreate: { machineId: string }; 
