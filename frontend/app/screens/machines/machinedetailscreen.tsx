@@ -7,6 +7,8 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../config/api';
 import { isNetworkAvailable } from '../../../config/netinfo';
 import { getMachineById, insertMachines } from '../../../config/sqlite'; // SQLite functions
+import { useContext } from 'react';
+import { AuthContext } from '../../AuthContext';
 
 type RootStackParamList = {
   MachineDetail: { machineId: string };
@@ -36,6 +38,7 @@ export default function MachineDetailScreen() {
   const [inputMachineName, setInputMachineName] = useState('');
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { userRole } = useContext(AuthContext);
 
   const fetchMachineDetails = async () => {
     try {
@@ -113,31 +116,40 @@ export default function MachineDetailScreen() {
     <Box style={styles.container}>
       <Text style={styles.title}>{machine.machineName}</Text>
       <Text style={styles.state}>State: {machine.state}</Text>
-      <VStack space={4} marginTop={6}>
-        <HStack space={6} justifyContent="center">
+      <HStack space={3} justifyContent="center" marginTop={4}>
+      {(userRole === 'admin' || userRole === 'adminSystem') && (
+        <>
           <Button
-            style={styles.iconButton}
-            onPress={() => navigation.navigate('SensorList', { machineId })}
-          >
-            <Icon as={MaterialIcons} name="sensors" size="6xl" color="white" />
-          </Button>
-          <Button
-            style={styles.iconButton}
-            onPress={() => navigation.navigate('MaintenanceList', { machineId })}
-          >
-            <Icon as={MaterialIcons} name="build" size="6xl" color="white" />
-          </Button>
-          <Button
-            style={styles.iconButton}
+            colorScheme="yellow"
             onPress={() => navigation.navigate('MachineEdit', { machineId })}
+            leftIcon={<Icon as={MaterialIcons} name="edit" size="sm" color="white" />}
           >
-            <Icon as={MaterialIcons} name="edit" size="6xl" color="white" />
+            Edit
           </Button>
-          <Button colorScheme="red" onPress={() => setShowDeleteModal(true)}>
-            Delete Machine
+          <Button
+            colorScheme="red"
+            onPress={() => setShowDeleteModal(true)}
+            leftIcon={<Icon as={MaterialIcons} name="delete" size="sm" color="white" />}
+          >
+            Delete
           </Button>
-        </HStack>
-      </VStack>
+        </>
+        )}
+        <Button
+          colorScheme="blue"
+          onPress={() => navigation.navigate('SensorList', { machineId })}
+          leftIcon={<Icon as={MaterialIcons} name="sensors" size="sm" color="white" />}
+        >
+          Sensors
+        </Button>
+        <Button
+          colorScheme="green"
+          onPress={() => navigation.navigate('MaintenanceList', { machineId })}
+          leftIcon={<Icon as={MaterialIcons} name="build" size="sm" color="white" />}
+        >
+          Maintenance
+        </Button>
+      </HStack>
 
       {/* Modal de confirmação de exclusão */}
       <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)}>

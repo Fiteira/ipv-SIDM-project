@@ -71,6 +71,11 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   const { userId } = req.params;
   const { userNumber, name, role, factoryId } = req.body;
 
+  if (!userId) {
+    res.status(400).json({ success: false, message: 'UserId is required' });
+    return;
+  }
+
   try {
     const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
     if (!user) {
@@ -78,10 +83,10 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    user.userNumber = userNumber;
-    user.name = name;
-    user.role = role;
-    user.factoryId = factoryId;
+    if(userNumber) user.userNumber = userNumber;
+    else if (name)user.name = name;
+    else if (role) user.role = role;
+    else if (factoryId) user.factoryId = factoryId;
 
     await user.save();
     res.status(200).json({ success: true, data: user });

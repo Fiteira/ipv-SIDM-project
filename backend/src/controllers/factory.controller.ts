@@ -48,6 +48,10 @@ export const createFactory = async (req: Request, res: Response): Promise<void> 
 export const updateFactory = async (req: Request, res: Response): Promise<void> => {
   const { factoryId } = req.params;
   const { factoryName, location } = req.body;
+  if (!factoryId) {
+    res.status(400).json({ success: false, message: 'FactoryId is required' });
+    return;
+  }
 
   try {
     const factory = await FactoryModel.findByPk(factoryId);
@@ -56,8 +60,8 @@ export const updateFactory = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    factory.factoryName = factoryName;
-    factory.location = location;
+    if (factoryName) factory.factoryName = factoryName;
+    else if (location) factory.location = location;
 
     await factory.save();
     res.status(200).json({ success: true, data: factory });

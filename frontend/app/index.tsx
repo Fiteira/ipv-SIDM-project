@@ -8,7 +8,8 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { db, createTables } from '@/config/sqlite';
-import { AuthProvider } from './AuthContext';
+import { AuthProvider, AuthContext } from './AuthContext';
+import { useContext } from 'react';
 
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
@@ -130,6 +131,7 @@ export default function App() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
+  const { userRole } = useContext(AuthContext);
 
   useEffect(() => {
     setupAxiosInterceptors(setIsAuthenticated);
@@ -199,7 +201,7 @@ export default function App() {
             {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} deviceToken={expoPushToken} />}
           </Stack.Screen>
         ) : (
-          <>
+            <>
             <Stack.Screen
               name="Main"
               options={{ headerShown: false }}
@@ -207,26 +209,40 @@ export default function App() {
               {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
             </Stack.Screen>
             <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
-            <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
             <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
-            <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
-            <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
+
             <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
             <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
-            <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
+
             <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
             <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
-            <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
-            <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
-            <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
-            <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
-            <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
+
             <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
             <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />
+
             <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
             <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
             <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
-          </>
+
+            {( userRole === 'admin' || userRole === 'adminSystem') && (
+              <>
+                <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
+                <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
+                <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+                <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
+                <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
+                <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
+                <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
+
+              </>
+            )}
+            { userRole === 'adminSystem' && (
+              <>
+                <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
+                <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
+              </>
+            )}
+            </>
         )}
       </Stack.Navigator>
     </NativeBaseProvider>

@@ -74,6 +74,11 @@ export const updateSensor = async (req: Request, res: Response): Promise<void> =
   const { sensorId } = req.params;
   const { sensorType, machineId } = req.body;
 
+  if (!sensorId) {
+    res.status(400).json({ success: false, message: 'SensorId is required' });
+    return;
+  }
+
   try {
     const sensor = await SensorModel.findByPk(sensorId);
     if (!sensor) {
@@ -81,8 +86,8 @@ export const updateSensor = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    sensor.sensorType = sensorType;
-    sensor.machineId = machineId;
+    if ( sensorType ) sensor.sensorType = sensorType;
+    else if ( machineId )sensor.machineId = machineId;
 
     await sensor.save();
     res.status(200).json({ success: true, data: sensor });

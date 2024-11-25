@@ -146,10 +146,7 @@ export const createAlert = async (req: Request, res: Response): Promise<void> =>
 export const updateAlert = async (req: Request, res: Response): Promise<void> => {
   const { alertId } = req.params;
   const { machineId, alertDate, severity, message } = req.body;
-  if (!machineId || !alertDate || !severity || !message) {
-    res.status(400).json({ success: false, message: 'MachineId, alertDate, severity, and message are required' });
-    return;
-  } else if (!alertId) {
+  if (!alertId) {
     res.status(400).json({ success: false, message: 'AlertId is required' });
     return;
   }
@@ -161,10 +158,10 @@ export const updateAlert = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    alert.machineId = machineId;
-    alert.alertDate = alertDate;
-    alert.severity = severity;
-    alert.message = message;
+    if (machineId) alert.machineId = machineId;
+    else if (alertDate) alert.alertDate = alertDate;
+    else if (severity) alert.severity = severity;
+    else if (message) alert.message = message;
 
     await alert.save();
     res.status(200).json({ success: true, data: alert });

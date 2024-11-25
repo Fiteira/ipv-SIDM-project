@@ -53,6 +53,11 @@ export const updateMachine = async (req: Request, res: Response): Promise<void> 
   const { machineId } = req.params;
   const { machineName, factoryId } = req.body;
 
+  if (!machineId) {
+    res.status(400).json({ success: false, message: 'MachineId is required' });
+    return;
+  }
+
   try {
     const machine = await MachineModel.findByPk(machineId);
     if (!machine) {
@@ -60,8 +65,9 @@ export const updateMachine = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    machine.machineName = machineName;
-    machine.factoryId = factoryId;
+    if (machineName) machine.machineName = machineName;
+    else if (factoryId) machine.factoryId = factoryId;
+ 
 
     await machine.save();
     res.status(200).json({ success: true, data: machine });

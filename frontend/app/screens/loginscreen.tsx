@@ -13,7 +13,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const { setUserRole } = useContext(AuthContext);
-  console.log(setUserRole)
+
   useEffect(() => {
     const checkTokenAndAutoLogin = async () => {
       try {
