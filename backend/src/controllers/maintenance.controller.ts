@@ -93,7 +93,12 @@ export const createMaintenance = async (req: Request, res: Response): Promise<vo
 export const updateMaintenance = async (req: Request, res: Response): Promise<void> => {
     const { maintenanceId } = req.params;
     const { machineId, maintenanceDate, description, performedBy } = req.body;
-  
+
+    if (!maintenanceId) {
+      res.status(400).json({ success: false, message: 'MaintenanceId is required' });
+      return;
+    }
+
     try {
       const maintenance = await MaintenanceModel.findByPk(maintenanceId);
       if (!maintenance) {
@@ -101,10 +106,10 @@ export const updateMaintenance = async (req: Request, res: Response): Promise<vo
         return;
       }
   
-      maintenance.machineId = machineId;
-      maintenance.maintenanceDate = maintenanceDate;
-      maintenance.description = description;
-      maintenance.performedBy = performedBy;
+      if (machineId) maintenance.machineId = machineId;
+      else if (maintenanceDate) maintenance.maintenanceDate = maintenanceDate;
+      else if (description) maintenance.description = description;
+      else if (performedBy) maintenance.performedBy = performedBy;
   
       await maintenance.save();
       res.status(200).json({ success: true, data: maintenance });

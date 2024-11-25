@@ -13,6 +13,8 @@ import io, { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSensorById, insertSensors } from '../../../../config/sqlite'
+import  { useContext } from 'react';
+import { AuthContext } from '../../../AuthContext';
 
 
 type RootStackParamList = {
@@ -69,6 +71,7 @@ export default function SensorDetailScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [dataPoints, setDataPoints] = useState<SensorData[]>([]);
   const socketRef = useRef<Socket<DefaultEventsMap, DefaultEventsMap> | null>(null);
+  const { userRole } = useContext(AuthContext);
 
 
   
@@ -240,6 +243,8 @@ export default function SensorDetailScreen() {
           <Text style={styles.title}>{sensor.name}</Text>
           <Text style={styles.state}>Type: {sensor.sensorType}</Text>
         </View>
+        {(userRole === 'admin' || userRole === 'adminSystem') && (
+          <>
         <Button
           colorScheme="red"
           size="sm"
@@ -255,6 +260,8 @@ export default function SensorDetailScreen() {
         >
           <Icon as={MaterialIcons} name="edit" size="6xl" color="white" />
         </Button>
+        </>
+        )}
       </View>
 
       {/* Sensor Charts and Data */}

@@ -53,8 +53,8 @@ export const createData = async (req: Request, res: Response): Promise<void> => 
 export const updateData = async (req: Request, res: Response): Promise<void> => {
   const { dataId } = req.params;
   const { sensorId, value } = req.body;
-  if (!sensorId || !value) {
-    res.status(400).json({ success: false, message: 'SensorId and value are required' });
+  if (!dataId) {
+    res.status(400).json({ success: false, message: 'DataId is required' });
     return;
   }
   try {
@@ -64,8 +64,8 @@ export const updateData = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    data.sensorId = sensorId;
-    data.value = value;
+    if (sensorId) data.sensorId = sensorId;
+    else if (value) data.value = value;
 
     await data.save();
     res.status(200).json({ success: true, data });

@@ -150,7 +150,7 @@ export default function FactoryDetailScreen() {
           </Button>
         </HStack>
 
-        {/* Botões de Editar e Deletar */}
+        {(userRole === 'admin' || userRole === 'adminSystem') && (
         <HStack space={3} justifyContent="center" marginTop={4}>
           <Button 
             colorScheme="yellow"
@@ -167,6 +167,7 @@ export default function FactoryDetailScreen() {
             Delete
           </Button>
         </HStack>
+        )}
       </VStack>
 
       {/* Primeiro Modal para confirmação inicial de exclusão */}

@@ -113,16 +113,20 @@ export default function HomeScreen() {
         refreshing={refreshing}
         onRefresh={syncFactories}
         ListFooterComponent={
-          <Button
-            onPress={() => navigation.navigate('FactoryCreate')}
-            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
-            colorScheme="blue"
-            marginTop="4"
-            borderRadius="md"
-            padding="4"
-          >
-            Create New Factory
-          </Button>
+          <Box>
+            {(userRole === 'adminSystem') && (
+            <Button
+              onPress={() => navigation.navigate('FactoryCreate')}
+              leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+              colorScheme="blue"
+              marginTop="4"
+              borderRadius="md"
+              padding="4"
+            >
+              Create New Factory
+            </Button>
+            )}
+          </Box>
         }
       />
     </View>
