@@ -6,6 +6,8 @@ import { RouteProp, useRoute, useNavigation, NavigationProp, useFocusEffect } fr
 import api from '../../../config/api';
 import { getMachinesByFactory, insertMachines } from '../../../config/sqlite'; // SQLite functions
 import { isNetworkAvailable } from '../../../config/netinfo'; // Utility to check network status
+import { useContext } from 'react';
+import { AuthContext } from '../../AuthContext';
 
 type RootStackParamList = {
   MachineList: { factoryId: string };
@@ -30,6 +32,7 @@ export default function MachineListScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { userRole } = useContext(AuthContext);
 
   const fetchMachines = useCallback(async () => {
     try {
@@ -115,15 +118,19 @@ export default function MachineListScreen() {
         refreshing={refreshing}
         onRefresh={fetchMachines}
         ListFooterComponent={
-          <Button
-            onPress={() => navigation.navigate('MachineCreate', { factoryId })}
-            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
-            colorScheme="blue"
-            marginTop="4"
-            borderRadius="md"
-          >
-            Create Machine
-          </Button>
+          <>
+            {(userRole === 'admin' || userRole === 'adminSystem') && (
+              <Button
+                onPress={() => navigation.navigate('MachineCreate', { factoryId })}
+                leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+                colorScheme="blue"
+                marginTop="4"
+                borderRadius="md"
+              >
+                Create Machine
+              </Button>
+            )}
+          </>
         }
       />
     </View>

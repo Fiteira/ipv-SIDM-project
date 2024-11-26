@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, DrawerContentComponentProps } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NativeBaseProvider, Avatar, HStack, VStack, Text } from 'native-base';
@@ -9,10 +9,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { db, createTables } from '@/config/sqlite';
 import { AuthProvider, AuthContext } from './AuthContext';
-import { useContext } from 'react';
 
 import AdminAppHomeScreen from './screens/homescreen';
 import ProfileScreen from './screens/profilescreen';
+import ProfileEditScreen from './screens/profileeditscreen';
 import LoginScreen from './screens/loginscreen';
 import FactoryDetailScreen from './screens/factories/factorydetailscreen';
 import FactoryDashboardScreen from './screens/factories/factorydashboardscreen';
@@ -27,17 +27,16 @@ import AlertDetailScreen from './screens/alerts/alertdetailscreen';
 import MaintenanceListScreen from './screens/machines/maintenances/maintenancelistscreen';
 import MaintenanceDetailScreen from './screens/machines/maintenances/maintenancedetailscreen';
 import RegisterMaintenanceScreen from './screens/machines/maintenances/registermaintenancescreen';
-import FactoryCreateScreen from './screens/factories/factortorycreate'; 
+import FactoryCreateScreen from './screens/factories/factorycreate';
 import UserCreateScreen from './screens/users/usercreate';
 import MachineCreateScreen from './screens/machines/machinecreate';
-import SensorCreateScreen from './screens/machines/sensors/sensorcreate'
-import FactoryEditScreen from './screens/factories/factortoryedit';
+import SensorCreateScreen from './screens/machines/sensors/sensorcreate';
+import FactoryEditScreen from './screens/factories/factoryedit';
 import MachineEditScreen from './screens/machines/machineedit';
 import SensorEditScreen from './screens/machines/sensors/sensoredit';
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
-import { create } from 'react-test-renderer';
 
 if (Platform.OS !== 'web') {
   Appearance.setColorScheme('light');
@@ -46,8 +45,6 @@ if (Platform.OS !== 'web') {
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
-
-
 interface CustomDrawerContentProps extends DrawerContentComponentProps {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
 }
@@ -55,13 +52,22 @@ interface CustomDrawerContentProps extends DrawerContentComponentProps {
 function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerContentProps) {
   const [userName, setUserName] = useState<string | null>(null);
 
-  function handleLogout() {
+  useEffect(() => {
+    const loadUserName = async () => {
+      const user = await AsyncStorage.getItem('user');
+      if (user) setUserName(JSON.parse(user).name);
+    };
+    loadUserName();
+    createTables();
+  }, []);
+
+  const handleLogout = () => {
     AsyncStorage.removeItem('token');
     AsyncStorage.removeItem('user');
     setIsAuthenticated(false);
-  }
+  };
 
-  function handleDeleteLocalData() {
+  const handleDeleteLocalData = () => {
     db.transaction((tx) => {
       tx.executeSql('DROP TABLE IF EXISTS Factory');
       tx.executeSql('DROP TABLE IF EXISTS Machine');
@@ -75,17 +81,7 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
       console.log('Local data deleted');
       createTables();
     });
-  }
-
-
-  useEffect(() => {
-    const loadUserName = async () => {
-      const user = await AsyncStorage.getItem('user');
-      if (user) setUserName(JSON.parse(user).name);
-    };
-    loadUserName();
-    createTables()
-  }, []);
+  };
 
   return (
     <DrawerContentScrollView {...props}>
@@ -102,13 +98,13 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
         label="Logout"
         icon={() => <MaterialIcons name="logout" size={22} color="red" />}
         labelStyle={{ color: 'red' }}
-        onPress={() => handleLogout()}
+        onPress={handleLogout}
       />
       <DrawerItem
         label="Delete local data"
         icon={() => <MaterialIcons name="delete" size={22} color="red" />}
         labelStyle={{ color: 'red' }}
-        onPress={() => {handleDeleteLocalData()}}
+        onPress={handleDeleteLocalData}
       />
     </DrawerContentScrollView>
   );
@@ -182,70 +178,64 @@ export default function App() {
     return token;
   };
 
-  async function sendLocalNotification(title: string, body: string) {
-    await Notifications.scheduleNotificationAsync({
-      content: { title, body, sound: true },
-      trigger: null,
-    });
-  }
-
   return (
     <AuthProvider>
-    <NativeBaseProvider>
-      <Stack.Navigator screenOptions={{ headerBackTitle: '' }}>
-        {!isAuthenticated ? (
-          <Stack.Screen
-            name="Login"
-            options={{ headerShown: false }}
-          >
-            {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} deviceToken={expoPushToken} />}
-          </Stack.Screen>
-        ) : (
-            <>
+      <NativeBaseProvider>
+        <Stack.Navigator screenOptions={{ headerBackTitle: '' }}>
+          {!isAuthenticated ? (
             <Stack.Screen
-              name="Main"
+              name="Login"
               options={{ headerShown: false }}
             >
-              {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
+              {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} deviceToken={expoPushToken} />}
             </Stack.Screen>
-            <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
-            <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
+          ) : (
+            <>
+              <Stack.Screen
+                name="Main"
+                options={{ headerShown: false }}
+              >
+                {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
+              </Stack.Screen>
+              <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} options={{ title: 'Edit Profile' }} />
 
-            <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
-            <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
+              <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
+              <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
 
-            <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
-            <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
+              <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
+              <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
 
-            <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
-            <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />
+              <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
+              <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
 
-            <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
-            <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
-            <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
+              <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
+              <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />
 
-            {( userRole === 'admin' || userRole === 'adminSystem') && (
-              <>
-                <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
-                <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
-                <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
-                <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
-                <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
-                <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
-                <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
+              <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} options={{ title: 'Maintenances List' }} />
+              <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
+              <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
 
-              </>
-            )}
-            { userRole === 'adminSystem' && (
-              <>
-                <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
-                <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
-              </>
-            )}
+              {(userRole === 'admin' || userRole === 'adminSystem') && (
+                <>
+                  <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
+                  <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
+                  <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+                  <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
+                  <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
+                  <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
+                  <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
+                </>
+              )}
+              {userRole === 'adminSystem' && (
+                <>
+                  <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
+                  <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
+                </>
+              )}
             </>
-        )}
-      </Stack.Navigator>
-    </NativeBaseProvider>
+          )}
+        </Stack.Navigator>
+      </NativeBaseProvider>
     </AuthProvider>
   );
 }

@@ -28,6 +28,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
             const userRole = response.data.message.role;
             await AsyncStorage.setItem('user', JSON.stringify(response.data.message));
             await AsyncStorage.setItem('userRole', userRole);
+            await AsyncStorage.setItem('userNumber', response.data.message.userNumber)
             await AsyncStorage.setItem(
               'factoryId',
               response.data.message.factoryId ? response.data.message.factoryId.toString() : ''
