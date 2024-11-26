@@ -1,22 +1,56 @@
+// ProfileScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NativeBaseProvider, VStack, HStack, Avatar, Text, Box, Spinner, Button  } from 'native-base';
+import { NativeBaseProvider, VStack, HStack, Avatar, Text, Box, Spinner, Button } from 'native-base';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { db, getUserByNumber, insertUsers } from '@/config/sqlite';
+import api from '@/config/api';
 import avatarImage from '@/assets/avatar.png';
+
+type RootStackParamList = {
+  ProfileEdit: undefined;
+};
 
 export default function ProfileScreen() {
   const [perfil, setPerfil] = useState<{ name: string; userNumber: string; role: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
+        // Tentar carregar do banco de dados local
+        const userNumber = await AsyncStorage.getItem('userNumber');
+        if (userNumber) {
+          const localUser = await getUserByNumber(parseInt(userNumber));
+          if (localUser) {
+            setPerfil(localUser);
+            setLoading(false);
+            return;
+          }
+        }
+
         const user = await AsyncStorage.getItem('user');
         if (user) {
           const parsedUser = JSON.parse(user);
           setPerfil(parsedUser);
+          setLoading(false);
+          return;
         }
+
+        const response = await api.get('/user/' + userNumber);
+        const apiUser = response.data;
+        setPerfil(apiUser);
+
+        // Atualizar o banco de dados local e o AsyncStorage com os dados da API
+        await insertUsers([apiUser]);
+        await AsyncStorage.setItem('user', JSON.stringify(apiUser));
+        await AsyncStorage.setItem('userNumber', apiUser.userNumber.toString());
       } catch (error) {
-        console.error("Failed to load user profile:", error);
+        console.error('Failed to load user profile:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -24,9 +58,12 @@ export default function ProfileScreen() {
   }, []);
 
   const handleEditProfile = () => {
-    // Lógica para abrir uma tela de edição ou habilitar a edição dos campos
-    console.log("Edit Profile button clicked");
+    navigation.navigate('ProfileEdit');
   };
+
+  if (loading) {
+    return <Spinner color="blue.500" />;
+  }
 
   return (
     <NativeBaseProvider>
@@ -61,11 +98,13 @@ export default function ProfileScreen() {
                 </Text>
               </HStack>
               <Button mt={4} colorScheme="darkBlue" alignSelf="center" onPress={handleEditProfile}>
-                Editar Perfil
+                Edit Profile
               </Button>
             </VStack>
           ) : (
-            <Spinner size="lg" color="primary.500" />
+            <Text fontSize="md" color="coolGray.500" textAlign="center">
+              Profile not found
+            </Text>
           )}
         </VStack>
       </Box>

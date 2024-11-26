@@ -4,6 +4,8 @@ import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'nati
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../../config/api';
+import { useContext } from 'react';
+import { AuthContext } from '../../../AuthContext';
 
 type RootStackParamList = {  
   SensorList: { machineId: string };
@@ -44,6 +46,7 @@ export default function SensorListScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { userRole } = useContext(AuthContext);
 
   const fetchSensors = useCallback(() => {
     setRefreshing(true);
@@ -113,15 +116,19 @@ export default function SensorListScreen() {
         refreshing={refreshing}
         onRefresh={fetchSensors}
         ListFooterComponent={
-          <Button
-            onPress={() => navigation.navigate('SensorCreate', { machineId })}
-            leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
-            colorScheme="blue"
-            marginTop="4"
-            borderRadius="md"
-          >
-            Create Sensor
-          </Button>
+          <>
+            {(userRole === 'admin' || userRole === 'adminSystem') && (
+              <Button
+                onPress={() => navigation.navigate('SensorCreate', { machineId })}
+                leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
+                colorScheme="blue"
+                marginTop="4"
+                borderRadius="md"
+              >
+                Create Sensor
+              </Button>
+            )}
+          </>
         }
       />
     </View>
