@@ -19,7 +19,7 @@ router.get(
   (req: Request, res: Response) => {
     if (req.user && (req.user as any).userId) {
       const user = req.user as any;
-      const { userId, name, role, factoryId } = user;
+      const { userId, name, role, factoryId, userNumber } = user;
       const deviceToken = req.headers['devicetoken'];
 
       if (deviceToken) {
@@ -32,7 +32,7 @@ router.get(
 
       res.status(200).json({
         success: true,
-        message: { userId, name, role, factoryId },
+        message: { userId, name, role, factoryId, userNumber },
       });
     } else {
       res.status(401).json({
