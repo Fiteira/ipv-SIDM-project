@@ -15,7 +15,7 @@ import ProfileScreen from './screens/profilescreen';
 import ProfileEditScreen from './screens/profileeditscreen';
 import LoginScreen from './screens/loginscreen';
 import FactoryDetailScreen from './screens/factories/factorydetailscreen';
-import UserHomeScreen from './screens/factories/factorydetailscreen';
+import UserHomeScreen from './screens/users/userfactorydetailscreen';
 import FactoryDashboardScreen from './screens/factories/factorydashboardscreen';
 import MachineListScreen from './screens/machines/machinelistscreen';
 import MachineDetailScreen from './screens/machines/machinedetailscreen';
@@ -143,7 +143,7 @@ function DrawerNavigator({ setIsAuthenticated}: { setIsAuthenticated: (isAuthent
     >
       <Drawer.Screen
         name="Homepage"
-        component={userRole === 'adminSystem' ? AdminAppHomeScreen : UserHomeScreen}
+        component={userRole === 'adminSystem' ? AdminAppHomeScreen : FactoryDetailScreen}
         initialParams={userRole !== 'adminSystem' ? { factoryId } : undefined}
       />
       

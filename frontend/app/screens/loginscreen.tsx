@@ -39,8 +39,8 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
             if (userRole === 'adminSystem') {
               navigation.navigate('Homepage');
             } else {
-              navigation.navigate('FactoryDetail', { factoryId: response.data.message.factoryId.toString()
-               })
+              // navigation.navigate('FactoryDetail', { factoryId: response.data.message.factoryId.toString()
+              //  })
             } 
             return;
           }
@@ -86,8 +86,8 @@ export default function LoginScreen({ navigation, setIsAuthenticated, deviceToke
           navigation.navigate('Homepage');
           console.log('adminSystem')
         } else {
-          console.log('factory')
-          navigation.navigate('FactoryDetail', { factoryId: response.data.user.factoryId.toString() })
+          // console.log('factory')
+          // navigation.navigate('FactoryDetail', { factoryId: response.data.user.factoryId.toString() })
         } 
 
       } else {
