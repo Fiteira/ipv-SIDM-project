@@ -20,9 +20,9 @@ router.get('/factory/:factoryId', jwtAuthMiddleware, getUsersByFactoryId);
 
 router.post('/', jwtAuthMiddleware, createUser);
 
-router.put('/:userId', jwtAuthMiddleware, updateUser);
+router.put('/:userNumber', jwtAuthMiddleware, updateUser);
 
-router.delete('/:userId', jwtAuthMiddleware, deleteUser);
+router.delete('/:userNumber', jwtAuthMiddleware, deleteUser);
 
 
 export default router;

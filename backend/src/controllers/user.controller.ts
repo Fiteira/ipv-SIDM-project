@@ -3,6 +3,7 @@ import { UserModel } from '../models/user.model';
 import { handleServerError } from '../utils/helpers';
 import { createUserService, findUserByUserNumber, findUserDTOByUserNumber } from '../services/user.service';
 import bcrypt from 'bcryptjs';
+import { findSourceMap } from 'module';
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const { userNumber } = req.params;
@@ -59,7 +60,6 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   try {
 
     const newUser = await createUserService(req.body);
-    console.log(newUser);
     
     res.status(201).json({ success: true,  message: "User create successfully" });
   } catch (error) {
@@ -68,27 +68,27 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 }; 
 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req.params;
-  const { userNumber, name, role, factoryId } = req.body;
+  const { userNumber } = req.params; //É o userNumber
+  const { name, role, factoryId } = req.body;
 
-  if (!userId) {
-    res.status(400).json({ success: false, message: 'UserId is required' });
+  if (!userNumber) {
+    res.status(400).json({ success: false, message: 'UserNumber is required' });
     return;
   }
 
   try {
-    const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
+    const user = await findUserDTOByUserNumber(Number(userNumber))
     if (!user) {
+      console.error("User not found")
       res.status(404).json({ success: false, message: 'User not found' });
       return;
     }
 
-    if(userNumber) user.userNumber = userNumber;
-    else if (name)user.name = name;
+    if (name)user.name = name;
     else if (role) user.role = role;
     else if (factoryId) user.factoryId = factoryId;
-
-    await user.save();
+    console.log(user)
+    await UserModel.update({ name: user.name }, { where: { userNumber } });
     res.status(200).json({ success: true, data: user });
   } catch (error) {
     handleServerError(res, 'Error updating user', error);
@@ -97,15 +97,15 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
 export const updatePassword = async (req: Request, res: Response): Promise<void> => {
 
-  const { userId } = req.params;
+  const { userNumber } = req.params;
   const { password } = req.body;
-  if (!userId) {
+  if (!userNumber) {
     res.status(400).json({ success: false, message: 'UserId is required' });
     return;
   }
 
   try {
-    const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
+    const user = await findUserDTOByUserNumber(Number(userNumber))
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
@@ -124,19 +124,19 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
 };
 
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req.params;
-  if (!userId) {
+  const { userNumber } = req.params;
+  if (!userNumber) {
     res.status(400).json({ success: false, message: 'UserId is required' });
     return;
   }
   try {
-    const user = await UserModel.findByPk(userId, { attributes: { exclude: ['password'] } });
+    const user = await findUserByUserNumber(Number(userNumber))
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
     }
 
-    await user.update({ name: 'deleted', password: 'deleted', factoryId: null });
+    await UserModel.update({ name: 'deleted', password: 'deleted', factoryId: null }, { where: { userNumber } });
     res.status(200).json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     handleServerError(res, 'Error deleting user', error);

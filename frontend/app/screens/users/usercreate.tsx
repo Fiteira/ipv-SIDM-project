@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Select } from 'native-base';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Box, Button, FormControl, Input, Text } from 'native-base';
 import api from '../../../config/api';
+import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 
 type RootStackParamList = {
@@ -19,6 +21,10 @@ export default function UserCreateScreen() {
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [loading, setLoading] = useState(false);
+  const roleOptions = ['Admin', 'User'];
+  if (role === 'adminSystem') {
+    roleOptions.push('System Admin');
+  }
 
   const handleCreateUser = async () => {
     if (!name || !role) {
@@ -57,11 +63,15 @@ export default function UserCreateScreen() {
 
         <FormControl isRequired marginTop={4}>
           <FormControl.Label>Role</FormControl.Label>
-          <Input 
-            value={role}
-            onChangeText={setRole}
-            placeholder="Enter user role"
-          />
+          <Select
+            selectedValue={role}
+            onValueChange={setRole}
+            placeholder="Select user role"
+          >
+            {roleOptions.map((option) => (
+              <Select.Item key={option} label={option} value={option} />
+            ))}
+          </Select>
         </FormControl>
         
         <Button
@@ -69,6 +79,7 @@ export default function UserCreateScreen() {
           colorScheme="blue"
           marginTop={4}
           isLoading={loading}
+          leftIcon={<MaterialIcons name="add" color="white" />}
         >
           Create User
         </Button>

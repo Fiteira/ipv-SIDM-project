@@ -3,6 +3,8 @@ import { Alert, StyleSheet } from 'react-native';
 import { Box, VStack, Button, Input, Text, Spinner } from 'native-base';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../config/api';
+import { getMachineById, insertMachines } from '@/config/sqlite';
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   MachineEdit: { machineId: string };
@@ -18,20 +20,55 @@ export default function MachineEditScreen() {
   const [machineName, setMachineName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMachineDetails = async () => {
-      try {
-        const response = await api.get(`/machines/${machineId}`);
-        const machine = response.data.data;
-        setMachineName(machine.machineName);
-      } catch (error) {
-        console.error('Error fetching machine details:', error);
-        Alert.alert('Error', 'Failed to load machine details.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchMachineDetails = async () => {
+    try {
+      setLoading(true);
 
+      // Fetch local machine details
+      const localMachine = await getMachineById(machineId);
+
+      if (localMachine) {
+        setMachineName(localMachine.machineName); // Atualiza estado com dados locais
+      } else {
+        console.warn('No local machine data found.');
+      }
+
+      // Fetch machine details from API
+      const response = await api.get(`/machines/${machineId}`);
+      const serverMachine = response.data.data;
+
+      // Normalize data for comparison
+      const normalizeMachine = (machine: any) => ({
+        machineId: machine.machineId,
+        machineName: machine.machineName.trim(),
+        state: machine.state.trim(),
+        factoryId: machine.factoryId,
+      });
+
+      const normalizedLocalMachine = localMachine ? normalizeMachine(localMachine) : null;
+      const normalizedServerMachine = normalizeMachine(serverMachine);
+
+      // Compare local and server data
+      if (!normalizedLocalMachine || !compareJSON(normalizedLocalMachine, normalizedServerMachine)) {
+        console.log('Machine data has changed. Updating state and local storage.');
+
+        // Update local storage
+        await insertMachines([serverMachine]);
+
+        // Update state with server data
+        setMachineName(normalizedServerMachine.machineName);
+      } else {
+        console.log('Machine data is up-to-date. No update needed.');
+      }
+    } catch (error) {
+      console.error('Error fetching machine details:', error);
+      Alert.alert('Error', 'Failed to load machine details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchMachineDetails();
   }, [machineId]);
 

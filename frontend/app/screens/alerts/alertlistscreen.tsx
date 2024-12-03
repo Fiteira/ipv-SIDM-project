@@ -6,6 +6,7 @@ import { RouteProp, useRoute, NavigationProp, useNavigation } from '@react-navig
 import { isNetworkAvailable } from '../../../config/netinfo';
 import { getAlertsByFactory, insertAlerts } from '../../../config/sqlite'; // SQLite functions
 import api from '../../../config/api';
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   AlertList: { factoryId: string };
@@ -59,10 +60,36 @@ export default function AlertListScreen() {
     });
   };
 
+  function normalizeAlerts(alerts: Alerta[]): Alerta[] {
+    return alerts
+      .map(alert => ({
+        ...alert,
+        alertDate: new Date(alert.alertDate).toISOString(), // Garantir formato consistente para datas
+        state: alert.state.trim().toLowerCase(), // Normalizar estado
+        message: alert.message.trim(), // Remover espaços desnecessários em mensagens
+        machine: alert.machine
+          ? {
+              machineId: alert.machine.machineId,
+              machineName: alert.machine.machineName,
+              state: alert.machine.state.trim().toLowerCase(),
+              factoryId: alert.machine.factoryId,
+            }
+          : null,
+        sensor: alert.sensor
+          ? {
+              sensorId: alert.sensor.sensorId,
+              name: alert.sensor.name.trim(),
+              sensorType: alert.sensor.sensorType.trim(),
+            }
+          : null,
+      }))
+      .sort((a, b) => a.alertId - b.alertId); // Ordenar por `alertId` para consistência
+  }
+
   const fetchAlerts = async (isRefreshing = false) => {
     try {
       const isConnected = await isNetworkAvailable();
-
+  
       if (isRefreshing) {
         setPage(1);
         setHasMore(true);
@@ -70,61 +97,47 @@ export default function AlertListScreen() {
       } else {
         setIsLoadingMore(true);
       }
-
+  
       const currentPage = isRefreshing ? 1 : page;
       const localAlerts: Alerta[] = await getAlertsByFactory(factoryId, currentPage, limit);
-
+  
+      const normalizedLocalAlerts = normalizeAlerts(localAlerts);
+  
       if (isRefreshing) {
-        setAlerts(removeDuplicates(localAlerts));
+        setAlerts(normalizedLocalAlerts);
       } else {
-        setAlerts(prev => removeDuplicates([...prev, ...localAlerts]));
+        setAlerts(prev => removeDuplicates([...prev, ...normalizedLocalAlerts]));
       }
       setHasMore(localAlerts.length === limit);
-
+  
       if (!isConnected) {
         console.warn('Offline mode: Using local data.');
         return;
       }
-
+  
       const response = await api.get(`/alerts/factory/${factoryId}`, {
         params: { page: currentPage, limit },
       });
-
+  
       const serverAlerts: Alerta[] = response.data.data;
-
-      // Normalize local alerts for comparison
-      const localAlertMap = new Map(localAlerts.map(alert => [alert.alertId, alert]));
-
-      // Prepare a list to store alerts that need to be updated or inserted
-      const alertsToInsertOrUpdate: Alerta[] = [];
-      serverAlerts.forEach(serverAlert => {
-        const localAlert = localAlertMap.get(serverAlert.alertId);
-
-        const serverAlertDate = new Date(serverAlert.alertDate).toISOString();
-        const localAlertDate = localAlert ? new Date(localAlert.alertDate).toISOString() : null;
-
-        const serverState = serverAlert.state.trim().toLowerCase();
-        const localState = localAlert ? localAlert.state.trim().toLowerCase() : null;
-
-        if (
-          !localAlert ||
-          serverAlertDate !== localAlertDate ||
-          serverState !== localState
-        ) {
-          alertsToInsertOrUpdate.push(serverAlert);
-        }
+      const normalizedServerAlerts = normalizeAlerts(serverAlerts);
+  
+      // Comparar alertas normalizados
+      const alertsToInsertOrUpdate = normalizedServerAlerts.filter(serverAlert => {
+        const localAlert = normalizedLocalAlerts.find(alert => alert.alertId === serverAlert.alertId);
+        return !localAlert || !compareJSON(localAlert, serverAlert);
       });
-
+  
       if (alertsToInsertOrUpdate.length > 0) {
         await insertAlerts(alertsToInsertOrUpdate);
         console.log(`${alertsToInsertOrUpdate.length} alerts updated locally.`);
       }
-
+  
       if (isRefreshing) {
-        setAlerts(removeDuplicates(serverAlerts));
+        setAlerts(normalizedServerAlerts);
         setPage(2);
       } else {
-        setAlerts(prev => removeDuplicates([...prev, ...serverAlerts]));
+        setAlerts(prev => removeDuplicates([...prev, ...normalizedServerAlerts]));
         setPage(prevPage => prevPage + 1);
       }
       setHasMore(serverAlerts.length === limit);
@@ -136,6 +149,7 @@ export default function AlertListScreen() {
       setIsLoadingMore(false);
     }
   };
+  
 
   useEffect(() => {
     fetchAlerts(true); // Load alerts on initial render

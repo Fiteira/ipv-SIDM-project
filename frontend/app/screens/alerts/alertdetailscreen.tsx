@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, NavigationProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { isNetworkAvailable } from '../../../config/netinfo';
 import { getAlertById, insertAlerts } from '../../../config/sqlite'; // SQLite functions
+import { compareJSON } from '@/config/utils';
 import api from '../../../config/api';
 
 type RootStackParamList = {
@@ -66,18 +67,14 @@ export default function AlertDetailScreen() {
       console.log('Fetching remote alert...');
       const response = await api.get(`/alerts/${alertId}`);
       const serverAlert: Alerta = response.data.data;
-
-
+  
       // Verifica se os dados do servidor são diferentes dos locais
       const localAlert = await getAlertById(alertId.toString());
       console.log("Alerta local: ", localAlert);
       console.log("Alerta server: ", serverAlert);
-      const isDifferent =
-        !localAlert ||
-        new Date(localAlert.alertDate).toISOString() !==
-          new Date(serverAlert.alertDate).toISOString() ||
-        localAlert.state !== serverAlert.state;
-
+  
+      const isDifferent = !localAlert || !compareJSON(localAlert, serverAlert);
+  
       if (isDifferent) {
         console.log('Server alert is different, updating local database...');
         await insertAlerts([serverAlert]); // Atualiza o SQLite com os dados do servidor
@@ -88,7 +85,7 @@ export default function AlertDetailScreen() {
     } catch (error) {
       console.error('Error fetching remote alert:', error);
     }
-  }, [alertId]);
+  }, [alertId])
 
   const fetchAlertDetails = useCallback(async () => {
     setLoading(true);

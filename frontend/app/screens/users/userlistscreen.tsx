@@ -3,7 +3,8 @@ import { View, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
-import { getUsersByFactory, insertUsers } from '../../../config/sqlite'; // SQLite functions
+import { getUsersByFactory, insertUsers, deleteUserByUserNumber } from '../../../config/sqlite'; // SQLite functions
+import { compareJSON } from '../../../config/utils';
 import api from '../../../config/api';
 
 type RootStackParamList = {
@@ -19,7 +20,6 @@ interface User {
   userNumber: number;
   name: string;
   role: string;
-  updatedAt: string;
   factoryId: number | null;
 }
 
@@ -35,34 +35,52 @@ export default function UserListScreen() {
   const syncUsers = async () => {
     try {
       setLoading(true);
-  
+
       // Obtém os dados locais
       const localUsers = await getUsersByFactory(factoryId);
-  
+
       // Atualiza a lista com os dados locais
       setUsers(localUsers);
+
       // Busca os dados do servidor
       const response = await api.get(`/users/factory/${factoryId}`);
       const serverUsers: User[] = response.data.data;
-  
-      // Filtra os usuários a serem inseridos ou atualizados
-      const usersToInsertOrUpdate = serverUsers.filter(serverUser => {
-        const localUser = localUsers.find(local => local.userNumber === serverUser.userNumber); // Comparando por userNumber
-        return (
-          !localUser || // Novo usuário
-          new Date(serverUser.updatedAt) > new Date(localUser.updatedAt) // Usuário atualizado
-        );
+
+      // Normalizar dados para comparação
+      const normalizeUser = (user: User) => ({
+        userId: user.userId,
+        userNumber: user.userNumber,
+        name: user.name.trim(),
+        role: user.role.trim(),
+        factoryId: user.factoryId,
       });
-  
-  
-      // Atualiza ou insere os dados no SQLite
+
+      const normalizedLocalUsers = localUsers.map(normalizeUser);
+      const normalizedServerUsers = serverUsers.map(normalizeUser);
+
+      // Identificar usuários para inserir ou atualizar
+      const usersToInsertOrUpdate = serverUsers.filter(serverUser => {
+        const localUser = normalizedLocalUsers.find(
+          user => user.userNumber === serverUser.userNumber
+        );
+        return !localUser || !compareJSON(localUser, normalizeUser(serverUser));
+      });
+
       if (usersToInsertOrUpdate.length > 0) {
         await insertUsers(usersToInsertOrUpdate);
         console.log(`${usersToInsertOrUpdate.length} usuários sincronizados.`);
-      } else {
-        console.log('Nenhuma atualização necessária.');
       }
-  
+
+      // Identificar usuários para remover
+      const serverUserNumbers = new Set(serverUsers.map(user => user.userNumber));
+      const usersToDelete = localUsers.filter(localUser => !serverUserNumbers.has(localUser.userNumber));
+
+      if (usersToDelete.length > 0) {
+        const userNumbersToDelete = usersToDelete.map(user => user.userNumber);
+        await deleteUserByUserNumber(userNumbersToDelete);
+        console.log(`${usersToDelete.length} usuários removidos localmente.`);
+      }
+
       // Atualiza o estado com os dados mais recentes
       setUsers(serverUsers);
     } catch (error) {
@@ -72,7 +90,6 @@ export default function UserListScreen() {
       setRefreshing(false);
     }
   };
-  
 
   // Sincroniza ao entrar na tela
   useFocusEffect(

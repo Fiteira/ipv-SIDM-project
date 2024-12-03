@@ -762,6 +762,120 @@ const getSensorById = async (sensorId: string): Promise<any> => {
   });
 };
 
+const deleteSensorsById = async (sensorIds: string[]): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      const placeholders = sensorIds.map(() => '?').join(',');
+      tx.executeSql(
+        `
+        DELETE FROM Sensor
+        WHERE sensorId IN (${placeholders});
+        `,
+        sensorIds,
+        () => {
+          console.log(`Sensores removidos com sucesso: ${sensorIds.join(', ')}`);
+          resolve();
+        },
+        (_, error) => {
+          console.error('Erro ao remover sensores:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+const deleteUserByUserNumber = async (userNumbers: number[]): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      const placeholders = userNumbers.map(() => '?').join(',');
+      tx.executeSql(
+        `
+        DELETE FROM User
+        WHERE userNumber IN (${placeholders});
+        `,
+        userNumbers,
+        () => {
+          console.log(`Usuários removidos com sucesso: ${userNumbers.join(', ')}`);
+          resolve();
+        },
+        (_, error) => {
+          console.error('Erro ao remover usuários:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+const deleteMachineById = async (machineIds: number[]): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      const placeholders = machineIds.map(() => '?').join(',');
+      tx.executeSql(
+        `
+        DELETE FROM Machine
+        WHERE machineId IN (${placeholders});
+        `,
+        machineIds,
+        () => {
+          console.log(`Máquinas removidas com sucesso: ${machineIds.join(', ')}`);
+          resolve();
+        },
+        (_, error) => {
+          console.error('Erro ao remover máquinas:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+const deleteFactoryById = async (factoryIds: number[]): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      const placeholders = factoryIds.map(() => '?').join(',');
+      tx.executeSql(
+        `
+        DELETE FROM Factory
+        WHERE factoryId IN (${placeholders});
+        `,
+        factoryIds,
+        () => {
+          console.log(`Fábricas removidas com sucesso: ${factoryIds.join(', ')}`);
+          resolve();
+        },
+        (_, error) => {
+          console.error('Erro ao remover fábricas:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+};
+
+const getSensorsByMachineId = async (machineId: number) 
+: Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * FROM Sensor WHERE machineId = ?;`,
+        [machineId],
+        (_, { rows }) => resolve(rows._array),
+        (_, error) => {
+          console.error('Erro ao buscar sensores por máquina:', error);
+          reject(error);
+          return false;
+        }
+      );
+    });
+  });
+}
+
 
 // Exporta todas as funções para inserção
 export {
@@ -790,4 +904,9 @@ export {
   getAlertsByFactory,
   getAlertById,
   getSensorById,
+  getSensorsByMachineId,
+  deleteSensorsById,
+  deleteUserByUserNumber,
+  deleteMachineById,
+  deleteFactoryById
 };
