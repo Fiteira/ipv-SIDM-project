@@ -6,6 +6,7 @@ import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navig
 import api from '../../../../config/api';
 import { isNetworkAvailable } from '../../../../config/netinfo'; // Função para verificar conexão
 import { getMaintenancesByMachineId, insertMaintenances } from '../../../../config/sqlite'; // Funções SQLite
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   MaintenanceList: { machineId: number };
@@ -55,7 +56,7 @@ export default function MaintenanceListScreen() {
   const fetchLocalMaintenances = async (): Promise<Maintenance[]> => {
     try {
       const localMaintenances = await getMaintenancesByMachineId(Number(machineId));
-      setMaintenances(localMaintenances);
+      setMaintenances(localMaintenances); // Atualiza o estado com dados locais
       return localMaintenances;
     } catch (error) {
       console.error('Error fetching local maintenances:', error);
@@ -69,16 +70,26 @@ export default function MaintenanceListScreen() {
       console.log('Fetching remote maintenances...');
       const response = await api.get(`/maintenances/machine/${machineId}`);
       const serverMaintenances: Maintenance[] = response.data.data;
-
+  
       console.log('Remote maintenances fetched:', serverMaintenances);
-
+  
       // Obter dados locais atuais
       const localMaintenances = await getMaintenancesByMachineId(Number(machineId));
-
-      // Verificar se os dados são diferentes antes de atualizar
-      if (!areMaintenancesEqual(localMaintenances, serverMaintenances)) {
+  
+      // Normalizar dados antes de comparar
+      const normalizeMaintenance = (maintenance: Maintenance) => ({
+        ...maintenance,
+        maintenanceDate: new Date(maintenance.maintenanceDate).toISOString(), // Normaliza datas
+        description: maintenance.description.trim(), // Remove espaços extras
+      });
+  
+      const normalizedLocal = localMaintenances.map(normalizeMaintenance);
+      const normalizedServer = serverMaintenances.map(normalizeMaintenance);
+  
+      // Verificar se os dados são diferentes
+      if (!compareJSON(normalizedLocal, normalizedServer)) {
         console.log('Data changed, updating local database and state.');
-        
+  
         // Atualizar banco de dados local
         const formattedMaintenances = serverMaintenances.map((maintenance) => ({
           maintenanceId: maintenance.maintenanceId,
@@ -89,7 +100,7 @@ export default function MaintenanceListScreen() {
           performedBy: maintenance.performedBy ? parseInt(maintenance.performedBy) : null,
         }));
         await insertMaintenances(formattedMaintenances);
-
+  
         // Atualizar estado
         setMaintenances(serverMaintenances);
       } else {
@@ -104,10 +115,10 @@ export default function MaintenanceListScreen() {
   // Função principal para buscar dados (Offline First)
   const fetchMaintenances = async () => {
     setRefreshing(true);
-
+  
     try {
       const localData = await fetchLocalMaintenances(); // Prioriza dados locais
-
+  
       const isConnected = await isNetworkAvailable();
       if (isConnected) {
         await fetchRemoteMaintenances(); // Busca dados do servidor se houver conexão

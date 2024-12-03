@@ -1,21 +1,21 @@
 // ProfileEditScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { useFocusEffect } from 'expo-router'; 
 import { Alert, StyleSheet } from 'react-native';
 import { Box, VStack, Button, Input, Text, Spinner } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Modal } from 'native-base';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { compareJSON } from '@/config/utils';
-import api from '../../config/api'
+import api from '../../../config/api'
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { getUserByNumber, insertUsers } from '@/config/sqlite';
 
 type RootStackParamList = {
   ProfileEdit: undefined;
   Profile: undefined;
 };
 
-export default function ProfileEditScreen() {
+export default function UserEditScreen({ route }: { route: any }) {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [name, setName] = useState('');
@@ -26,50 +26,36 @@ export default function ProfileEditScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const loadProfile = async () => {
-    try {
-      const user = await AsyncStorage.getItem('user');
-      let parsedUser = user ? JSON.parse(user) : null;
-  
-      if (parsedUser) {
-        setName(parsedUser.name);
-        setUserNumber(parsedUser.userNumber);
-        setRole(parsedUser.role);
-      }
-  
-      // Obter userNumber do AsyncStorage (separado por segurança)
-      const storedUserNumber = await AsyncStorage.getItem('userNumber');
-      if (storedUserNumber) {
-        const response = await api.get(`/users/${storedUserNumber}`);
-        const serverUser = response.data.data;
-  
-        // Comparar os dados locais e do servidor
-        if (!parsedUser || !compareJSON(parsedUser, serverUser)) {
-          // Atualiza AsyncStorage com os dados do servidor
-          await AsyncStorage.setItem('user', JSON.stringify(serverUser));
-          console.log('User data synced with server.');
-  
-          // Atualiza o estado com os dados do servidor
-          setName(serverUser.name);
-          setUserNumber(serverUser.userNumber);
-          setRole(serverUser.role);
-        } else {
-          console.log('No update needed for user profile.');
-        }
-      } else {
-        console.warn('No user number found in AsyncStorage.');
-      }
-    } catch (error) {
-      console.error('Failed to load user profile:', error);
-      Alert.alert('Error', 'Failed to load user profile.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const loadProfile = async () => {
+      const userNumber = route.params.userNumber;
+        try {
+            const user = await getUserByNumber(userNumber);
+            setName(user.name);
+            setUserNumber(user.userNumber);
+            setRole(user.role);
 
-  useFocusEffect(() => {
+            const response = await api.get('/users/' + userNumber);
+            const apiUser = response.data.data;
+            setName(apiUser.name);
+            setUserNumber(apiUser.userNumber);
+            setRole(apiUser.role);
+            // Comparar, se for diferente, atualizar
+            if (user.name !== apiUser.name || user.role !== apiUser.role) {
+                console.log('User data is different from API. Updating local data...');
+                await insertUsers([apiUser]);
+            }
+
+        } catch (error) {
+            console.error('Failed to load user profile:', error);
+            Alert.alert('Error', 'Failed to load user profile.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     loadProfile();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -79,9 +65,9 @@ export default function ProfileEditScreen() {
 
     try {
       setLoading(true);
-      const updatedUser = { name, userNumber, role }
-      await api.put('/users/' + userNumber.toString(), updatedUser);
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      const updatedUser = { name: name }
+      const response = await api.put('/users/' + userNumber.toString(), updatedUser);
+      console.log(response.data)
       Alert.alert('Success', 'Profile updated successfully.');
       navigation.goBack()
     } catch (error) {
@@ -141,9 +127,6 @@ export default function ProfileEditScreen() {
           isReadOnly
           placeholder="Role"
         />
-        <Button colorScheme="blue" onPress={openPassModal} leftIcon={<MaterialIcons name="password" color="white"></MaterialIcons>}>
-          Change Password
-        </Button>
         <Button colorScheme="blue" onPress={handleSave} leftIcon={<MaterialIcons name="add" color="white"></MaterialIcons>}>
           Save Changes
         </Button>

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { View, Text, Alert, StyleSheet, TextInput } from 'react-native';
 import { Box, Spinner, Button, VStack, Icon, HStack, Modal } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,6 +10,7 @@ import { isNetworkAvailable } from '../../../config/netinfo';
 import { getMachineById, insertMachines } from '../../../config/sqlite'; // SQLite functions
 import { useContext } from 'react';
 import { AuthContext } from '../../AuthContext';
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   MachineDetail: { machineId: string };
@@ -25,7 +27,6 @@ interface Machine {
   machineName: string;
   state: string;
   factoryId: number;
-  updatedAt: string; // For synchronization
 }
 
 export default function MachineDetailScreen() {
@@ -40,36 +41,46 @@ export default function MachineDetailScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { userRole } = useContext(AuthContext);
 
-  const fetchMachineDetails = async () => {
+  const fetchMachineDetails = useCallback(async () => {
     try {
       setLoading(true);
-
+  
       // Step 1: Load machine details from SQLite
       const localMachine = await getMachineById(machineId);
       if (localMachine) {
-        setMachine(localMachine);
+        setMachine(localMachine); // Atualiza o estado com os dados locais
       }
-
+  
       // Step 2: Check network availability
       const isConnected = await isNetworkAvailable();
       if (!isConnected) {
         console.warn('Offline mode: Using cached data.');
         return; // Skip server fetch if offline
       }
-
+  
       // Step 3: Fetch machine details from server
       const response = await api.get(`/machines/${machineId}`);
       const serverMachine: Machine = response.data.data;
-
+  
+      // Normalize data for comparison
+      const normalizeMachine = (machine: Machine) => ({
+        machineId: machine.machineId,
+        machineName: machine.machineName.trim(), // Normalize strings
+        state: machine.state.trim(),
+        factoryId: machine.factoryId,
+      });
+  
+      const normalizedLocalMachine = localMachine ? normalizeMachine(localMachine) : null;
+      const normalizedServerMachine = normalizeMachine(serverMachine);
+  
       // Step 4: Update SQLite if necessary
-      if (
-        !localMachine ||
-        new Date(serverMachine.updatedAt) > new Date(localMachine.updatedAt)
-      ) {
+      if (!normalizedLocalMachine || !compareJSON(normalizedLocalMachine, normalizedServerMachine)) {
+        console.log('Machine data has changed. Updating local database.');
         await insertMachines([serverMachine]);
-        console.log('Machine details synchronized with local database.');
+      } else {
+        console.log('Machine data is up-to-date. No update needed.');
       }
-
+  
       // Step 5: Update state with server data
       setMachine(serverMachine);
     } catch (error) {
@@ -78,11 +89,14 @@ export default function MachineDetailScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchMachineDetails();
-  }, [machineId]);
+  }, [machineId]); // Dependência para controlar reexecuções
+  
+  useFocusEffect(
+    useCallback(() => {
+      fetchMachineDetails();
+    }, [fetchMachineDetails]) // Chama fetch apenas se machineId mudar
+  );
+  
 
   const handleDelete = async () => {
     if (inputMachineName === machine?.machineName) {

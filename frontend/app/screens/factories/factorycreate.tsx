@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Box, Button, FormControl, Input, Text } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import api from '../../../config/api';
 
 export default function FactoryCreateScreen({ navigation }: { navigation: any }) {
@@ -58,6 +59,7 @@ export default function FactoryCreateScreen({ navigation }: { navigation: any })
           colorScheme="blue"
           marginTop={4}
           isLoading={loading}
+          leftIcon={<MaterialIcons name="add" color="white" />}
         >
           Create Factory
         </Button>

@@ -4,6 +4,7 @@ import { Box, Spinner, Button, VStack, HStack, Icon } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import { getFactoryById, insertFactories } from '../../../config/sqlite';
+import { compareJSON } from '@/config/utils';
 import { useContext } from 'react';
 import { AuthContext } from '../../AuthContext';
 
@@ -43,31 +44,31 @@ export default function FactoryDetailScreen() {
   const fetchFactoryDetails = async () => {
     try {
       setLoading(true);
-
+  
       // Step 1: Load data from SQLite
       const localFactory = await getFactoryById(factoryId);
       if (localFactory) {
         setFactory(localFactory);
-        setLoading(false);
       } else {
         console.warn('Factory not found in local database.');
       }
-
-      // Step 2: Fetch data from the server if online
+  
+      // Step 2: Check online status and fetch data from the server
+  
       try {
         const response = await api.get(`/factories/${factoryId}`);
         const serverFactory: Factory = response.data.data;
-
-        // Step 3: Update local database if necessary
-        if (
-          !localFactory ||
-          new Date(serverFactory.updatedAt) > new Date(localFactory.updatedAt)
-        ) {
+  
+        // Step 3: Compare server and local data
+        const isDifferent = !localFactory || !compareJSON(localFactory, serverFactory);
+  
+        // Step 4: Update local database if necessary
+        if (isDifferent) {
           await insertFactories([serverFactory]);
           console.log('Factory details updated in the local database.');
         }
-
-        // Step 4: Update state with server data
+  
+        // Step 5: Update state with server data
         setFactory(serverFactory);
       } catch (networkError) {
         console.warn('Unable to fetch data from server. Using local data if available.');

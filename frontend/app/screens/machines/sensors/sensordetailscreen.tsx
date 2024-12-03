@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSensorById, insertSensors } from '../../../../config/sqlite'
 import  { useContext } from 'react';
 import { AuthContext } from '../../../AuthContext';
+import { compareJSON } from '@/config/utils';
 
 
 type RootStackParamList = {
@@ -156,34 +157,45 @@ export default function SensorDetailScreen() {
   const fetchSensorData = async () => {
     try {
       setLoading(true);
-
+  
       // Fetch local sensor data
       console.log('Fetching local sensor data...');
       const localSensorData = await getSensorById(sensorId);
-
+  
       if (localSensorData) {
         console.log('Local sensor data found:', localSensorData);
         setSensor(localSensorData); // Update state with local data
       } else {
         console.warn('No local sensor data found.');
       }
-
+  
       // Fetch sensor data from API
       console.log('Fetching sensor data from API...');
       const response = await api.get(`/sensors/${sensorId}`);
       const fetchedSensor: Sensor = response.data.data;
-
+  
       console.log('Fetched sensor from API:', fetchedSensor);
-
+  
+      // Normalize data for comparison
+      const normalizeSensor = (sensor: Sensor) => ({
+        ...sensor,
+        sensorId: sensor.sensorId.toString(), // Ensure sensorId is a string
+        name: sensor.name.trim(), // Normalize string
+        sensorType: sensor.sensorType.trim(), // Normalize string
+      });
+  
+      const normalizedLocalSensor = localSensorData ? normalizeSensor(localSensorData) : null;
+      const normalizedFetchedSensor = normalizeSensor(fetchedSensor);
+  
       // Compare local data with API data
-      if (!localSensorData || !deepEqual(localSensorData, fetchedSensor)) {
+      if (!normalizedLocalSensor || !compareJSON(normalizedLocalSensor, normalizedFetchedSensor)) {
         console.log('Sensor data has changed. Updating local storage and state.');
-
+  
         // Update local storage
-        await insertSensors([{ ...fetchedSensor, sensorId: Number(fetchedSensor.sensorId) }]);
-
+        await insertSensors([{ ...normalizedFetchedSensor, sensorId: parseInt(normalizedFetchedSensor.sensorId) }]);
+  
         // Update state with new data
-        setSensor(fetchedSensor);
+        setSensor(normalizedFetchedSensor);
       } else {
         console.log('Sensor data is the same. No update needed.');
       }
@@ -256,9 +268,11 @@ export default function SensorDetailScreen() {
         </Button>
         <Button
           style={styles.iconButton}
+          size="sm"
+          leftIcon={<Icon as={MaterialIcons} name="edit" size="sm" />}
           onPress={() => navigation.navigate('SensorEdit', { sensorId })}
         >
-          <Icon as={MaterialIcons} name="edit" size="6xl" color="white" />
+          Edit
         </Button>
         </>
         )}

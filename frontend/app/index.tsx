@@ -34,6 +34,7 @@ import SensorCreateScreen from './screens/machines/sensors/sensorcreate';
 import FactoryEditScreen from './screens/factories/factoryedit';
 import MachineEditScreen from './screens/machines/machineedit';
 import SensorEditScreen from './screens/machines/sensors/sensoredit';
+import UserEditScreen from './screens/users/useredit';
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';
@@ -215,23 +216,21 @@ export default function App() {
               <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
               <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
 
-              {(userRole === 'admin' || userRole === 'adminSystem') && (
                 <>
                   <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
                   <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
                   <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+                  <Stack.Screen name="UserEdit" component={UserEditScreen} options={{ title: 'Edit User' }} />
                   <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
                   <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
                   <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
                   <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
                 </>
-              )}
-              {userRole === 'adminSystem' && (
+            
                 <>
                   <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
                   <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
                 </>
-              )}
             </>
           )}
         </Stack.Navigator>

@@ -125,7 +125,7 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
   }
 
   try {
-    const user = await findUserByUserNumber(userNumber);
+    const user = await findUserByUserNumber(Number(userNumber));
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
@@ -136,6 +136,34 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
     await UserModel.update({ password: hashedPassword }, { where: { userNumber } });
 
     res.status(200).json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    handleServerError(res, 'Error resetting password', error);
+  }
+}
+
+export const changeUserPassword = async (req: Request, res: Response): Promise<void> => {
+  const { userNumber } = req.params;
+  const { password } = req.body;
+  if (!userNumber) {
+    res.status(400).json({ success: false, message: 'UserNumber is required' });
+    return;
+  } else if (!password) {
+    res.status(400).json({ success: false, message: 'Password is required' });
+    return;
+  }
+
+  try {
+    const user = await findUserByUserNumber(Number(userNumber));
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await UserModel.update({ password: hashedPassword }, { where: { userNumber } });
+
+    res.status(200).json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
     handleServerError(res, 'Error resetting password', error);
   }

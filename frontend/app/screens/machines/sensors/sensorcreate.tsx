@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Box, Button, FormControl, Input, Text } from 'native-base';
 import api from '../../../../config/api';
+import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 
 type RootStackParamList = {
@@ -71,6 +72,7 @@ export default function SensorCreateScreen() {
           </FormControl>
           <Button
             onPress={handleCreateSensor}
+            leftIcon={<MaterialIcons name="add" color="white" />}
             colorScheme="blue"
             marginTop={4}
             isLoading={loading}

@@ -11,6 +11,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 const api = setupCache(
   axios.create({
     baseURL: API_URL,
+    timeout: 2500,
     headers: {
       'Content-Type': 'application/json',
     },
