@@ -4,10 +4,11 @@ import { Box, FlatList, Icon, HStack, VStack, Spinner, Text, Button } from 'nati
 import { MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
 import api from '../../../config/api';
-import { getMachinesByFactory, insertMachines } from '../../../config/sqlite'; // SQLite functions
+import { deleteMachineById, getMachinesByFactory, insertMachines } from '../../../config/sqlite'; // SQLite functions
 import { isNetworkAvailable } from '../../../config/netinfo'; // Utility to check network status
 import { useContext } from 'react';
 import { AuthContext } from '../../AuthContext';
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   MachineList: { factoryId: string };
@@ -37,40 +38,62 @@ export default function MachineListScreen() {
   const fetchMachines = useCallback(async () => {
     try {
       setLoading(true);
-
+  
       // Step 1: Fetch local machines
       const localMachines = await getMachinesByFactory(factoryId);
       if (localMachines.length > 0) {
         console.log('Local machines:', localMachines);
-        setMachines(localMachines);
+        setMachines(localMachines); // Atualiza o estado com dados locais
       }
-
+  
       // Step 2: Check network status
       const isConnected = await isNetworkAvailable();
       if (!isConnected) {
         console.warn('Offline mode: Displaying cached data.');
         return; // Stop here if offline
       }
-
+  
       // Step 3: Fetch server machines if online
       const response = await api.get(`/machines/factory/${factoryId}`);
       const serverMachines: Machine[] = response.data.data;
-
+  
+      // Normalize data for comparison
+      const normalizeMachine = (machine: Machine) => ({
+        machineId: machine.machineId,
+        machineName: machine.machineName.trim(), // Normalize strings
+        state: machine.state.trim(),
+        factoryId: machine.factoryId,
+      });
+  
+      const normalizedLocalMachines = localMachines.map(normalizeMachine);
+      const normalizedServerMachines = serverMachines.map(normalizeMachine);
+  
       // Step 4: Sync server data with local database
       const machinesToSync = serverMachines.filter(serverMachine => {
-        const localMachine = localMachines.find(m => m.machineId === serverMachine.machineId);
-        return (
-          !localMachine ||
-          new Date(serverMachine.updatedAt) > new Date(localMachine.updatedAt)
+        const localMachine = normalizedLocalMachines.find(
+          m => m.machineId === serverMachine.machineId
         );
+        return !localMachine || !compareJSON(localMachine, normalizeMachine(serverMachine));
       });
-
+  
       if (machinesToSync.length > 0) {
         await insertMachines(machinesToSync);
         console.log(`${machinesToSync.length} machines synchronized.`);
       }
-
-      // Step 5: Update state with the most recent data
+  
+      // Step 5: Identify and delete local machines not present in server data
+      const serverMachineIds = new Set(serverMachines.map(machine => machine.machineId));
+      const machinesToDelete = localMachines.filter(
+        localMachine => !serverMachineIds.has(localMachine.machineId)
+      );
+  
+      if (machinesToDelete.length > 0) {
+        const machineIdsToDelete = machinesToDelete.map(machine => machine.machineId);
+        await deleteMachineById(machineIdsToDelete);
+        console.log(`${machinesToDelete.length} machines deleted locally.`);
+      }
+  
+      // Step 6: Update state with the most recent data
       setMachines(serverMachines);
     } catch (error) {
       console.error('Error fetching machines:', error);
@@ -82,6 +105,7 @@ export default function MachineListScreen() {
       setRefreshing(false);
     }
   }, [factoryId]);
+  
 
   // Fetch machines when screen is focused
   useFocusEffect(

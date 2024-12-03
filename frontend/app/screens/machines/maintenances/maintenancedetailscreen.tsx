@@ -7,6 +7,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import api from '../../../../config/api';
 import { isNetworkAvailable } from '../../../../config/netinfo'; // Verificar conexão
 import { getMaintenanceById, insertMaintenances } from '../../../../config/sqlite'; // Funções SQLite
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   MaintenanceDetail: { maintenanceId: string };
@@ -108,20 +109,20 @@ export default function MaintenanceDetailScreen() {
   const fetchMaintenanceDetails = useCallback(async () => {
     try {
       setLoading(true);
-
+  
       // Obtém os dados locais
       console.log('Fetching local maintenance details...');
       const localMaintenanceData = await getMaintenanceById(parseInt(maintenanceId));
-
+  
       let localMaintenance: Maintenance | null = null;
-
+  
       if (localMaintenanceData) {
         localMaintenance = transformMaintenance(localMaintenanceData);
         setMaintenance(localMaintenance); // Atualiza o estado com os dados locais
       } else {
         console.warn('No local maintenance found.');
       }
-
+  
       // Verifica conexão de rede
       const isConnected = await isNetworkAvailable();
       if (!isConnected) {
@@ -129,17 +130,17 @@ export default function MaintenanceDetailScreen() {
         setLoading(false);
         return;
       }
-
+  
       // Busca os dados do servidor
       console.log('Fetching remote maintenance details...');
       const response = await api.get(`/maintenances/${maintenanceId}`);
       const serverMaintenance: MaintenanceAPI = response.data.data;
       const transformedServerMaintenance = transformMaintenance(serverMaintenance);
-
-      // Compara os dados locais e remotos usando deepEqual
+  
+      // Compara os dados locais e remotos usando compareJSON
       if (
         !localMaintenance || // Se não há dados locais
-        !deepEqual(localMaintenance, transformedServerMaintenance)
+        !compareJSON(localMaintenance, transformedServerMaintenance)
       ) {
         console.log('Maintenance data is different. Updating local database...');
         await insertMaintenances([transformedServerMaintenance]); // Atualiza o banco local

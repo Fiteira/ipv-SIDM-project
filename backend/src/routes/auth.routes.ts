@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import cacheNode from '../config/cache';
-import { login, sensorLogin, resetUserPassword } from '../controllers/auth.controller';
+import { login, sensorLogin, resetUserPassword, changeUserPassword } from '../controllers/auth.controller';
 import * as middleware from '../config/middleware';
+import { jwtAuthMiddleware } from '../config/middleware';
 
 const router: Router = Router();
 
@@ -11,7 +12,9 @@ router.post("/login", middleware.limitLogin, login);
 
 router.post("/loginsensor", sensorLogin);
 
-router.post("/resetpassword", resetUserPassword);
+router.patch("/resetpassword", resetUserPassword);
+
+router.patch("/changepassword/:userNumber", jwtAuthMiddleware, changeUserPassword);
 
 router.get(
   '/checktoken',

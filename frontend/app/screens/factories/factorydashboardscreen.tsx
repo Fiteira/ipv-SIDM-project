@@ -38,34 +38,37 @@ export default function SensorDashboardScreen() {
     setExpandedSensors((prev) => ({ ...prev, [sensorId]: !prev[sensorId] }));
   };
 
-  useEffect(() => {
-    const fetchMachineData = async () => {
-      try {
-        const factoryId = await AsyncStorage.getItem("factoryId");
-        if (!factoryId) {
-          Alert.alert('Error', 'Factory ID not found in storage.');
-          return;
-        }
-
-        const response = await api.get(`/machines/factory/${factoryId}`);
-        const machineData = await Promise.all(
-          response.data.data.map(async (machine: any) => {
-            const alertResponse = await api.get(`/alerts/machine/${machine.machineId}`);
-            const newAlerts = alertResponse.data.data.filter((alert: any) => alert.state === 'awaiting analysis').length;
-            return {
-              machineId: machine.machineId,
-              machineName: machine.machineName,
-              state: machine.state,
-              alerts: newAlerts,
-            };
-          })
-        );
-        setMachines(machineData);
-      } catch (error) {
-        Alert.alert('Error', 'Failed to fetch machine data.');
+  const fetchMachineData = async () => {
+    try {
+      const factoryId = await AsyncStorage.getItem("factoryId");
+      if (!factoryId) {
+        Alert.alert('Error', 'Factory ID not found in storage.');
+        return;
       }
-    };
+  
+      const machineResponse = await api.get(`/machines/factory/${factoryId}`);
+      const machines = machineResponse.data.data;
+  
+      const alertResponse = await api.get(`/alerts/factory/${factoryId}`);
+      const alerts = alertResponse.data.data;
+  
+      const machineData = machines.map((machine: any) => {
+        const newAlerts = alerts.filter((alert: any) => alert.machineId === machine.machineId && alert.state === 'awaiting analysis').length;
+        return {
+          machineId: machine.machineId,
+          machineName: machine.machineName,
+          state: machine.state,
+          alerts: newAlerts,
+        };
+      });
+  
+      setMachines(machineData);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch machine data.');
+    }
+  };
 
+  useEffect(() => {
     fetchMachineData();
   }, []);
 

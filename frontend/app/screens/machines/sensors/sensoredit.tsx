@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 import { Box, VStack, Button, Input, Text, Spinner } from 'native-base';
 import { RouteProp, useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 import api from '../../../../config/api';
+import { getSensorById, insertSensors } from '@/config/sqlite';
+import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   SensorEdit: { sensorId: string };
@@ -19,21 +22,63 @@ export default function SensorEditScreen() {
   const [sensorType, setSensorType] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSensorDetails = async () => {
-      try {
-        const response = await api.get(`/sensors/${sensorId}`);
-        const sensor = response.data.data;
-        setSensorName(sensor.name);
-        setSensorType(sensor.sensorType);
-      } catch (error) {
-        console.error('Error fetching sensor details:', error);
-        Alert.alert('Error', 'Failed to load sensor details.');
-      } finally {
-        setLoading(false);
+  const fetchSensorDetails = async () => {
+    try {
+      setLoading(true);
+  
+      // Fetch local sensor data
+      console.log('Fetching local sensor data...');
+      const localSensorData = await getSensorById(sensorId);
+  
+      if (localSensorData) {
+        console.log('Local sensor data found:', localSensorData);
+        setSensorName(localSensorData.name);
+        setSensorType(localSensorData.sensorType);
+      } else {
+        console.warn('No local sensor data found.');
       }
-    };
+  
+      // Fetch sensor data from API
+      console.log('Fetching sensor data from API...');
+      const response = await api.get(`/sensors/${sensorId}`);
+      const fetchedSensor = response.data.data;
+  
+      console.log('Fetched sensor from API:', fetchedSensor);
+  
+      // Normalize data for comparison
+      const normalizeSensor = (sensor: any) => ({
+        sensorId: Number(sensor.sensorId),
+        name: sensor.name.trim(),
+        sensorType: sensor.sensorType.trim(),
+        machineId: Number(sensor.machineId),
+        apiKey: sensor.apiKey.trim(),
+      });
+  
+      const normalizedLocalSensor = localSensorData ? normalizeSensor(localSensorData) : null;
+      const normalizedFetchedSensor = normalizeSensor(fetchedSensor);
+  
+      // Compare local data with API data
+      if (!normalizedLocalSensor || !compareJSON(normalizedLocalSensor, normalizedFetchedSensor)) {
+        console.log('Sensor data has changed. Updating local storage and state.');
+  
+        // Update local storage
+        await insertSensors([normalizedFetchedSensor]);
+  
+        // Update state with new data
+        setSensorName(normalizedFetchedSensor.name);
+        setSensorType(normalizedFetchedSensor.sensorType);
+      } else {
+        console.log('Sensor data is the same. No update needed.');
+      }
+    } catch (error) {
+      console.error('Error fetching sensor details:', error);
+      Alert.alert('Error', 'Failed to load sensor details.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchSensorDetails();
   }, [sensorId]);
 
@@ -75,7 +120,7 @@ export default function SensorEditScreen() {
           onChangeText={setSensorType}
           placeholder="Enter sensor type"
         />
-        <Button colorScheme="blue" onPress={handleSave}>
+        <Button colorScheme="blue" onPress={handleSave} width="30%" alignSelf="center" leftIcon={<MaterialIcons name="save" color="white"/>}>
           Save Changes
         </Button>
       </VStack>

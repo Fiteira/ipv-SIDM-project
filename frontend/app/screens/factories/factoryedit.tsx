@@ -19,21 +19,21 @@ export default function FactoryEditScreen() {
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchFactoryDetails = async () => {
-      try {
-        const response = await api.get(`/factories/${factoryId}`);
-        const factory = response.data.data;
-        setFactoryName(factory.factoryName);
-        setLocation(factory.location);
-      } catch (error) {
-        console.error('Error fetching factory details:', error);
-        Alert.alert('Error', 'Failed to load factory details.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchFactoryDetails = async () => {
+    try {
+      const response = await api.get(`/factories/${factoryId}`);
+      const factory = response.data.data;
+      setFactoryName(factory.factoryName);
+      setLocation(factory.location);
+    } catch (error) {
+      console.error('Error fetching factory details:', error);
+      Alert.alert('Error', 'Failed to load factory details.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchFactoryDetails();
   }, [factoryId]);
 

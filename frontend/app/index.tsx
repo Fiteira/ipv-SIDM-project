@@ -35,6 +35,7 @@ import SensorCreateScreen from './screens/machines/sensors/sensorcreate';
 import FactoryEditScreen from './screens/factories/factoryedit';
 import MachineEditScreen from './screens/machines/machineedit';
 import SensorEditScreen from './screens/machines/sensors/sensoredit';
+import UserEditScreen from './screens/users/useredit';
 
 import avatar from '../assets/avatar.png';
 import { setupAxiosInterceptors } from '@/config/api';

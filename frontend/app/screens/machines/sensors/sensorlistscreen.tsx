@@ -6,6 +6,8 @@ import { RouteProp, useRoute, useFocusEffect, useNavigation, NavigationProp } fr
 import api from '../../../../config/api';
 import { useContext } from 'react';
 import { AuthContext } from '../../../AuthContext';
+import { compareJSON } from '@/config/utils';
+import { insertSensors, deleteSensorsById, getSensorsByMachineId } from '@/config/sqlite';
 
 type RootStackParamList = {  
   SensorList: { machineId: string };
@@ -16,27 +18,9 @@ type RootStackParamList = {
 type SensorListRouteProp = RouteProp<RootStackParamList, 'SensorList'>;
 
 interface Sensor {
-  sensorId: string;
+  sensorId: number;
   name: string;
   sensorType: string;
-}
-
-// Deep equality function
-function deepEqual(a: any, b: any): boolean {
-  if (a === b) return true;
-
-  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
-
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
-
-  if (keysA.length !== keysB.length) return false;
-
-  for (let key of keysA) {
-    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) return false;
-  }
-
-  return true;
 }
 
 export default function SensorListScreen() {
@@ -48,29 +32,67 @@ export default function SensorListScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { userRole } = useContext(AuthContext);
 
-  const fetchSensors = useCallback(() => {
-    setRefreshing(true);
-    api.get(`/sensors/machine/${machineId}`)
-      .then((response) => {
-        const fetchedSensors: Sensor[] = response.data.data;
-
-        // Compare the new data with the current state
-        if (!deepEqual(sensors, fetchedSensors)) {
-          console.log('Sensors data has changed. Updating state.');
-          setSensors(fetchedSensors);
-        } else {
-          console.log('Sensors data is the same. No state update needed.');
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching sensors:', error);
-        Alert.alert('Error', 'Unable to load sensors.');
-      })
-      .finally(() => {
-        setRefreshing(false);
-        setLoading(false);
+  const fetchSensors = useCallback(async () => {
+    try {
+      setRefreshing(true);
+  
+      // Obter sensores locais do banco de dados
+      const localSensors = await getSensorsByMachineId(Number(machineId));
+      console.log('Local sensors:', localSensors);
+  
+      // Buscar sensores do servidor
+      const response = await api.get(`/sensors/machine/${machineId}`);
+      const serverSensors: Sensor[] = response.data.data;
+  
+      // Normalizar dados para comparação
+      const normalizeSensor = (sensor: Sensor) => ({
+        sensorId: sensor.sensorId,
+        name: sensor.name.trim(),
+        sensorType: sensor.sensorType.trim(),
       });
-  }, [machineId, sensors]);
+  
+      const normalizedLocalSensors = localSensors.map(normalizeSensor);
+      const normalizedServerSensors = serverSensors.map(normalizeSensor);
+  
+      // Identificar sensores para inserir ou atualizar
+      const sensorsToInsertOrUpdate = serverSensors.filter(serverSensor => {
+        const localSensor = normalizedLocalSensors.find(
+          sensor => sensor.sensorId === serverSensor.sensorId
+        );
+        return !localSensor || !compareJSON(localSensor, normalizeSensor(serverSensor));
+      });
+  
+      if (sensorsToInsertOrUpdate.length > 0) {
+        await insertSensors(sensorsToInsertOrUpdate.map(sensor => ({
+          ...sensor,
+          machineId: Number(machineId),
+          apiKey: '' // Replace with the actual API key
+        })));
+        console.log(`${sensorsToInsertOrUpdate.length} sensors synchronized.`);
+      }
+  
+      // Identificar sensores para remover
+      const serverSensorIds = new Set(serverSensors.map(sensor => sensor.sensorId));
+      const sensorsToDelete = localSensors.filter(
+        localSensor => !serverSensorIds.has(localSensor.sensorId)
+      );
+  
+      if (sensorsToDelete.length > 0) {
+        const sensorIdsToDelete = sensorsToDelete.map(sensor => sensor.sensorId);
+        await deleteSensorsById(sensorIdsToDelete);
+        console.log(`${sensorsToDelete.length} sensors deleted locally.`);
+      }
+  
+      // Atualizar estado com os dados mais recentes
+      setSensors(serverSensors);
+    } catch (error) {
+      console.error('Error fetching sensors:', error);
+      Alert.alert('Error', 'Unable to load sensors.');
+    } finally {
+      setRefreshing(false);
+      setLoading(false);
+    }
+  }, [machineId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,7 +101,7 @@ export default function SensorListScreen() {
   );
 
   const renderSensorCard = ({ item }: { item: Sensor }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('SensorDetail', { sensorId: item.sensorId })}>
+    <TouchableOpacity onPress={() => navigation.navigate('SensorDetail', { sensorId: String(item.sensorId) })}>
       <Box
         shadow={2}
         borderRadius="md"
@@ -111,7 +133,7 @@ export default function SensorListScreen() {
       <FlatList
         data={sensors}
         renderItem={renderSensorCard}
-        keyExtractor={(item) => item.sensorId}
+        keyExtractor={(item) => String(item.sensorId)}
         contentContainerStyle={styles.listContainer}
         refreshing={refreshing}
         onRefresh={fetchSensors}
@@ -120,10 +142,11 @@ export default function SensorListScreen() {
             {(userRole === 'admin' || userRole === 'adminSystem') && (
               <Button
                 onPress={() => navigation.navigate('SensorCreate', { machineId })}
+                size="sm"
+                width="full"
+                alignSelf="center"
                 leftIcon={<Icon as={MaterialIcons} name="add" size="sm" color="white" />}
                 colorScheme="blue"
-                marginTop="4"
-                borderRadius="md"
               >
                 Create Sensor
               </Button>

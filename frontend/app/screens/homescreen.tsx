@@ -3,7 +3,7 @@ import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Box, FlatList, Text, Icon, VStack, HStack, Spinner, Button } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
-import { db, insertFactories, getFactories } from '@/config/sqlite'; // SQLite functions
+import { db, insertFactories, getFactories, deleteFactoryById } from '@/config/sqlite'; // SQLite functions
 import api from '../../config/api';
 import { isNetworkAvailable } from '../../config/netinfo'; // Utility to check network status
 import { useContext } from 'react';
@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const syncFactories = async () => {
     try {
       setRefreshing(true);
-
+  
       // Load local data first
       const localFactories = await getFactories();
       console.log('Local factories:', localFactories);
@@ -39,18 +39,18 @@ export default function HomeScreen() {
       if (localFactories.length === 0) {
         setRefreshing(false);
       }
+  
       // Check network availability
       const isConnected = await isNetworkAvailable();
-
       if (!isConnected) {
         console.warn('No internet connection. Displaying offline data.');
         return; // Exit early if offline
       }
-
+  
       // Fetch data from the server
       const response = await api.get('/factories');
       const serverFactories: Factory[] = response.data.data;
-
+  
       // Find and update or insert data locally
       const factoriesToInsertOrUpdate = serverFactories.filter(serverFactory => {
         const localFactory = localFactories.find(
@@ -60,14 +60,28 @@ export default function HomeScreen() {
           !localFactory || new Date(serverFactory.updatedAt) > new Date(localFactory.updatedAt)
         );
       });
-
+  
       if (factoriesToInsertOrUpdate.length > 0) {
         await insertFactories(factoriesToInsertOrUpdate);
         console.log(`${factoriesToInsertOrUpdate.length} factories synchronized.`);
       } else {
         console.log('No updates needed.');
       }
-
+  
+      // Find and delete local factories that are no longer in the server
+      const serverFactoryIds = new Set(serverFactories.map(factory => factory.factoryId));
+      const factoriesToDelete = localFactories.filter(
+        localFactory => !serverFactoryIds.has(localFactory.factoryId)
+      );
+  
+      if (factoriesToDelete.length > 0) {
+        const factoryIdsToDelete = factoriesToDelete.map(factory => factory.factoryId);
+        await deleteFactoryById(factoryIdsToDelete);
+        console.log(`${factoriesToDelete.length} factories deleted locally.`);
+      } else {
+        console.log('No factories to delete.');
+      }
+  
       // Update UI with server data
       setFactories(serverFactories);
     } catch (error) {
@@ -77,6 +91,7 @@ export default function HomeScreen() {
       setRefreshing(false); // Ensure refreshing is stopped
     }
   };
+  
 
   useFocusEffect(
     React.useCallback(() => {

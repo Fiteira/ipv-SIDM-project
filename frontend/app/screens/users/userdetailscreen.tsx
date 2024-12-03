@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, Alert, StyleSheet, TextInput } from 'react-native';
 import { Box, Spinner, Button, VStack, Modal, HStack, Icon } from 'native-base';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { getUserByNumber, insertUsers } from '../../../config/sqlite'; // SQLite functions
 import api from '../../../config/api';
+import { compareJSON } from '@/config/utils';
 import { MaterialIcons } from '@expo/vector-icons';
 
 type RootStackParamList = {
   UserDetail: { userNumber: number };
+  UserEdit: { userNumber: number };
   UserList: { factoryId: string };
 };
 
@@ -38,48 +41,50 @@ export default function UserDetailScreen() {
   // Função para buscar os dados do usuário
   const fetchUserDetails = async () => {
     try {
-      setLoading(true);
-  
-      // Step 1: Load data from local storage
-      const localUser = await getUserByNumber(userNumber);
-      if (localUser) {
-        console.log('Local user found:', localUser);
-        setUser(localUser); // Set user state immediately with local data
-      } else {
-        console.warn('User not found in local database.');
-      }
-  
-      // Step 2: Fetch data from the server
-      const response = await api.get(`/users/${userNumber}`);
-      const serverUser: User = response.data.data;
-  
-      // Step 3: Sync server data with local storage if needed
-      if (
-        !localUser ||
-        new Date(serverUser.updatedAt) > new Date(localUser.updatedAt)
-      ) {
-        await insertUsers([serverUser]); // Update or insert into local storage
-        console.log('User data synced successfully.');
-      }
-  
-      // Step 4: Update the user state with the most recent data
-      setUser(serverUser);
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-    } finally {
-      setLoading(false); // Ensure loading is stopped
-    }
-  };
+        setLoading(true);
 
-  useEffect(() => {
-    fetchUserDetails();
-  }, [userNumber]);
+        // Passo 1: Carregar dados do armazenamento local
+        const localUser = await getUserByNumber(userNumber);
+        if (localUser) {
+            console.log('Local user found:', localUser);
+            setUser(localUser); // Define imediatamente os dados locais no estado
+        } else {
+            console.warn('User not found in local database.');
+        }
+
+        // Passo 2: Buscar dados do servidor
+        const response = await api.get(`/users/${userNumber}`);
+        const serverUser: User = response.data.data;
+
+        // Passo 3: Sincronizar dados do servidor com o armazenamento local, se necessário
+        if (!localUser || !compareJSON(localUser, serverUser)) {
+            await insertUsers([serverUser]); // Atualizar ou inserir no armazenamento local
+            console.log('User data synced successfully.');
+        } else {
+            console.log('No update needed for user data.');
+        }
+
+        // Passo 4: Atualizar o estado com os dados mais recentes
+        setUser(serverUser);
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+    } finally {
+        setLoading(false); // Garantir que o carregamento é parado
+    }
+};
+
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserDetails();
+    }, [userNumber])
+  );
 
   const handleDelete = async () => {
     if (inputUserName === user?.name) {
       setConfirmDeleteModalVisible(false);
       try {
-        await api.delete(`/users/${user?.userId}`);
+        await api.delete(`/users/${user?.userNumber}`);
         Alert.alert('Success', 'User deleted successfully');
         navigation.goBack();
       } catch (error) {
@@ -95,7 +100,7 @@ export default function UserDetailScreen() {
     if (!user) return;
 
     try {
-      const response = await api.post('/auth/resetpassword', { userNumber: user.userNumber });
+      const response = await api.patch('/auth/resetpassword', { userNumber: user.userNumber });
       if (response.data.success) {
         Alert.alert('Success', 'Password has been reset');
       } else {
@@ -134,6 +139,7 @@ export default function UserDetailScreen() {
           <Button
             colorScheme="yellow"
             leftIcon={<Icon as={MaterialIcons} name="edit" size="sm" color="white" />}
+            onPress={() => navigation.navigate('UserEdit', { userNumber })}
           >
             Edit
           </Button>
