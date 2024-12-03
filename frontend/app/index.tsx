@@ -15,6 +15,7 @@ import ProfileScreen from './screens/profilescreen';
 import ProfileEditScreen from './screens/profileeditscreen';
 import LoginScreen from './screens/loginscreen';
 import FactoryDetailScreen from './screens/factories/factorydetailscreen';
+import UserHomeScreen from './screens/factories/factorydetailscreen';
 import FactoryDashboardScreen from './screens/factories/factorydashboardscreen';
 import MachineListScreen from './screens/machines/machinelistscreen';
 import MachineDetailScreen from './screens/machines/machinedetailscreen';
@@ -110,13 +111,41 @@ function CustomDrawerContent({ setIsAuthenticated, ...props }: CustomDrawerConte
   );
 }
 
-function DrawerNavigator({ setIsAuthenticated }: { setIsAuthenticated: (isAuthenticated: boolean) => void }) {
+function DrawerNavigator({ setIsAuthenticated}: { setIsAuthenticated: (isAuthenticated: boolean) => void }) {
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [factoryId, setFactoryId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const user = await AsyncStorage.getItem('user');
+      if (user) {
+        const parsedUser = JSON.parse(user);
+        setUserRole(parsedUser.role || null);
+        setFactoryId(parsedUser.factoryId || null);
+      }
+      setIsLoading(false);
+    };
+
+    loadUserData();
+  }, []);
+
+  if (isLoading) {
+    return null; 
+  }
+
+  console.log(userRole, factoryId);
   return (
     <Drawer.Navigator
       initialRouteName="Homepage"
       drawerContent={(props) => <CustomDrawerContent {...props} setIsAuthenticated={setIsAuthenticated} />}
     >
-      <Drawer.Screen name="Homepage" component={AdminAppHomeScreen} />
+      <Drawer.Screen
+        name="Homepage"
+        component={userRole === 'adminSystem' ? AdminAppHomeScreen : UserHomeScreen}
+        initialParams={userRole !== 'adminSystem' ? { factoryId } : undefined}
+      />
+      
       <Drawer.Screen name="Profile Screen" component={ProfileScreen} options={{ drawerItemStyle: { display: 'none' } }} />
     </Drawer.Navigator>
   );
@@ -127,7 +156,6 @@ export default function App() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
-  const { userRole } = useContext(AuthContext);
 
   useEffect(() => {
     setupAxiosInterceptors(setIsAuthenticated);
@@ -195,18 +223,24 @@ export default function App() {
                 name="Main"
                 options={{ headerShown: false }}
               >
-                {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
+                {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated}/>}
               </Stack.Screen>
               <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} options={{ title: 'Edit Profile' }} />
 
               <Stack.Screen name="FactoryDetail" component={FactoryDetailScreen} options={{ title: 'Factory Details' }} />
               <Stack.Screen name="FactoryDashboard" component={FactoryDashboardScreen} options={{ title: 'Factory Dashboard' }} />
-
+              <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
+              <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
+              
               <Stack.Screen name="MachineList" component={MachineListScreen} options={{ title: 'Machines List' }} />
               <Stack.Screen name="MachineDetail" component={MachineDetailScreen} options={{ title: 'Machine Details' }} />
+              <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
+              <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
 
               <Stack.Screen name="SensorList" component={SensorListScreen} options={{ title: 'Sensors List' }} />
               <Stack.Screen name="SensorDetail" component={SensorDetailScreen} options={{ title: 'Sensor Details' }} />
+              <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
+              <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
 
               <Stack.Screen name="AlertList" component={AlertListScreen} options={{ title: 'Alerts List' }} />
               <Stack.Screen name="AlertDetail" component={AlertDetailScreen} options={{ title: 'Alert Details' }} />
@@ -215,23 +249,9 @@ export default function App() {
               <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Maintenance Details' }} />
               <Stack.Screen name="RegisterMaintenance" component={RegisterMaintenanceScreen} options={{ title: 'Register Maintenance' }} />
 
-              {(userRole === 'admin' || userRole === 'adminSystem') && (
-                <>
-                  <Stack.Screen name="MachineEdit" component={MachineEditScreen} options={{ title: 'Edit Machine' }} />
-                  <Stack.Screen name="SensorEdit" component={SensorEditScreen} options={{ title: 'Edit Sensor' }} />
-                  <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
-                  <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
-                  <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
-                  <Stack.Screen name="MachineCreate" component={MachineCreateScreen} options={{ title: 'Machines Create' }} />
-                  <Stack.Screen name="SensorCreate" component={SensorCreateScreen} options={{ title: 'Sensor Create' }} />
-                </>
-              )}
-              {userRole === 'adminSystem' && (
-                <>
-                  <Stack.Screen name="FactoryEdit" component={FactoryEditScreen} options={{ title: 'Edit Factory' }} />
-                  <Stack.Screen name="FactoryCreate" component={FactoryCreateScreen} options={{ title: 'Create New Factory' }} />
-                </>
-              )}
+              <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Users List' }} />
+              <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'User Details' }} />
+              <Stack.Screen name="UserCreate" component={UserCreateScreen} options={{ title: 'Create New User' }} />
             </>
           )}
         </Stack.Navigator>
