@@ -15,7 +15,6 @@ import ProfileScreen from './screens/profilescreen';
 import ProfileEditScreen from './screens/profileeditscreen';
 import LoginScreen from './screens/loginscreen';
 import FactoryDetailScreen from './screens/factories/factorydetailscreen';
-import UserHomeScreen from './screens/users/userfactorydetailscreen';
 import FactoryDashboardScreen from './screens/factories/factorydashboardscreen';
 import MachineListScreen from './screens/machines/machinelistscreen';
 import MachineDetailScreen from './screens/machines/machinedetailscreen';
