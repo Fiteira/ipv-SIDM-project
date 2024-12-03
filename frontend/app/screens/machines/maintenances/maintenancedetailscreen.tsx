@@ -11,6 +11,7 @@ import { compareJSON } from '@/config/utils';
 
 type RootStackParamList = {
   MaintenanceDetail: { maintenanceId: string };
+  AlertDetail: { alertId: string };
 };
 
 type MaintenanceDetailRouteProp = RouteProp<RootStackParamList, 'MaintenanceDetail'>;
@@ -195,7 +196,7 @@ export default function MaintenanceDetailScreen() {
         </HStack>
         <Text style={styles.value}>{maintenance.description}</Text>
 
-        <Button colorScheme="darkBlue" onPress={() => navigation.navigate('MaintenanceDetail', { maintenanceId })}>
+        <Button colorScheme="darkBlue" onPress={() => navigation.navigate('AlertDetail', { alertId: maintenance.alertId.toString() })}>
           Associated Alert
         </Button>
       </VStack>

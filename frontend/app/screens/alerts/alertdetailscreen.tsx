@@ -309,9 +309,11 @@ export default function AlertDetailScreen() {
         </AlertDialog>
 
         {alerta.state === 'solved' && (
-          <VStack space={4} marginTop={6}>
+          <>
+            {/* <VStack space={4} marginTop={6}>
             <Button colorScheme="darkBlue">Check Associated Maintenance</Button>
-          </VStack>
+           </VStack> */}
+          </>
         )}
       </VStack>
     </Box>

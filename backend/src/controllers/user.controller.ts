@@ -87,7 +87,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (name)user.name = name;
     else if (role) user.role = role;
     else if (factoryId) user.factoryId = factoryId;
-    console.log(user)
+
     await UserModel.update({ name: user.name }, { where: { userNumber } });
     res.status(200).json({ success: true, data: user });
   } catch (error) {
@@ -100,7 +100,7 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
   const { userNumber } = req.params;
   const { password } = req.body;
   if (!userNumber) {
-    res.status(400).json({ success: false, message: 'UserId is required' });
+    res.status(400).json({ success: false, message: 'UserNumber is required' });
     return;
   }
 
@@ -126,7 +126,7 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   const { userNumber } = req.params;
   if (!userNumber) {
-    res.status(400).json({ success: false, message: 'UserId is required' });
+    res.status(400).json({ success: false, message: 'UserNumber is required' });
     return;
   }
   try {
