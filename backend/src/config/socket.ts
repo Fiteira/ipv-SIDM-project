@@ -331,7 +331,7 @@ const anomalyDetectionHandler = async (
         const alertMessage = `Severity: ${severity} \nDetails: ${details}.`;
 
         // Verificação de cooldown para evitar spam de notificações
-        if (anomalyData.prediction > 0.5 && !inAnomaly) {
+        if (anomalyData.prediction > 0.4 && !inAnomaly) {
           if (currentTime - lastAlertTime >= anomalyCooldown) {
             // Criação de alerta e envio de notificação, pois está fora do período de cooldown
             const alert = await AlertModel.create({

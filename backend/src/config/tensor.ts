@@ -106,7 +106,7 @@ async function detectAnomalies(model: tf.Sequential, sensorData: SensorData) {
 
         console.log("PREDICTED VALUE: " + predictedValue[0] + "  INDEX:" + data[index] + "\n"); 
         
-        if (predictedValue[0] >= 0.50) anomalyDetection.push({ prediction: predictedValue[0], data: data[index] });
+        if (predictedValue[0] >= 0.40) anomalyDetection.push({ prediction: predictedValue[0], data: data[index] });
         else console.log("dados normais detectados")
     });
 
